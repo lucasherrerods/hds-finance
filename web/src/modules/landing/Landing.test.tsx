@@ -1,15 +1,27 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { Cabecalho, ComoUsar, ExemploDeResultado, Inicio, Privacidade } from '.'
+import { MemoryRouter } from 'react-router'
+import { Cabecalho as CabecalhoSemRota, ComoUsar, ExemploDeResultado, Inicio as InicioSemRota, Privacidade } from '.'
+
+const Cabecalho = () => (
+  <MemoryRouter>
+    <CabecalhoSemRota />
+  </MemoryRouter>
+)
+const Inicio = () => (
+  <MemoryRouter>
+    <InicioSemRota />
+  </MemoryRouter>
+)
 
 describe('landing', () => {
   it('o cabeçalho leva a cada seção da página', () => {
     render(<Cabecalho />)
 
     const navegacao = screen.getByRole('navigation', { name: 'Seções' })
-    expect(within(navegacao).getByRole('link', { name: 'Como usar' })).toHaveAttribute('href', '#como-usar')
-    expect(within(navegacao).getByRole('link', { name: 'Exemplo' })).toHaveAttribute('href', '#exemplo')
-    expect(within(navegacao).getByRole('link', { name: 'Privacidade' })).toHaveAttribute('href', '#privacidade')
+    expect(within(navegacao).getByRole('link', { name: 'Como usar' })).toHaveAttribute('href', '/#como-usar')
+    expect(within(navegacao).getByRole('link', { name: 'Exemplo' })).toHaveAttribute('href', '/#exemplo')
+    expect(within(navegacao).getByRole('link', { name: 'Privacidade' })).toHaveAttribute('href', '/#privacidade')
   })
 
   it('o botão de tema alterna entre claro e escuro', () => {
@@ -26,7 +38,7 @@ describe('landing', () => {
     render(<Inicio />)
 
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /testar com meu extrato/i })).toHaveAttribute('href', '#testar')
+    expect(screen.getByRole('link', { name: /testar com meu extrato/i })).toHaveAttribute('href', '/testar')
   })
 
   it('como usar explica os três passos', () => {

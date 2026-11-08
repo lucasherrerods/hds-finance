@@ -1,5 +1,6 @@
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, ShieldCheck } from 'lucide-react'
 import { motion } from 'motion/react'
+import { Link } from 'react-router'
 import { formatarMoedaComSinal } from '../../shared'
 import { mesDeExemplo } from './exemplo'
 
@@ -34,13 +35,13 @@ export function Inicio() {
             sem cadastro e sem conectar sua conta.
           </motion.p>
           <motion.div variants={entrada} className="flex flex-wrap gap-4">
-            <a
-              href="#testar"
+            <Link
+              to="/testar"
               className="group flex items-center gap-2 rounded-lg bg-primaria px-6 py-3 font-medium text-primaria-texto transition-transform hover:-translate-y-0.5"
             >
               Testar com meu extrato
               <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
-            </a>
+            </Link>
             <a
               href="#exemplo"
               className="rounded-lg bg-superficie px-6 py-3 font-medium shadow-elevacao transition-transform hover:-translate-y-0.5"

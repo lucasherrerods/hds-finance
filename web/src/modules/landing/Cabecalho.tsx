@@ -1,11 +1,12 @@
 import { Moon, Sun, Wallet } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { aplicarTema, salvarTema, temaAtual, type Tema } from '../../shared'
 
 const secoes = [
-  { href: '#como-usar', rotulo: 'Como usar' },
-  { href: '#exemplo', rotulo: 'Exemplo' },
-  { href: '#privacidade', rotulo: 'Privacidade' },
+  { href: '/#como-usar', rotulo: 'Como usar' },
+  { href: '/#exemplo', rotulo: 'Exemplo' },
+  { href: '/#privacidade', rotulo: 'Privacidade' },
 ]
 
 export function Cabecalho() {
@@ -21,16 +22,16 @@ export function Cabecalho() {
   return (
     <header className="sticky top-0 z-10 bg-fundo/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-        <a href="#inicio" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+        <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
           <Wallet aria-hidden className="size-5 text-primaria" />
           hds-finance
-        </a>
+        </Link>
 
         <nav aria-label="Seções" className="hidden items-center gap-8 md:flex">
           {secoes.map((secao) => (
-            <a key={secao.href} href={secao.href} className="text-texto-suave transition-colors hover:text-texto">
+            <Link key={secao.href} to={secao.href} className="text-texto-suave transition-colors hover:text-texto">
               {secao.rotulo}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -43,12 +44,12 @@ export function Cabecalho() {
           >
             {tema === 'escuro' ? <Sun aria-hidden className="size-5" /> : <Moon aria-hidden className="size-5" />}
           </button>
-          <a
-            href="#testar"
+          <Link
+            to="/testar"
             className="rounded-lg bg-primaria px-4 py-2 font-medium text-primaria-texto transition-transform hover:-translate-y-0.5"
           >
             Testar
-          </a>
+          </Link>
         </div>
       </div>
     </header>

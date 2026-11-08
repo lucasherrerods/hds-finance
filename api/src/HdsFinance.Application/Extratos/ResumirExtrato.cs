@@ -4,7 +4,10 @@ namespace HdsFinance.Application.Extratos;
 
 public abstract record ResultadoDoResumo
 {
-    public sealed record Resumido(ResultadoDaImportacao.Importado Importacao, IReadOnlyList<ResumoMensal> Meses) : ResultadoDoResumo;
+    public sealed record Resumido(
+        ResultadoDaImportacao.Importado Importacao,
+        IReadOnlyList<ResumoMensal> Meses,
+        PainelDoMes? Painel = null) : ResultadoDoResumo;
 
     public sealed record NaoImportado(ResultadoDaImportacao Motivo) : ResultadoDoResumo;
 }
@@ -25,6 +28,10 @@ public sealed class ResumirExtrato(
         }
 
         var transacoes = await repositorio.ListarAsync(cancelamento);
-        return new ResultadoDoResumo.Resumido(importado, ResumoMensal.PorMes(transacoes, importado.SaldoFinal, categorizador));
+        var regras = categorizador ?? Categorizador.Padrao;
+        return new ResultadoDoResumo.Resumido(
+            importado,
+            ResumoMensal.PorMes(transacoes, importado.SaldoFinal, regras),
+            PainelDoMes.Montar(transacoes, regras));
     }
 }

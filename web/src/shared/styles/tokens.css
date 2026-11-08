@@ -26,6 +26,12 @@
 
   --color-primaria-suave: #e3eafb;
 
+  /* Mapa de calor: a cor de saída misturada à superfície, do mais fraco ao mais forte. */
+  --color-calor-1: color-mix(in oklab, var(--color-saida) 22%, var(--color-superficie));
+  --color-calor-2: color-mix(in oklab, var(--color-saida) 45%, var(--color-superficie));
+  --color-calor-3: color-mix(in oklab, var(--color-saida) 70%, var(--color-superficie));
+  --color-calor-4: var(--color-saida);
+
   --shadow-elevacao: 0 2px 4px rgb(22 26 34 / 0.08);
   --shadow-elevacao-alta: 0 8px 16px rgb(22 26 34 / 0.06);
 }

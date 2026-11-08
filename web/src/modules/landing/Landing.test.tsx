@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { Cabecalho as CabecalhoSemRota, ComoUsar, ExemploDeResultado, Inicio as InicioSemRota, Privacidade } from '.'
 
@@ -72,10 +72,19 @@ describe('exemplo de resultado', () => {
 })
 
 describe('exemplo com gráficos', () => {
-  it('mostra a evolução dos meses fictícios', async () => {
+  beforeAll(async () => {
+    // Os gráficos carregam sob demanda. Carregar os módulos antes evita que o teste dependa
+    // do tempo do primeiro import do Recharts, que com a suíte inteira às vezes passava de 5 s.
+    await Promise.all([import('../dashboard/GraficosDoPeriodo'), import('../dashboard/RitmoDeGastos')])
+  })
+
+  it('mostra o painel e a evolução dos meses fictícios', async () => {
     render(<ExemploDeResultado />)
 
-    expect(await screen.findByRole('table', { name: 'Entradas e saídas por mês' }, { timeout: 5000 })).toBeInTheDocument()
-    expect(screen.getByRole('table', { name: 'Saldo no fim de cada mês' })).toBeInTheDocument()
-  }, 10_000)
+    expect(screen.getByRole('region', { name: 'Destaque do mês' })).toHaveTextContent('Sem categoria subiu 24%')
+    expect(screen.getByRole('table', { name: 'Principais categorias' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Entradas e saídas por mês' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Gasto acumulado por dia' })).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Saldo no fim de cada mês' })).not.toBeInTheDocument()
+  })
 })

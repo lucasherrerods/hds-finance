@@ -108,3 +108,27 @@ public class DemonstracaoCategoriasTestes(WebApplicationFactory<Program> fabrica
         (await resposta.Content.ReadAsStringAsync()).Should().Contain("\"categoria\":\"Feira\"");
     }
 }
+
+public class DemonstracaoPainelTestes(WebApplicationFactory<Program> fabrica) : IClassFixture<WebApplicationFactory<Program>>
+{
+    [Fact]
+    public async Task Devolve_o_painel_do_ultimo_mes_do_extrato()
+    {
+        var arquivo = new ByteArrayContent(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "samples", "inter-extrato.ofx")));
+
+        var resposta = await fabrica.CreateClient()
+            .PostAsync("/demonstracao/resumo", new MultipartFormDataContent { { arquivo, "arquivo", "extrato.ofx" } });
+
+        using var json = System.Text.Json.JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        var painel = json.RootElement.GetProperty("painel");
+        painel.GetProperty("ano").GetInt32().Should().Be(2026);
+        painel.GetProperty("mes").GetInt32().Should().Be(10);
+        painel.GetProperty("gastoNoMes").GetDecimal().Should().Be(123.45m);
+        painel.GetProperty("gastoNoMesAnterior").ValueKind.Should().Be(System.Text.Json.JsonValueKind.Null);
+        painel.GetProperty("ritmo").GetArrayLength().Should().Be(31);
+        painel.GetProperty("mapaDeCalor")[0].GetProperty("diaDaSemana").GetInt32().Should().Be(4);
+        painel.GetProperty("principaisCategorias")[0].GetProperty("categoria").GetString().Should().Be("Alimentação");
+        painel.GetProperty("transacoesRecentes")[0].GetProperty("data").GetString().Should().Be("2026-10-10");
+        painel.GetProperty("transacoesRecentes")[0].GetProperty("categoria").GetString().Should().Be("Investimentos e transferências");
+    }
+}

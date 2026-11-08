@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
-import { GraficosDoPeriodo, ResumoDoMes } from '../modules/dashboard'
+import { GraficosDoPeriodo, PainelDoMes, ResumoDoMes } from '../modules/dashboard'
 import { AvisoDePrivacidade, EnvioDeExtrato, type ResumoDoExtrato } from '../modules/import'
 
 export function PaginaDeTeste() {
@@ -44,6 +44,7 @@ export function PaginaDeTeste() {
               {resumo.transacoesNovas} transações lidas
               {resumo.duplicadas > 0 && `, ${resumo.duplicadas} duplicadas ignoradas`}.
             </p>
+            {resumo.painel && <PainelDoMes painel={resumo.painel} />}
             <GraficosDoPeriodo meses={resumo.meses} />
             {resumo.meses.map((mes, indice) => (
               <motion.div

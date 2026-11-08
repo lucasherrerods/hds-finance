@@ -1,4 +1,5 @@
 export { Cabecalho } from './Cabecalho'
+export { ChamadaFinal } from './ChamadaFinal'
 export { ComoUsar } from './ComoUsar'
 export { ExemploDeResultado } from './ExemploDeResultado'
 export { Inicio } from './Inicio'

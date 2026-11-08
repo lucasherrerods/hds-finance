@@ -1,3 +1,5 @@
+using HdsFinance.Domain;
+
 namespace HdsFinance.Application.Extratos;
 
 public abstract record ResultadoDaImportacao
@@ -9,7 +11,10 @@ public abstract record ResultadoDaImportacao
     public sealed record FormatoNaoSuportado(FormatoDeExtrato Formato) : ResultadoDaImportacao;
 }
 
-public sealed class ImportarExtrato(IEnumerable<ILeitorDeExtrato> leitores, IRepositorioDeTransacoes repositorio)
+public sealed class ImportarExtrato(
+    IEnumerable<ILeitorDeExtrato> leitores,
+    IRepositorioDeTransacoes repositorio,
+    ClassificadorDeTipo? classificador = null)
 {
     public async Task<ResultadoDaImportacao> ExecutarAsync(
         Stream conteudo, FormatoDeExtrato formato, CancellationToken cancelamento = default)
@@ -26,7 +31,8 @@ public sealed class ImportarExtrato(IEnumerable<ILeitorDeExtrato> leitores, IRep
             return new ResultadoDaImportacao.ArquivoInvalido(falha.Linha, falha.Motivo);
         }
 
-        var lidas = ((ResultadoDaLeitura.Sucesso)leitura).Transacoes;
+        var classificar = (classificador ?? new ClassificadorDeTipo()).Classificar;
+        var lidas = ((ResultadoDaLeitura.Sucesso)leitura).Transacoes.Select(classificar).ToList();
         var unicasDoArquivo = lidas.DistinctBy(t => t.ChaveDeDeduplicacao).ToList();
         var existentes = await repositorio.ChavesExistentesAsync(
             unicasDoArquivo.Select(t => t.ChaveDeDeduplicacao), cancelamento);

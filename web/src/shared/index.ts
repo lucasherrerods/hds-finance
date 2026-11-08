@@ -1,1 +1,1 @@
-export { formatarData, formatarMoeda } from './format/formatar'
+export { formatarData, formatarMes, formatarMoeda, formatarMoedaComSinal } from './format/formatar'

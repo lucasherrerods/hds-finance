@@ -24,4 +24,8 @@
     <ProjectReference Include="..\..\src\HdsFinance.Api\HdsFinance.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="../samples/**" LinkBase="samples" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

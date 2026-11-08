@@ -1,0 +1,1 @@
+export { ResumoDoMes } from './ResumoDoMes'

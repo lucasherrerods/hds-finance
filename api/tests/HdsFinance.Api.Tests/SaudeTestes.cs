@@ -2,7 +2,7 @@ using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace HdsFinance.Api.Testes;
+namespace HdsFinance.Api.Tests;
 
 public class SaudeTestes(WebApplicationFactory<Program> fabrica) : IClassFixture<WebApplicationFactory<Program>>
 {

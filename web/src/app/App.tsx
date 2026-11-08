@@ -1,4 +1,4 @@
-import { AvisoDePrivacidade } from '../modules/importacao'
+import { AvisoDePrivacidade } from '../modules/import'
 
 export function App() {
   return (

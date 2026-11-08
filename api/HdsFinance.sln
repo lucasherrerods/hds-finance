@@ -7,25 +7,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Api", "src\HdsFinance.Api\HdsFinance.Api.csproj", "{52A6F260-320A-4D80-BBC9-9196025B4597}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Aplicacao", "src\HdsFinance.Aplicacao\HdsFinance.Aplicacao.csproj", "{5A3C5BB0-12E2-4037-8A1F-1E949A7775BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Application", "src\HdsFinance.Application\HdsFinance.Application.csproj", "{5A3C5BB0-12E2-4037-8A1F-1E949A7775BC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Cli", "src\HdsFinance.Cli\HdsFinance.Cli.csproj", "{83613056-9932-4BED-8F67-69E6389104A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Dominio", "src\HdsFinance.Dominio\HdsFinance.Dominio.csproj", "{6E540714-835F-4105-9AAD-093ADB5448D8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Domain", "src\HdsFinance.Domain\HdsFinance.Domain.csproj", "{6E540714-835F-4105-9AAD-093ADB5448D8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Infraestrutura", "src\HdsFinance.Infraestrutura\HdsFinance.Infraestrutura.csproj", "{38B70C4B-0719-453C-BAA1-7F5D21D671A7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Infrastructure", "src\HdsFinance.Infrastructure\HdsFinance.Infrastructure.csproj", "{38B70C4B-0719-453C-BAA1-7F5D21D671A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Worker", "src\HdsFinance.Worker\HdsFinance.Worker.csproj", "{67833AC4-C7C3-40A1-9276-AEA3846D7F37}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Api.Testes", "tests\HdsFinance.Api.Testes\HdsFinance.Api.Testes.csproj", "{7B0389AA-22D3-49ED-899C-4520585B997C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Api.Tests", "tests\HdsFinance.Api.Tests\HdsFinance.Api.Tests.csproj", "{7B0389AA-22D3-49ED-899C-4520585B997C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Aplicacao.Testes", "tests\HdsFinance.Aplicacao.Testes\HdsFinance.Aplicacao.Testes.csproj", "{DD43E63F-AAA6-40C9-B440-7A792B18560D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Application.Tests", "tests\HdsFinance.Application.Tests\HdsFinance.Application.Tests.csproj", "{DD43E63F-AAA6-40C9-B440-7A792B18560D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Dominio.Testes", "tests\HdsFinance.Dominio.Testes\HdsFinance.Dominio.Testes.csproj", "{4313A9B8-6858-4BBE-B18E-13FCF868F94B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Domain.Tests", "tests\HdsFinance.Domain.Tests\HdsFinance.Domain.Tests.csproj", "{4313A9B8-6858-4BBE-B18E-13FCF868F94B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Infraestrutura.Testes", "tests\HdsFinance.Infraestrutura.Testes\HdsFinance.Infraestrutura.Testes.csproj", "{3C763637-BCBB-4072-BD49-E88D31ED36D3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HdsFinance.Infrastructure.Tests", "tests\HdsFinance.Infrastructure.Tests\HdsFinance.Infrastructure.Tests.csproj", "{3C763637-BCBB-4072-BD49-E88D31ED36D3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

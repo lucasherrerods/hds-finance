@@ -12,6 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HdsFinance.Infraestrutura\HdsFinance.Infraestrutura.csproj" />
+    <ProjectReference Include="..\HdsFinance.Infrastructure\HdsFinance.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

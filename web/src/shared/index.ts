@@ -1,1 +1,1 @@
-export { formatarData, formatarMoeda } from './formatar/formatar'
+export { formatarData, formatarMoeda } from './format/formatar'

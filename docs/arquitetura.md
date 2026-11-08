@@ -5,14 +5,14 @@ O backend segue a arquitetura hexagonal (portas e adaptadores). O domínio fica 
 ```
 Api / Worker / Cli   montam tudo e traduzem entrada e saída
         │
-Infraestrutura       adaptadores: OFX/CSV, SQLite, memória, PDF, e-mail
+Infrastructure       adaptadores: OFX/CSV, SQLite, memória, PDF, e-mail
         │
-Aplicacao            casos de uso e portas (interfaces)
+Application            casos de uso e portas (interfaces)
         │
-Dominio              entidades e regras puras
+Domain              entidades e regras puras
 ```
 
-As dependências apontam para dentro: `Dominio` não referencia nenhum pacote externo, e `Aplicacao` só conhece o `Dominio`.
+As dependências apontam para dentro: `Domain` não referencia nenhum pacote externo, e `Application` só conhece o `Domain`.
 
 ## Modos
 

@@ -21,4 +21,11 @@ internal static class TextoNormalizado
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return string.Join(' ', palavras);
     }
+
+    /// <summary>Termos já normalizados, comparados como palavras inteiras.</summary>
+    public static bool ContemAlgum(string texto, IEnumerable<string> termosNormalizados)
+    {
+        var comBordas = $" {De(texto)} ";
+        return termosNormalizados.Any(t => comBordas.Contains($" {t} ", StringComparison.Ordinal));
+    }
 }

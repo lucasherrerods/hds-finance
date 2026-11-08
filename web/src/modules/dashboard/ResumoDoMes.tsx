@@ -1,6 +1,7 @@
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Equal, Wallet, type LucideIcon } from 'lucide-react'
 import { formatarMes, formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal } from '../import'
+import { GastosPorCategoria } from './GastosPorCategoria'
 
 type Props = { mes: ResumoMensal }
 
@@ -29,6 +30,7 @@ export function ResumoDoMes({ mes }: Props) {
         />
         <Valor rotulo="Saldo" icone={Wallet} texto={saldo} cor="text-texto" />
       </div>
+      <GastosPorCategoria gastos={mes.gastosPorCategoria} totalDeSaidas={mes.saidas} />
     </section>
   )
 }

@@ -49,3 +49,12 @@ describe('landing', () => {
     expect(screen.getAllByText(/nada|nunca/i).length).toBeGreaterThan(0)
   })
 })
+
+describe('exemplo de resultado', () => {
+  it('mostra o saldo e os investimentos do mês fictício', () => {
+    render(<ExemploDeResultado />)
+
+    expect(screen.getByRole('group', { name: 'Saldo' })).toHaveTextContent('R$ 1.250,40 → R$ 2.352,60')
+    expect(screen.getByRole('group', { name: 'Investimentos e transferências' })).toHaveTextContent('−R$ 2.000,00')
+  })
+})

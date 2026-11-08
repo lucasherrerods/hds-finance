@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { ResumoDoMes } from './ResumoDoMes'
 
@@ -11,6 +11,7 @@ const outubro = {
   investimentosETransferencias: -1000,
   saldoInicial: 0,
   saldoFinal: 2376.55,
+  gastosPorCategoria: [],
 }
 
 describe('ResumoDoMes', () => {
@@ -34,5 +35,48 @@ describe('ResumoDoMes', () => {
     render(<ResumoDoMes mes={{ ...outubro, saldoInicial: null, saldoFinal: null }} />)
 
     expect(screen.getByRole('group', { name: 'Saldo' })).toHaveTextContent('Não informado no extrato')
+  })
+})
+
+describe('gastos por categoria', () => {
+  const comGastos = {
+    ...outubro,
+    saidas: 1200,
+    gastosPorCategoria: [
+      { categoria: 'Alimentação', valor: 900 },
+      { categoria: 'Transporte', valor: 300 },
+    ],
+  }
+
+  it('lista cada categoria com valor e participação nas saídas', () => {
+    render(<ResumoDoMes mes={comGastos} />)
+
+    const lista = screen.getByRole('list', { name: 'Gastos por categoria' })
+    const itens = within(lista).getAllByRole('listitem')
+    expect(itens).toHaveLength(2)
+    expect(itens[0]).toHaveTextContent('Alimentação')
+    expect(itens[0]).toHaveTextContent('R$ 900,00')
+    expect(itens[0]).toHaveTextContent('75%')
+  })
+
+  it('sem gastos no mês, não mostra a lista', () => {
+    render(<ResumoDoMes mes={{ ...outubro, gastosPorCategoria: [] }} />)
+
+    expect(screen.queryByRole('list', { name: 'Gastos por categoria' })).not.toBeInTheDocument()
+  })
+})
+
+describe('vários meses na mesma página', () => {
+  it('cada lista de gastos tem o próprio rótulo', () => {
+    const mes = { ...outubro, saidas: 100, gastosPorCategoria: [{ categoria: 'Alimentação', valor: 100 }] }
+    render(
+      <>
+        <ResumoDoMes mes={mes} />
+        <ResumoDoMes mes={{ ...mes, mes: 11 }} />
+      </>,
+    )
+
+    const ids = screen.getAllByRole('list', { name: 'Gastos por categoria' }).map((l) => l.getAttribute('aria-labelledby'))
+    expect(new Set(ids).size).toBe(2)
   })
 })

@@ -10,7 +10,10 @@ public abstract record ResultadoDoResumo
 }
 
 /// <summary>Importa o extrato no repositório recebido e devolve o resumo de cada mês que ele contém.</summary>
-public sealed class ResumirExtrato(ImportarExtrato importar, IRepositorioDeTransacoes repositorio)
+public sealed class ResumirExtrato(
+    ImportarExtrato importar,
+    IRepositorioDeTransacoes repositorio,
+    Categorizador? categorizador = null)
 {
     public async Task<ResultadoDoResumo> ExecutarAsync(
         Stream conteudo, FormatoDeExtrato formato, CancellationToken cancelamento = default)
@@ -22,6 +25,6 @@ public sealed class ResumirExtrato(ImportarExtrato importar, IRepositorioDeTrans
         }
 
         var transacoes = await repositorio.ListarAsync(cancelamento);
-        return new ResultadoDoResumo.Resumido(importado, ResumoMensal.PorMes(transacoes, importado.SaldoFinal));
+        return new ResultadoDoResumo.Resumido(importado, ResumoMensal.PorMes(transacoes, importado.SaldoFinal, categorizador));
     }
 }

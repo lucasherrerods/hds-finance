@@ -7,6 +7,12 @@ export type ResumoMensal = {
   investimentosETransferencias: number
   saldoInicial: number | null
   saldoFinal: number | null
+  gastosPorCategoria: GastoPorCategoria[]
+}
+
+export type GastoPorCategoria = {
+  categoria: string
+  valor: number
 }
 
 export type ResumoDoExtrato = {

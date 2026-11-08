@@ -45,6 +45,14 @@ switch (await resumir.ExecutarAsync(arquivo, formato))
             Console.WriteLine($"  Resultado: {resumo.Resultado.ToString("C", ptBr)}");
             Console.WriteLine($"  Investimentos e transferências: {resumo.InvestimentosETransferencias.ToString("C", ptBr)}");
             Console.WriteLine($"  Saldo:     {Saldo(resumo.SaldoInicial)} → {Saldo(resumo.SaldoFinal)}");
+            if (resumo.GastosPorCategoria.Count > 0)
+            {
+                Console.WriteLine("  Gastos por categoria:");
+                foreach (var gasto in resumo.GastosPorCategoria)
+                {
+                    Console.WriteLine($"    {gasto.Categoria,-16} {gasto.Valor.ToString("C", ptBr)}");
+                }
+            }
         }
 
         return 0;

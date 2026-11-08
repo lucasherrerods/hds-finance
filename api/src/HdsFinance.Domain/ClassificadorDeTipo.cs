@@ -12,12 +12,10 @@ public sealed class ClassificadorDeTipo
     private static readonly string[] TermosDeTransferenciaPropriaPadrao =
         ["TRANSFERENCIA ENTRE CONTAS", "MESMA TITULARIDADE"];
 
-    private readonly string[] _investimento;
     private readonly string[] _transferenciaPropria;
 
     public ClassificadorDeTipo(IEnumerable<string>? termosDeTransferenciaPropria = null)
     {
-        _investimento = TermosDeInvestimento;
         _transferenciaPropria = TermosDeTransferenciaPropriaPadrao
             .Concat((termosDeTransferenciaPropria ?? []).Select(TextoNormalizado.De))
             .Where(t => t.Length > 0)
@@ -26,15 +24,10 @@ public sealed class ClassificadorDeTipo
 
     public Transacao Classificar(Transacao transacao)
     {
-        var descricao = $" {TextoNormalizado.De(transacao.Descricao)} ";
-
-        var tipo = Contem(descricao, _transferenciaPropria) ? TipoDeTransacao.TransferenciaEntreContasProprias
-            : Contem(descricao, _investimento) ? TipoDeTransacao.MovimentacaoDeInvestimento
+        var tipo = TextoNormalizado.ContemAlgum(transacao.Descricao, _transferenciaPropria) ? TipoDeTransacao.TransferenciaEntreContasProprias
+            : TextoNormalizado.ContemAlgum(transacao.Descricao, TermosDeInvestimento) ? TipoDeTransacao.MovimentacaoDeInvestimento
             : TipoDeTransacao.Comum;
 
         return transacao with { Tipo = tipo };
     }
-
-    private static bool Contem(string descricao, string[] termos) =>
-        termos.Any(t => descricao.Contains($" {t} ", StringComparison.Ordinal));
 }

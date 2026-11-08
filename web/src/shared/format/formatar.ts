@@ -25,3 +25,17 @@ const abreviacoes = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'se
 export function formatarMesCurto(ano: number, mes: number): string {
   return `${abreviacoes[mes - 1]}/${String(ano % 100).padStart(2, '0')}`
 }
+
+const diaCurto = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: 'UTC' })
+
+export function formatarDiaCurto(dataIso: string): string {
+  const [ano, mes, dia] = dataIso.split('-').map(Number)
+  const semana = diaCurto.format(new Date(Date.UTC(ano, mes - 1, dia))).replace('.', '')
+  return `${semana}, ${String(dia).padStart(2, '0')} ${abreviacoes[mes - 1]}`
+}
+
+export function formatarPercentual(valor: number): string {
+  const inteiro = Math.round(Math.abs(valor))
+  if (inteiro === 0) return '0%'
+  return `${valor > 0 ? '+' : '−'}${inteiro}%`
+}

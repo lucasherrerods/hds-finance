@@ -87,3 +87,25 @@ public class ResumirExtratoCategoriasTestes
             .Should().Equal(new GastoPorCategoria("Educação", 80m));
     }
 }
+
+public class ResumirExtratoPainelTestes
+{
+    [Fact]
+    public async Task Devolve_o_painel_do_ultimo_mes()
+    {
+        var gasto = new Transacao(new DateOnly(2026, 11, 3), -80m, "Mercado", TipoDeTransacao.Comum);
+        var leitor = Substitute.For<ILeitorDeExtrato>();
+        leitor.Formato.Returns(FormatoDeExtrato.Csv);
+        leitor.LerAsync(Arg.Any<Stream>(), Arg.Any<CancellationToken>()).Returns(new ResultadoDaLeitura.Sucesso([gasto]));
+        var repositorio = Substitute.For<IRepositorioDeTransacoes>();
+        repositorio.ChavesExistentesAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>()).Returns(new HashSet<string>());
+        repositorio.ListarAsync(Arg.Any<CancellationToken>()).Returns([gasto]);
+
+        var resultado = await new ResumirExtrato(new ImportarExtrato([leitor], repositorio), repositorio)
+            .ExecutarAsync(Stream.Null, FormatoDeExtrato.Csv);
+
+        var painel = ((ResultadoDoResumo.Resumido)resultado).Painel;
+        painel!.Mes.Should().Be(new MesDeReferencia(2026, 11));
+        painel.GastoNoMes.Should().Be(80m);
+    }
+}

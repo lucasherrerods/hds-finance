@@ -19,6 +19,7 @@ export type ResumoDoExtrato = {
   transacoesNovas: number
   duplicadas: number
   meses: ResumoMensal[]
+  painel: Painel | null
 }
 
 export type ResultadoDoEnvio = { ok: true; resumo: ResumoDoExtrato } | { ok: false; mensagem: string }
@@ -43,4 +44,32 @@ export async function enviarExtrato(arquivo: File): Promise<ResultadoDoEnvio> {
   const problema = (await resposta.json().catch(() => ({}))) as Problema
   const mensagem = problema.detail ?? problema.title ?? 'Não foi possível ler o extrato.'
   return { ok: false, mensagem: problema.linha ? `${mensagem} (linha ${problema.linha})` : mensagem }
+}
+
+export type PontoDoRitmo = { dia: number; acumuladoAtual: number | null; acumuladoAnterior: number | null }
+
+/** diaDaSemana vai de 0 (domingo) a 6 (sábado); semana é a coluna do calendário do mês. */
+export type GastoDoDia = { dia: number; diaDaSemana: number; semana: number; valor: number }
+
+export type CategoriaComparada = {
+  categoria: string
+  atual: number
+  anterior: number | null
+  variacaoPercentual: number | null
+}
+
+export type TransacaoDoPainel = { data: string; descricao: string; categoria: string; valor: number }
+
+export type Painel = {
+  ano: number
+  mes: number
+  gastoNoMes: number
+  gastoNoMesAnterior: number | null
+  variacaoPercentual: number | null
+  mediaDiaria: number
+  maiorGasto: GastoDoDia | null
+  ritmo: PontoDoRitmo[]
+  mapaDeCalor: GastoDoDia[]
+  principaisCategorias: CategoriaComparada[]
+  transacoesRecentes: TransacaoDoPainel[]
 }

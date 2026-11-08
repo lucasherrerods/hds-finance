@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ResumoMensal } from '../import'
-import { dadosDeEntradasESaidas, dadosDoSaldo } from './dadosDosGraficos'
+import { dadosDeEntradasESaidas } from './dadosDosGraficos'
 
 function mes(ano: number, numero: number, parcial: Partial<ResumoMensal> = {}): ResumoMensal {
   return {
@@ -35,17 +35,3 @@ describe('dadosDeEntradasESaidas', () => {
   })
 })
 
-describe('dadosDoSaldo', () => {
-  it('usa o saldo final de cada mês', () => {
-    expect(dadosDoSaldo([mes(2026, 9, { saldoFinal: 500 }), mes(2026, 10, { saldoFinal: 820.5 })])).toEqual([
-      { rotulo: 'set/26', saldo: 500 },
-      { rotulo: 'out/26', saldo: 820.5 },
-    ])
-  })
-
-  it('deixa de fora os meses sem saldo informado', () => {
-    expect(dadosDoSaldo([mes(2026, 9, { saldoInicial: null, saldoFinal: null }), mes(2026, 10)])).toEqual([
-      { rotulo: 'out/26', saldo: 60 },
-    ])
-  })
-})

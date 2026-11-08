@@ -36,16 +36,8 @@ describe('GraficosDoPeriodo', () => {
     expect(linhas[2]).toHaveTextContent('−R$ 980,00')
   })
 
-  it('mostra a evolução do saldo quando o extrato informa', () => {
+  it('não mostra mais a evolução do saldo', () => {
     render(<GraficosDoPeriodo meses={[mes(9, { saldoFinal: 500 }), mes(10, { saldoFinal: 2300 })]} />)
-
-    const tabela = screen.getByRole('table', { name: 'Saldo no fim de cada mês' })
-    expect(within(tabela).getAllByRole('row')[2]).toHaveTextContent('R$ 2.300,00')
-  })
-
-  it('sem saldo informado, não mostra o gráfico de saldo', () => {
-    const semSaldo = { saldoInicial: null, saldoFinal: null }
-    render(<GraficosDoPeriodo meses={[mes(9, semSaldo), mes(10, semSaldo)]} />)
 
     expect(screen.queryByRole('table', { name: 'Saldo no fim de cada mês' })).not.toBeInTheDocument()
   })

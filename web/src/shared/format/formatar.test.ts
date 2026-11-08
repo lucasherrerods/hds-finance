@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { formatarData, formatarMes, formatarMesCurto, formatarMoeda, formatarMoedaComSinal } from './formatar'
+import {
+  formatarData,
+  formatarDiaCurto,
+  formatarMes,
+  formatarMesCurto,
+  formatarMoeda,
+  formatarMoedaComSinal,
+  formatarPercentual,
+} from './formatar'
 
 describe('formatarMoeda', () => {
   it('usa o padrão pt-BR com R$', () => {
@@ -34,5 +42,20 @@ describe('formatarMesCurto', () => {
   it('usa a abreviação do mês e o ano com dois dígitos', () => {
     expect(formatarMesCurto(2026, 10)).toBe('out/26')
     expect(formatarMesCurto(2025, 3)).toBe('mar/25')
+  })
+})
+
+describe('formatarDiaCurto', () => {
+  it('mostra o dia da semana, o dia e o mês abreviados', () => {
+    expect(formatarDiaCurto('2026-10-30')).toBe('sex, 30 out')
+    expect(formatarDiaCurto('2026-11-01')).toBe('dom, 01 nov')
+  })
+})
+
+describe('formatarPercentual', () => {
+  it('mostra o sinal e arredonda para inteiro', () => {
+    expect(formatarPercentual(22.2)).toBe('+22%')
+    expect(formatarPercentual(-59.9)).toBe('−60%')
+    expect(formatarPercentual(0)).toBe('0%')
   })
 })

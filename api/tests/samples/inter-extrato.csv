@@ -1,0 +1,9 @@
+Extrato Conta Corrente
+Conta ;00000000
+Período ;01/10/2026 a 31/10/2026
+Saldo ;2.376,55
+
+Data Lançamento;Histórico;Descrição;Valor;Saldo
+01/10/2026;Pix recebido;Fulano de Tal Ficticio;3.500,00;3.500,00
+05/10/2026;Compra no debito;Mercado Exemplo;-123,45;3.376,55
+10/10/2026;Aplicação;CDB Ficticio;-1.000,00;2.376,55

@@ -8,7 +8,7 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.MapOpenApi();
 
-app.MapGet("/saude", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
 

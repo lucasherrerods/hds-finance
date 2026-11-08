@@ -1,6 +1,5 @@
 using System.Globalization;
 using HdsFinance.Application.Extratos;
-using HdsFinance.Domain;
 using HdsFinance.Infrastructure.Extratos;
 using HdsFinance.Infrastructure.Repositorios;
 
@@ -25,31 +24,30 @@ if (!File.Exists(caminho))
 }
 
 var repositorio = new RepositorioEmMemoria();
-var importar = new ImportarExtrato([new LeitorOfx(), new LeitorCsvInter()], repositorio);
+var resumir = new ResumirExtrato(new ImportarExtrato([new LeitorOfx(), new LeitorCsvInter()], repositorio), repositorio);
 
 await using var arquivo = File.OpenRead(caminho);
-var resultado = await importar.ExecutarAsync(arquivo, formato);
 
-switch (resultado)
+switch (await resumir.ExecutarAsync(arquivo, formato))
 {
-    case ResultadoDaImportacao.ArquivoInvalido invalido:
+    case ResultadoDoResumo.NaoImportado { Motivo: ResultadoDaImportacao.ArquivoInvalido invalido }:
         Console.Error.WriteLine($"Arquivo inválido na linha {invalido.Linha}: {invalido.Motivo}");
         return 1;
-    case ResultadoDaImportacao.FormatoNaoSuportado:
+
+    case ResultadoDoResumo.Resumido resumido:
+        Console.WriteLine($"Transações lidas: {resumido.Importacao.Novas} (duplicadas ignoradas: {resumido.Importacao.Duplicadas})");
+        foreach (var resumo in resumido.Meses)
+        {
+            Console.WriteLine();
+            Console.WriteLine($"{resumo.Mes.Mes:00}/{resumo.Mes.Ano}");
+            Console.WriteLine($"  Entradas:  {resumo.Entradas.ToString("C", ptBr)}");
+            Console.WriteLine($"  Saídas:    {resumo.Saidas.ToString("C", ptBr)}");
+            Console.WriteLine($"  Resultado: {resumo.Resultado.ToString("C", ptBr)}");
+        }
+
+        return 0;
+
+    default:
         Console.Error.WriteLine("Formato não suportado.");
         return 2;
-    case ResultadoDaImportacao.Importado importado:
-        Console.WriteLine($"Transações lidas: {importado.Novas} (duplicadas ignoradas: {importado.Duplicadas})");
-        break;
 }
-
-foreach (var resumo in ResumoMensal.PorMes(await repositorio.ListarAsync()))
-{
-    Console.WriteLine();
-    Console.WriteLine($"{resumo.Mes.Mes:00}/{resumo.Mes.Ano}");
-    Console.WriteLine($"  Entradas:  {resumo.Entradas.ToString("C", ptBr)}");
-    Console.WriteLine($"  Saídas:    {resumo.Saidas.ToString("C", ptBr)}");
-    Console.WriteLine($"  Resultado: {resumo.Resultado.ToString("C", ptBr)}");
-}
-
-return 0;

@@ -55,6 +55,8 @@ cd api && dotnet run --project src/HdsFinance.Cli -- importar caminho/extrato.of
 
 O comando mostra quantas transações leu e as entradas, saídas e o resultado de cada mês.
 
+Para testar pela tela, suba a API e o web em dois terminais, copie `web/.env.example` para `web/.env` e abra `http://localhost:5173`. O extrato enviado é lido em memória e descartado ao fim da requisição.
+
 ## Privacidade
 
 - Extratos, bancos de dados e relatórios nunca entram no repositório.

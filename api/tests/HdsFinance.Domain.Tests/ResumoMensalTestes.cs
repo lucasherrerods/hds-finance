@@ -1,7 +1,7 @@
 using FluentAssertions;
-using HdsFinance.Dominio;
+using HdsFinance.Domain;
 
-namespace HdsFinance.Dominio.Testes;
+namespace HdsFinance.Domain.Tests;
 
 public class ResumoMensalTestes
 {

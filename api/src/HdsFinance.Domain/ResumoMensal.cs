@@ -1,4 +1,4 @@
-namespace HdsFinance.Dominio;
+namespace HdsFinance.Domain;
 
 public sealed record ResumoMensal(MesDeReferencia Mes, decimal SaldoInicial, decimal Entradas, decimal Saidas)
 {

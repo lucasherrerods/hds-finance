@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\HdsFinance.Infraestrutura\HdsFinance.Infraestrutura.csproj" />
+    <ProjectReference Include="..\..\src\HdsFinance.Infrastructure\HdsFinance.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

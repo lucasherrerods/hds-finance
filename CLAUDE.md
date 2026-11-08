@@ -23,26 +23,25 @@ O mesmo código roda de dois jeitos. A diferença é só qual adaptador entra em
 ```
 api/                          backend .NET
   src/
-    HdsFinance.Dominio/          entidades e regras puras
-    HdsFinance.Aplicacao/        casos de uso e portas (interfaces)
-    HdsFinance.Infraestrutura/   adaptadores: OFX/CSV, SQLite, repositório em memória, PDF, e-mail
+    HdsFinance.Domain/          entidades e regras puras
+    HdsFinance.Application/        casos de uso e portas (interfaces)
+    HdsFinance.Infrastructure/   adaptadores: OFX/CSV, SQLite, repositório em memória, PDF, e-mail
     HdsFinance.Api/              ASP.NET Core: rotas usadas pelo front
     HdsFinance.Worker/           modo pessoal: vigia a pasta de extratos
     HdsFinance.Cli/              importar e gerar relatório pelo terminal
   tests/
-    HdsFinance.Dominio.Testes/
-    HdsFinance.Aplicacao.Testes/
-    HdsFinance.Infraestrutura.Testes/
-    HdsFinance.Api.Testes/          rotas com WebApplicationFactory
-    amostras/                       extratos fictícios
+    HdsFinance.Domain.Tests/
+    HdsFinance.Application.Tests/
+    HdsFinance.Infrastructure.Tests/
+    HdsFinance.Api.Tests/          rotas com WebApplicationFactory
+    samples/                       extratos fictícios
   HdsFinance.sln
 web/                          front React
   docs/design.md              regras visuais
 docs/
   arquitetura.md
-  imagens/                    prints com dados fictícios para o README
+  images/                     prints com dados fictícios para o README
 .github/                      CI
-docker-compose.yml            sobe api + web para quem quiser rodar a própria instância
 CLAUDE.md                     este arquivo, único para o projeto inteiro
 ```
 
@@ -56,12 +55,12 @@ Valem para a api e para o web.
 - Escreva o teste antes da funcionalidade. O teste falha, o código o faz passar, depois refatore.
 - Todo bug corrigido ganha um teste que reproduz o problema, para ele não voltar.
 - Lógica (parsers, cálculos, categorização, agrupamento por mês, detecção de mês completo) fica em código puro testável, fora de rotas, componentes, Worker e acesso a banco.
-- No .NET, cada projeto tem o seu projeto de testes espelhando as pastas: `Dominio/FluxoDeCaixa.cs` → `Dominio.Testes/FluxoDeCaixaTestes.cs`. No web, `arquivo.ts` → `arquivo.test.ts`.
-- Parser de extrato se testa com arquivo de exemplo em `api/tests/amostras/`, sempre com dados fictícios.
+- No .NET, cada projeto tem o seu projeto de testes espelhando as pastas: `Domain/FluxoDeCaixa.cs` → `Domain.Tests/FluxoDeCaixaTestes.cs`. No web, `arquivo.ts` → `arquivo.test.ts`.
+- Parser de extrato se testa com arquivo de exemplo em `api/tests/samples/`, sempre com dados fictícios.
 
 ### Código
 - Nunca duplique código. Se algo se repete, extraia para o módulo dono ou para a pasta compartilhada.
-- Pastas de infraestrutura em inglês no web (`shared`, `modules`, `styles`). O resto em português: projetos, arquivos, classes, funções, variáveis, componentes, rotas, textos da interface e testes. Termos do .NET, do React e das bibliotecas continuam como são.
+- Pastas e projetos em inglês, nos dois lados: na api `HdsFinance.Domain`, `HdsFinance.Application`, `HdsFinance.Infrastructure` e `HdsFinance.Domain.Tests`; no web `app`, `shared`, `modules/import`, `shared/format`. O resto em português: arquivos, classes, funções, variáveis, componentes, rotas, textos da interface e testes. Termos do .NET, do React e das bibliotecas continuam como são.
 - Comentários só quando explicam algo que o código não mostra, em frases simples.
 - Segredos só por variável de ambiente ou `dotnet user-secrets`. Toda configuração nova entra no `appsettings.example.json` ou no `.env.example` do lado dela, com valor fictício.
 
@@ -74,7 +73,7 @@ Regra central do projeto: **o servidor nunca guarda dados financeiros de terceir
 - Upload tem limite de tamanho, e as rotas da demo têm limite de requisições por IP.
 
 ### Economia de tokens
-- Durante o trabalho, rode só o teste afetado: `dotnet test tests/HdsFinance.Dominio.Testes --nologo -v q` ou `npm test -- --reporter=dot arquivo`. A suíte inteira roda só no final.
+- Durante o trabalho, rode só o teste afetado: `dotnet test tests/HdsFinance.Domain.Tests --nologo -v q` ou `npm test -- --reporter=dot arquivo`. A suíte inteira roda só no final.
 - Não rode builds a cada passo, só antes do PR.
 - Leia `web/docs/design.md` só quando a mudança for de interface.
 - Não leia nem busque em `bin`, `obj`, `TestResults`, `node_modules`, `dist`, `coverage`, `*.db` e PDFs gerados.
@@ -91,7 +90,7 @@ Regra central do projeto: **o servidor nunca guarda dados financeiros de terceir
 - A descrição do PR é escrita para quem vai revisar: o problema, o que mudou e por quê, como foi testado e o que precisa de configuração. Sem falar com o leitor nem recados da conversa.
 - Cada PR parte da `main` atualizada e aponta para a `main`.
 - Mudança que precisa dos dois lados (api + tela) pode ir num PR só, desde que seja uma funcionalidade só.
-- **Dados financeiros nunca entram no git.** Extratos reais, bancos SQLite, PDFs gerados, saldos, CPF, número de conta, e-mails, telefones, chaves e tokens ficam fora de commits, mensagens e PRs. O `.gitignore` cobre `*.ofx`, `*.csv`, `*.db` e `relatorios/`, exceto `api/tests/amostras/`. O repositório é público, e o que entra no histórico não sai mais.
+- **Dados financeiros nunca entram no git.** Extratos reais, bancos SQLite, PDFs gerados, saldos, CPF, número de conta, e-mails, telefones, chaves e tokens ficam fora de commits, mensagens e PRs. O `.gitignore` cobre `*.ofx`, `*.csv`, `*.db` e `relatorios/`, exceto `api/tests/samples/`. O repositório é público, e o que entra no histórico não sai mais.
 
 ## API (`api/`)
 
@@ -111,7 +110,7 @@ dotnet run --project src/HdsFinance.Api        # sobe a API
 dotnet run --project src/HdsFinance.Worker     # modo pessoal: vigia a pasta de extratos
 dotnet run --project src/HdsFinance.Cli -- importar caminho/extrato.ofx
 dotnet run --project src/HdsFinance.Cli -- relatorio --mes 2026-10
-dotnet ef migrations add <Nome> -p src/HdsFinance.Infraestrutura -s src/HdsFinance.Api
+dotnet ef migrations add <Nome> -p src/HdsFinance.Infrastructure -s src/HdsFinance.Api
 dotnet format                                  # o CI falha se houver diferença
 ```
 
@@ -120,16 +119,16 @@ dotnet format                                  # o CI falha se houver diferença
 O domínio fica no centro e não conhece arquivo, banco, HTTP, PDF nem e-mail. O mundo de fora fala com ele por portas, e cada tecnologia é um adaptador.
 
 ```
-Dominio          Transacao, Categoria, PosicaoDeInvestimento, ResumoMensal, regras de cálculo
-Aplicacao        casos de uso (ImportarExtrato, ConsolidarMes, GerarRelatorio, EnviarRelatorio) e portas:
+Domain          Transacao, Categoria, PosicaoDeInvestimento, ResumoMensal, regras de cálculo
+Application        casos de uso (ImportarExtrato, ConsolidarMes, GerarRelatorio, EnviarRelatorio) e portas:
                  ILeitorDeExtrato, IRepositorioDeTransacoes, IGeradorDeRelatorio, INotificador, TimeProvider
-Infraestrutura   LeitorOfx, LeitorCsvInter, RepositorioSqlite, RepositorioEmMemoria,
+Infrastructure   LeitorOfx, LeitorCsvInter, RepositorioSqlite, RepositorioEmMemoria,
                  RelatorioQuestPdf, NotificadorEmail
 Api/Worker/Cli   só montam tudo e traduzem entrada e saída
 ```
 
 Regras:
-- As dependências apontam para dentro. `Dominio` não referencia pacote externo, e `Dominio` e `Aplicacao` não usam EF Core, ASP.NET, QuestPDF nem `HttpClient`.
+- As dependências apontam para dentro. `Domain` não referencia pacote externo, e `Domain` e `Application` não usam EF Core, ASP.NET, QuestPDF nem `HttpClient`.
 - Toda dependência externa (banco, arquivo, e-mail, relógio) entra por uma porta, para os testes trocarem por um fake. Nunca use `DateTime.Now` direto: use `TimeProvider`.
 - Casos de uso são testados com fakes das portas, sem banco, sem disco e sem rede.
 - O modo é escolhido na composição (`Program.cs`): pessoal liga `RepositorioSqlite`, demonstração liga `RepositorioEmMemoria` com tempo de vida da requisição.
@@ -180,7 +179,7 @@ npm run build       # typecheck + build
 web/src/
   app/              composição das telas e navegação
   shared/           ui (shadcn), utilitários (formatar moeda e data) e estilos
-  modules/<nome>/   uma pasta por funcionalidade (importacao, painel, relatorio, email)
+  modules/<nome>/   uma pasta por funcionalidade (import, dashboard, report, email)
 ```
 
 ### Regras do web

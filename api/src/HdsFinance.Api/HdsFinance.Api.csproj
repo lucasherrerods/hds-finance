@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
-    <ProjectReference Include="..\HdsFinance.Infraestrutura\HdsFinance.Infraestrutura.csproj" />
+    <ProjectReference Include="..\HdsFinance.Infrastructure\HdsFinance.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

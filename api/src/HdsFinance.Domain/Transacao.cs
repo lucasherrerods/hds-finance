@@ -1,4 +1,4 @@
-namespace HdsFinance.Dominio;
+namespace HdsFinance.Domain;
 
 public enum TipoDeTransacao
 {

@@ -7,8 +7,8 @@
 *.sqlite
 relatorios/
 extratos/
-!api/tests/amostras/
-!api/tests/amostras/**
+!api/tests/samples/
+!api/tests/samples/**
 
 # Segredos e configuração local
 .env

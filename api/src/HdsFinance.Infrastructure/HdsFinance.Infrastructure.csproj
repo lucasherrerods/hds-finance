@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\HdsFinance.Dominio\HdsFinance.Dominio.csproj" />
+    <ProjectReference Include="..\HdsFinance.Application\HdsFinance.Application.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

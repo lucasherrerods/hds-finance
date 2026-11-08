@@ -65,3 +65,25 @@ public class ResumirExtratoSaldoTestes
         mes.SaldoFinal.Should().Be(4000m);
     }
 }
+
+public class ResumirExtratoCategoriasTestes
+{
+    [Fact]
+    public async Task Usa_o_categorizador_recebido()
+    {
+        var gasto = new Transacao(new DateOnly(2026, 10, 1), -80m, "Livraria Central", TipoDeTransacao.Comum);
+        var leitor = Substitute.For<ILeitorDeExtrato>();
+        leitor.Formato.Returns(FormatoDeExtrato.Csv);
+        leitor.LerAsync(Arg.Any<Stream>(), Arg.Any<CancellationToken>()).Returns(new ResultadoDaLeitura.Sucesso([gasto]));
+        var repositorio = Substitute.For<IRepositorioDeTransacoes>();
+        repositorio.ChavesExistentesAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>()).Returns(new HashSet<string>());
+        repositorio.ListarAsync(Arg.Any<CancellationToken>()).Returns([gasto]);
+        var categorizador = new Categorizador([new RegraDeCategoria("Educação", ["livraria"])]);
+
+        var resultado = await new ResumirExtrato(new ImportarExtrato([leitor], repositorio), repositorio, categorizador)
+            .ExecutarAsync(Stream.Null, FormatoDeExtrato.Csv);
+
+        ((ResultadoDoResumo.Resumido)resultado).Meses.Single().GastosPorCategoria
+            .Should().Equal(new GastoPorCategoria("Educação", 80m));
+    }
+}

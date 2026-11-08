@@ -10,7 +10,10 @@ public sealed record MesJson(
     decimal Resultado,
     decimal InvestimentosETransferencias,
     decimal? SaldoInicial,
-    decimal? SaldoFinal);
+    decimal? SaldoFinal,
+    IReadOnlyList<GastoJson> GastosPorCategoria);
+
+public sealed record GastoJson(string Categoria, decimal Valor);
 
 public sealed record ResumoDoExtratoJson(int TransacoesNovas, int Duplicadas, IReadOnlyList<MesJson> Meses);
 
@@ -24,7 +27,8 @@ public static class RespostasHttp
             r.Importacao.Duplicadas,
             r.Meses.Select(m => new MesJson(
                 m.Mes.Ano, m.Mes.Mes, m.Entradas, m.Saidas, m.Resultado,
-                m.InvestimentosETransferencias, m.SaldoInicial, m.SaldoFinal)).ToList())),
+                m.InvestimentosETransferencias, m.SaldoInicial, m.SaldoFinal,
+                m.GastosPorCategoria.Select(g => new GastoJson(g.Categoria, g.Valor)).ToList())).ToList())),
         ResultadoDoResumo.NaoImportado { Motivo: ResultadoDaImportacao.ArquivoInvalido invalido } => Results.Problem(
             title: "Arquivo inválido",
             detail: invalido.Motivo,

@@ -17,6 +17,8 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
 builder.Services.AddSingleton<ILeitorDeExtrato, LeitorOfx>();
 builder.Services.AddSingleton<ILeitorDeExtrato, LeitorCsvInter>();
 builder.Services.AddSingleton(new ClassificadorDeTipo());
+var regras = builder.Configuration.GetSection("Categorias").Get<List<RegraDeCategoria>>();
+builder.Services.AddSingleton(regras is { Count: > 0 } ? new Categorizador(regras) : Categorizador.Padrao);
 builder.Services.AddScoped<IRepositorioDeTransacoes, RepositorioEmMemoria>();
 builder.Services.AddScoped<ImportarExtrato>();
 builder.Services.AddScoped<ResumirExtrato>();

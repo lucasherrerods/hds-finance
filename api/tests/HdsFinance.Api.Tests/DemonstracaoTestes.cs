@@ -37,7 +37,7 @@ public class DemonstracaoTestes(WebApplicationFactory<Program> fabrica) : IClass
         resposta.StatusCode.Should().Be(HttpStatusCode.OK);
         var corpo = await resposta.Content.ReadFromJsonAsync<ResumoDoExtratoJson>();
         corpo!.TransacoesNovas.Should().Be(3);
-        corpo.Meses.Should().ContainSingle().Which.Should().Be(new MesJson(2026, 10, 3500m, 123.45m, 3376.55m, -1000m, 0m, 2376.55m));
+        corpo.Meses.Should().ContainSingle().Which.Should().BeEquivalentTo(new MesJson(2026, 10, 3500m, 123.45m, 3376.55m, -1000m, 0m, 2376.55m, [new GastoJson("Alimentação", 123.45m)]));
     }
 
     [Fact]
@@ -86,5 +86,25 @@ public class DemonstracaoTestes(WebApplicationFactory<Program> fabrica) : IClass
 
     private sealed record MesJson(
         int Ano, int Mes, decimal Entradas, decimal Saidas, decimal Resultado,
-        decimal InvestimentosETransferencias, decimal? SaldoInicial, decimal? SaldoFinal);
+        decimal InvestimentosETransferencias, decimal? SaldoInicial, decimal? SaldoFinal,
+        IReadOnlyList<GastoJson> GastosPorCategoria);
+
+    private sealed record GastoJson(string Categoria, decimal Valor);
+}
+
+public class DemonstracaoCategoriasTestes(WebApplicationFactory<Program> fabrica) : IClassFixture<WebApplicationFactory<Program>>
+{
+    [Fact]
+    public async Task Regras_de_categoria_vem_da_configuracao()
+    {
+        var cliente = fabrica.WithWebHostBuilder(b => b
+                .UseSetting("Categorias:0:Categoria", "Feira")
+                .UseSetting("Categorias:0:Palavras:0", "mercado"))
+            .CreateClient();
+        var arquivo = new ByteArrayContent(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "samples", "inter-extrato.csv")));
+
+        var resposta = await cliente.PostAsync("/demonstracao/resumo", new MultipartFormDataContent { { arquivo, "arquivo", "extrato.csv" } });
+
+        (await resposta.Content.ReadAsStringAsync()).Should().Contain("\"categoria\":\"Feira\"");
+    }
 }

@@ -120,3 +120,45 @@ public class ResumoMensalSaldoTestes
         resumo.Resultado.Should().Be(50m);
     }
 }
+
+public class ResumoMensalCategoriasTestes
+{
+    private static Transacao Em(decimal valor, string descricao, TipoDeTransacao tipo = TipoDeTransacao.Comum) =>
+        new(new DateOnly(2026, 10, 5), valor, descricao, tipo);
+
+    private static readonly Categorizador Categorizador = new(
+    [
+        new RegraDeCategoria("Alimentação", ["mercado", "padaria"]),
+        new RegraDeCategoria("Transporte", ["uber"]),
+    ]);
+
+    [Fact]
+    public void Soma_as_despesas_por_categoria_da_maior_para_a_menor()
+    {
+        var resumo = ResumoMensal.Calcular(new MesDeReferencia(2026, 10), 0m,
+            [Em(-30m, "Uber"), Em(-100m, "Mercado"), Em(-20m, "Padaria"), Em(-5m, "Livraria"), Em(3000m, "Salario")],
+            Categorizador);
+
+        resumo.GastosPorCategoria.Should().Equal(
+            new GastoPorCategoria("Alimentação", 120m),
+            new GastoPorCategoria("Transporte", 30m),
+            new GastoPorCategoria(Categorizador.SemCategoria, 5m));
+    }
+
+    [Fact]
+    public void Investimentos_e_transferencias_nao_entram_nos_gastos()
+    {
+        var resumo = ResumoMensal.Calcular(new MesDeReferencia(2026, 10), 0m,
+            [Em(-1000m, "Aplicacao mercado", TipoDeTransacao.MovimentacaoDeInvestimento)], Categorizador);
+
+        resumo.GastosPorCategoria.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Os_gastos_por_categoria_somam_as_saidas()
+    {
+        var resumo = ResumoMensal.PorMes([Em(-30m, "Uber"), Em(-100m, "Mercado"), Em(-7m, "Outro")], categorizador: Categorizador).Single();
+
+        resumo.GastosPorCategoria.Sum(g => g.Valor).Should().Be(resumo.Saidas);
+    }
+}

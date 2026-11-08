@@ -17,7 +17,10 @@ public sealed record ResumoMensal(
 
     public decimal? SaldoFinal => SaldoInicial + Resultado + InvestimentosETransferencias;
 
-    public static ResumoMensal Calcular(MesDeReferencia mes, decimal? saldoInicial, IEnumerable<Transacao> transacoes)
+    public IReadOnlyList<GastoPorCategoria> GastosPorCategoria { get; init; } = [];
+
+    public static ResumoMensal Calcular(
+        MesDeReferencia mes, decimal? saldoInicial, IEnumerable<Transacao> transacoes, Categorizador? categorizador = null)
     {
         var doMes = transacoes.Where(t => mes.Contem(t.Data)).ToList();
         var fluxo = doMes.Where(t => t.ContaNoFluxoDeCaixa).ToList();
@@ -26,14 +29,21 @@ public sealed record ResumoMensal(
         var saidas = -fluxo.Where(t => t.Valor < 0).Sum(t => t.Valor);
         var internas = doMes.Where(t => !t.ContaNoFluxoDeCaixa).Sum(t => t.Valor);
 
-        return new ResumoMensal(mes, saldoInicial, entradas, saidas, internas);
+        var gastos = fluxo.Where(t => t.Valor < 0)
+            .GroupBy((categorizador ?? Categorizador.Padrao).Categorizar)
+            .Select(g => new GastoPorCategoria(g.Key, -g.Sum(t => t.Valor)))
+            .OrderByDescending(g => g.Valor)
+            .ToList();
+
+        return new ResumoMensal(mes, saldoInicial, entradas, saidas, internas) { GastosPorCategoria = gastos };
     }
 
     /// <summary>
     /// Um resumo por mês, do mais antigo ao mais recente. O saldo inicial do primeiro mês é
     /// o saldo final do extrato menos tudo o que foi movimentado nele.
     /// </summary>
-    public static IReadOnlyList<ResumoMensal> PorMes(IEnumerable<Transacao> transacoes, decimal? saldoFinalDoExtrato = null)
+    public static IReadOnlyList<ResumoMensal> PorMes(
+        IEnumerable<Transacao> transacoes, decimal? saldoFinalDoExtrato = null, Categorizador? categorizador = null)
     {
         var lista = transacoes.ToList();
         var saldo = saldoFinalDoExtrato - lista.Sum(t => t.Valor);
@@ -44,7 +54,7 @@ public sealed record ResumoMensal(
             .Distinct()
             .OrderBy(m => m.Ano).ThenBy(m => m.Mes))
         {
-            var resumo = Calcular(mes, saldo, lista);
+            var resumo = Calcular(mes, saldo, lista, categorizador);
             resumos.Add(resumo);
             saldo = resumo.SaldoFinal;
         }

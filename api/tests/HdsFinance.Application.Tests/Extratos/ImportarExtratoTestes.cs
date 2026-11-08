@@ -88,3 +88,24 @@ public class ImportarExtratoTestes
         }
     }
 }
+
+public class ImportarExtratoClassificacaoTestes
+{
+    [Fact]
+    public async Task Classifica_as_transacoes_antes_de_gravar()
+    {
+        var aplicacao = new Transacao(new DateOnly(2026, 10, 10), -1000m, "Aplicação CDB", TipoDeTransacao.Comum, "C");
+        var leitor = Substitute.For<ILeitorDeExtrato>();
+        leitor.Formato.Returns(FormatoDeExtrato.Ofx);
+        leitor.LerAsync(Arg.Any<Stream>(), Arg.Any<CancellationToken>()).Returns(new ResultadoDaLeitura.Sucesso([aplicacao]));
+        var repositorio = Substitute.For<IRepositorioDeTransacoes>();
+        repositorio.ChavesExistentesAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new HashSet<string>());
+
+        await new ImportarExtrato([leitor], repositorio).ExecutarAsync(Stream.Null, FormatoDeExtrato.Ofx);
+
+        await repositorio.Received().AdicionarAsync(
+            Arg.Is<IReadOnlyCollection<Transacao>>(ts => ts.Single().Tipo == TipoDeTransacao.MovimentacaoDeInvestimento),
+            Arg.Any<CancellationToken>());
+    }
+}

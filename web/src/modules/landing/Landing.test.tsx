@@ -54,7 +54,16 @@ describe('exemplo de resultado', () => {
   it('mostra o saldo e os investimentos do mês fictício', () => {
     render(<ExemploDeResultado />)
 
-    expect(screen.getByRole('group', { name: 'Saldo' })).toHaveTextContent('R$ 1.250,40 → R$ 2.352,60')
+    expect(screen.getByRole('group', { name: 'Saldo' })).toHaveTextContent('R$ 3.593,15 → R$ 4.695,35')
     expect(screen.getByRole('group', { name: 'Investimentos e transferências' })).toHaveTextContent('−R$ 2.000,00')
   })
+})
+
+describe('exemplo com gráficos', () => {
+  it('mostra a evolução dos meses fictícios', async () => {
+    render(<ExemploDeResultado />)
+
+    expect(await screen.findByRole('table', { name: 'Entradas e saídas por mês' }, { timeout: 5000 })).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Saldo no fim de cada mês' })).toBeInTheDocument()
+  }, 10_000)
 })

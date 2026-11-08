@@ -19,3 +19,9 @@ const mesPorExtenso = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'n
 export function formatarMes(ano: number, mes: number): string {
   return mesPorExtenso.format(new Date(Date.UTC(ano, mes - 1, 1)))
 }
+
+const abreviacoes = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
+export function formatarMesCurto(ano: number, mes: number): string {
+  return `${abreviacoes[mes - 1]}/${String(ano % 100).padStart(2, '0')}`
+}

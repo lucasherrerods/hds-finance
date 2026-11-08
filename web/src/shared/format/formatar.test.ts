@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatarData, formatarMes, formatarMoeda, formatarMoedaComSinal } from './formatar'
+import { formatarData, formatarMes, formatarMesCurto, formatarMoeda, formatarMoedaComSinal } from './formatar'
 
 describe('formatarMoeda', () => {
   it('usa o padrão pt-BR com R$', () => {
@@ -27,5 +27,12 @@ describe('formatarMoedaComSinal', () => {
 describe('formatarMes', () => {
   it('escreve o mês por extenso com o ano', () => {
     expect(formatarMes(2026, 10)).toBe('outubro de 2026')
+  })
+})
+
+describe('formatarMesCurto', () => {
+  it('usa a abreviação do mês e o ano com dois dígitos', () => {
+    expect(formatarMesCurto(2026, 10)).toBe('out/26')
+    expect(formatarMesCurto(2025, 3)).toBe('mar/25')
   })
 })

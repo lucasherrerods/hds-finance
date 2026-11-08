@@ -24,7 +24,10 @@
   --color-grafico-4: #8a5ad6;
   --color-grafico-5: #d0613c;
 
+  --color-primaria-suave: #e3eafb;
+
   --shadow-elevacao: 0 2px 4px rgb(22 26 34 / 0.08);
+  --shadow-elevacao-alta: 0 8px 16px rgb(22 26 34 / 0.06);
 }
 
 @layer base {
@@ -41,6 +44,7 @@
     --color-texto-suave: #9aa3b4;
     --color-primaria: #7d9ff0;
     --color-primaria-texto: #12151b;
+    --color-primaria-suave: #1c2742;
     --color-entrada: #5cc290;
     --color-saida: #ef8077;
     --color-grafico-1: #7d9ff0;
@@ -49,6 +53,17 @@
     --color-grafico-4: #b494ee;
     --color-grafico-5: #f2946f;
     --shadow-elevacao: none;
+    --shadow-elevacao-alta: none;
+  }
+
+  html {
+    scroll-padding-top: 96px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {

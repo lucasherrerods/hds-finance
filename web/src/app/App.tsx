@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
-import { ResumoDoMes } from '../modules/dashboard'
+import { GraficosDoPeriodo, ResumoDoMes } from '../modules/dashboard'
 import { AvisoDePrivacidade, EnvioDeExtrato, type ResumoDoExtrato } from '../modules/import'
 import { Cabecalho, ComoUsar, ExemploDeResultado, Inicio, Privacidade, Rodape, Secao } from '../modules/landing'
 import { Revelar } from '../shared'
@@ -40,6 +40,7 @@ export function App() {
                   {resumo.transacoesNovas} transações lidas
                   {resumo.duplicadas > 0 && `, ${resumo.duplicadas} duplicadas ignoradas`}.
                 </p>
+                <GraficosDoPeriodo meses={resumo.meses} />
                 {resumo.meses.map((mes, indice) => (
                   <motion.div
                     key={`${mes.ano}-${mes.mes}`}

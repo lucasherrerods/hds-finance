@@ -162,6 +162,7 @@ Regras:
 - React 19 + TypeScript + Vite
 - Tailwind CSS 4 + shadcn/ui + lucide-react
 - Recharts para os gráficos
+- Motion (antigo Framer Motion) para animações, sempre respeitando "reduzir movimento" (`MotionConfig reducedMotion="user"`)
 - Vitest + Testing Library
 
 ### Comandos
@@ -179,7 +180,7 @@ npm run build       # typecheck + build
 web/src/
   app/              composição das telas e navegação
   shared/           ui (shadcn), utilitários (formatar moeda e data) e estilos
-  modules/<nome>/   uma pasta por funcionalidade (import, dashboard, report, email)
+  modules/<nome>/   uma pasta por funcionalidade (landing, import, dashboard, report, email)
 ```
 
 ### Regras do web

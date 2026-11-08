@@ -1,0 +1,7 @@
+export { Cabecalho } from './Cabecalho'
+export { ComoUsar } from './ComoUsar'
+export { ExemploDeResultado } from './ExemploDeResultado'
+export { Inicio } from './Inicio'
+export { Privacidade } from './Privacidade'
+export { Rodape } from './Rodape'
+export { Secao } from './Secao'

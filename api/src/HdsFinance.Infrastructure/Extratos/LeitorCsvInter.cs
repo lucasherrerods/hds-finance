@@ -24,6 +24,7 @@ public sealed class LeitorCsvInter : ILeitorDeExtrato
         }
 
         var transacoes = new List<Transacao>();
+        var saldos = new List<decimal?>();
         for (var i = cabecalho + 1; i < linhas.Length; i++)
         {
             if (string.IsNullOrWhiteSpace(linhas[i]))
@@ -50,10 +51,40 @@ public sealed class LeitorCsvInter : ILeitorDeExtrato
 
             var descricao = $"{colunas[1].Trim()} {colunas[2].Trim()}".Trim();
             transacoes.Add(new Transacao(data, valor, descricao, TipoDeTransacao.Comum));
+            saldos.Add(colunas.Length > 4 &&
+                decimal.TryParse(colunas[4].Trim(), NumberStyles.Number | NumberStyles.AllowLeadingSign, PtBr, out var saldo)
+                    ? saldo
+                    : null);
         }
 
         return transacoes.Count == 0
             ? new ResultadoDaLeitura.Falha(cabecalho + 1, "Nenhuma transação encontrada no CSV.")
-            : new ResultadoDaLeitura.Sucesso(transacoes);
+            : new ResultadoDaLeitura.Sucesso(transacoes, SaldoFinal(transacoes, saldos));
+    }
+
+    // Cada linha traz o saldo depois dela. A ordem do arquivo (crescente ou decrescente)
+    // é descoberta pelos próprios saldos; se eles não fecham em nenhuma das duas, o saldo fica desconhecido.
+    private static decimal? SaldoFinal(List<Transacao> transacoes, List<decimal?> saldos)
+    {
+        if (saldos.Any(s => s is null))
+        {
+            return null;
+        }
+
+        if (saldos.Count == 1)
+        {
+            return saldos[0];
+        }
+
+        var crescente = Enumerable.Range(1, saldos.Count - 1)
+            .All(i => saldos[i - 1] + transacoes[i].Valor == saldos[i]);
+        if (crescente)
+        {
+            return saldos[^1];
+        }
+
+        var decrescente = Enumerable.Range(0, saldos.Count - 1)
+            .All(i => saldos[i + 1] + transacoes[i].Valor == saldos[i]);
+        return decrescente ? saldos[0] : null;
     }
 }

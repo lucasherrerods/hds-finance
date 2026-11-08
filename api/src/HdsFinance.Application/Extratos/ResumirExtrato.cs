@@ -22,6 +22,6 @@ public sealed class ResumirExtrato(ImportarExtrato importar, IRepositorioDeTrans
         }
 
         var transacoes = await repositorio.ListarAsync(cancelamento);
-        return new ResultadoDoResumo.Resumido(importado, ResumoMensal.PorMes(transacoes));
+        return new ResultadoDoResumo.Resumido(importado, ResumoMensal.PorMes(transacoes, importado.SaldoFinal));
     }
 }

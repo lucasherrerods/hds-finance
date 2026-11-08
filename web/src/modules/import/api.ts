@@ -4,6 +4,9 @@ export type ResumoMensal = {
   entradas: number
   saidas: number
   resultado: number
+  investimentosETransferencias: number
+  saldoInicial: number | null
+  saldoFinal: number | null
 }
 
 export type ResumoDoExtrato = {

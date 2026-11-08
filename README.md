@@ -47,7 +47,7 @@ cd api && dotnet run --project src/HdsFinance.Api
 cd web && npm install && npm run dev
 ```
 
-A aplicação ainda está no começo: por enquanto existem a estrutura, o cálculo do resumo mensal e a rota `/saude`.
+A aplicação ainda está no começo: por enquanto existem a estrutura, o cálculo do resumo mensal e a rota `/health`.
 
 ## Privacidade
 

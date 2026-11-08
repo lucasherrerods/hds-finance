@@ -23,4 +23,8 @@
     <ProjectReference Include="..\..\src\HdsFinance.Infrastructure\HdsFinance.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="../samples/**" LinkBase="samples" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

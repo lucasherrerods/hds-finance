@@ -90,7 +90,7 @@ Regra central do projeto: **o servidor nunca guarda dados financeiros de terceir
 - A descrição do PR é escrita para quem vai revisar: o problema, o que mudou e por quê, como foi testado e o que precisa de configuração. Sem falar com o leitor nem recados da conversa.
 - Cada PR parte da `main` atualizada e aponta para a `main`.
 - Mudança que precisa dos dois lados (api + tela) pode ir num PR só, desde que seja uma funcionalidade só.
-- **Dados financeiros nunca entram no git.** Extratos reais, bancos SQLite, PDFs gerados, saldos, CPF, número de conta, e-mails, telefones, chaves e tokens ficam fora de commits, mensagens e PRs. O `.gitignore` cobre `*.ofx`, `*.csv`, `*.db` e `relatorios/`, exceto `api/tests/samples/`. O repositório é público, e o que entra no histórico não sai mais.
+- **Dados financeiros nunca entram no git.** Extratos reais, bancos SQLite, PDFs gerados, saldos, CPF, número de conta, e-mails, telefones, chaves e tokens ficam fora de commits, mensagens e PRs. O `.gitignore` cobre `*.ofx`, `*.csv`, `*.db`, `/extratos/` e `/relatorios/`, exceto `api/tests/samples/`. O repositório é público, e o que entra no histórico não sai mais.
 
 ## API (`api/`)
 

@@ -42,3 +42,26 @@ public class ResumirExtratoTestes
         resultado.Should().Be(new ResultadoDoResumo.NaoImportado(new ResultadoDaImportacao.ArquivoInvalido(3, "Data da transação inválida.")));
     }
 }
+
+public class ResumirExtratoSaldoTestes
+{
+    [Fact]
+    public async Task Usa_o_saldo_final_do_extrato_para_calcular_o_saldo_de_cada_mes()
+    {
+        var salario = new Transacao(new DateOnly(2026, 10, 1), 3500m, "Salario", TipoDeTransacao.Comum);
+        var leitor = Substitute.For<ILeitorDeExtrato>();
+        leitor.Formato.Returns(FormatoDeExtrato.Csv);
+        leitor.LerAsync(Arg.Any<Stream>(), Arg.Any<CancellationToken>())
+            .Returns(new ResultadoDaLeitura.Sucesso([salario], SaldoFinal: 4000m));
+        var repositorio = Substitute.For<IRepositorioDeTransacoes>();
+        repositorio.ChavesExistentesAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>()).Returns(new HashSet<string>());
+        repositorio.ListarAsync(Arg.Any<CancellationToken>()).Returns([salario]);
+
+        var resultado = await new ResumirExtrato(new ImportarExtrato([leitor], repositorio), repositorio)
+            .ExecutarAsync(Stream.Null, FormatoDeExtrato.Csv);
+
+        var mes = ((ResultadoDoResumo.Resumido)resultado).Meses.Single();
+        mes.SaldoInicial.Should().Be(500m);
+        mes.SaldoFinal.Should().Be(4000m);
+    }
+}

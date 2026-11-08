@@ -45,3 +45,39 @@ public class LeitorCsvInterTestes
         resultado.Should().BeOfType<ResultadoDaLeitura.Falha>();
     }
 }
+
+public class LeitorCsvInterSaldoTestes
+{
+    private const string Cabecalho = "Data Lançamento;Histórico;Descrição;Valor;Saldo\n";
+
+    private static async Task<decimal?> SaldoFinalDe(string csv) =>
+        ((ResultadoDaLeitura.Sucesso)await new LeitorCsvInter().LerAsync(Amostras.DeTexto(Cabecalho + csv))).SaldoFinal;
+
+    [Fact]
+    public async Task Em_ordem_crescente_o_saldo_final_e_o_da_ultima_linha()
+    {
+        (await SaldoFinalDe("01/10/2026;A;x;100,00;600,00\n02/10/2026;B;y;-50,00;550,00")).Should().Be(550m);
+    }
+
+    [Fact]
+    public async Task Em_ordem_decrescente_o_saldo_final_e_o_da_primeira_linha()
+    {
+        (await SaldoFinalDe("02/10/2026;B;y;-50,00;550,00\n01/10/2026;A;x;100,00;600,00")).Should().Be(550m);
+    }
+
+    [Fact]
+    public async Task Saldos_que_nao_batem_deixam_o_saldo_desconhecido()
+    {
+        (await SaldoFinalDe("01/10/2026;A;x;100,00;600,00\n02/10/2026;B;y;-50,00;999,00")).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Le_o_saldo_da_amostra()
+    {
+        await using var arquivo = Amostras.Abrir("inter-extrato.csv");
+
+        var resultado = await new LeitorCsvInter().LerAsync(arquivo);
+
+        ((ResultadoDaLeitura.Sucesso)resultado).SaldoFinal.Should().Be(2376.55m);
+    }
+}

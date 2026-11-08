@@ -17,7 +17,8 @@ public interface ILeitorDeExtrato
 
 public abstract record ResultadoDaLeitura
 {
-    public sealed record Sucesso(IReadOnlyList<Transacao> Transacoes) : ResultadoDaLeitura;
+    /// <summary>SaldoFinal é o saldo da conta depois de todas as transações do arquivo, quando ele informa.</summary>
+    public sealed record Sucesso(IReadOnlyList<Transacao> Transacoes, decimal? SaldoFinal = null) : ResultadoDaLeitura;
 
     /// <summary>O motivo nunca traz trecho do arquivo, só a linha e o problema.</summary>
     public sealed record Falha(int Linha, string Motivo) : ResultadoDaLeitura;

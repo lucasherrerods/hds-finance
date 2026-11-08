@@ -49,7 +49,7 @@ public sealed partial class LeitorOfx : ILeitorDeExtrato
             transacoes.Add(new Transacao(dia, valor, descricao, TipoDeTransacao.Comum, id));
         }
 
-        return new ResultadoDaLeitura.Sucesso(transacoes);
+        return new ResultadoDaLeitura.Sucesso(transacoes, SaldoFinal(texto));
     }
 
     [GeneratedRegex(@"<STMTTRN>(.*?)</STMTTRN>", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
@@ -57,4 +57,13 @@ public sealed partial class LeitorOfx : ILeitorDeExtrato
 
     [GeneratedRegex(@"<(\w+)>([^<\r\n]*)")]
     private static partial Regex Campo();
+
+    private static decimal? SaldoFinal(string texto) =>
+        SaldoDoLedger().Match(texto) is { Success: true } saldo &&
+        decimal.TryParse(saldo.Groups[1].Value.Trim().Replace(',', '.'), NumberStyles.Number | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var valor)
+            ? valor
+            : null;
+
+    [GeneratedRegex(@"<LEDGERBAL>.*?<BALAMT>([^<\r\n]*)", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+    private static partial Regex SaldoDoLedger();
 }

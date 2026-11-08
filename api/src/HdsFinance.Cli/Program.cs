@@ -43,6 +43,8 @@ switch (await resumir.ExecutarAsync(arquivo, formato))
             Console.WriteLine($"  Entradas:  {resumo.Entradas.ToString("C", ptBr)}");
             Console.WriteLine($"  Saídas:    {resumo.Saidas.ToString("C", ptBr)}");
             Console.WriteLine($"  Resultado: {resumo.Resultado.ToString("C", ptBr)}");
+            Console.WriteLine($"  Investimentos e transferências: {resumo.InvestimentosETransferencias.ToString("C", ptBr)}");
+            Console.WriteLine($"  Saldo:     {Saldo(resumo.SaldoInicial)} → {Saldo(resumo.SaldoFinal)}");
         }
 
         return 0;
@@ -51,3 +53,5 @@ switch (await resumir.ExecutarAsync(arquivo, formato))
         Console.Error.WriteLine("Formato não suportado.");
         return 2;
 }
+
+string Saldo(decimal? valor) => valor?.ToString("C", ptBr) ?? "não informado";

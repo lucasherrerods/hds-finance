@@ -2,7 +2,15 @@ using HdsFinance.Application.Extratos;
 
 namespace HdsFinance.Api.Demonstracao;
 
-public sealed record MesJson(int Ano, int Mes, decimal Entradas, decimal Saidas, decimal Resultado);
+public sealed record MesJson(
+    int Ano,
+    int Mes,
+    decimal Entradas,
+    decimal Saidas,
+    decimal Resultado,
+    decimal InvestimentosETransferencias,
+    decimal? SaldoInicial,
+    decimal? SaldoFinal);
 
 public sealed record ResumoDoExtratoJson(int TransacoesNovas, int Duplicadas, IReadOnlyList<MesJson> Meses);
 
@@ -14,7 +22,9 @@ public static class RespostasHttp
         ResultadoDoResumo.Resumido r => Results.Ok(new ResumoDoExtratoJson(
             r.Importacao.Novas,
             r.Importacao.Duplicadas,
-            r.Meses.Select(m => new MesJson(m.Mes.Ano, m.Mes.Mes, m.Entradas, m.Saidas, m.Resultado)).ToList())),
+            r.Meses.Select(m => new MesJson(
+                m.Mes.Ano, m.Mes.Mes, m.Entradas, m.Saidas, m.Resultado,
+                m.InvestimentosETransferencias, m.SaldoInicial, m.SaldoFinal)).ToList())),
         ResultadoDoResumo.NaoImportado { Motivo: ResultadoDaImportacao.ArquivoInvalido invalido } => Results.Problem(
             title: "Arquivo inválido",
             detail: invalido.Motivo,

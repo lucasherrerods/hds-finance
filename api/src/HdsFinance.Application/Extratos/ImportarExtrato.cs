@@ -4,7 +4,7 @@ namespace HdsFinance.Application.Extratos;
 
 public abstract record ResultadoDaImportacao
 {
-    public sealed record Importado(int Novas, int Duplicadas) : ResultadoDaImportacao;
+    public sealed record Importado(int Novas, int Duplicadas, decimal? SaldoFinal = null) : ResultadoDaImportacao;
 
     public sealed record ArquivoInvalido(int Linha, string Motivo) : ResultadoDaImportacao;
 
@@ -43,6 +43,6 @@ public sealed class ImportarExtrato(
             await repositorio.AdicionarAsync(novas, cancelamento);
         }
 
-        return new ResultadoDaImportacao.Importado(novas.Count, lidas.Count - novas.Count);
+        return new ResultadoDaImportacao.Importado(novas.Count, lidas.Count - novas.Count, ((ResultadoDaLeitura.Sucesso)leitura).SaldoFinal);
     }
 }

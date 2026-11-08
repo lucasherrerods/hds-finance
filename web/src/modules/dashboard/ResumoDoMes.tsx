@@ -1,12 +1,17 @@
-import { ArrowDownLeft, ArrowUpRight, Equal, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Equal, Wallet, type LucideIcon } from 'lucide-react'
 import { formatarMes, formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal } from '../import'
 
 type Props = { mes: ResumoMensal }
 
 export function ResumoDoMes({ mes }: Props) {
+  const saldo =
+    mes.saldoInicial === null || mes.saldoFinal === null
+      ? 'Não informado no extrato'
+      : `${formatarMoeda(mes.saldoInicial)} → ${formatarMoeda(mes.saldoFinal)}`
+
   return (
-    <section className="flex flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao">
+    <section className="flex flex-col gap-6 rounded-2xl bg-superficie p-6 shadow-elevacao">
       <h2 className="text-2xl leading-tight font-semibold tracking-tight first-letter:uppercase">
         {formatarMes(mes.ano, mes.mes)}
       </h2>
@@ -14,6 +19,15 @@ export function ResumoDoMes({ mes }: Props) {
         <Valor rotulo="Entradas" icone={ArrowDownLeft} texto={formatarMoedaComSinal(mes.entradas, 'entrada')} cor="text-entrada" />
         <Valor rotulo="Saídas" icone={ArrowUpRight} texto={formatarMoedaComSinal(mes.saidas, 'saida')} cor="text-saida" />
         <Valor rotulo="Resultado" icone={Equal} texto={formatarMoeda(mes.resultado)} cor="text-texto" />
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Valor
+          rotulo="Investimentos e transferências"
+          icone={ArrowLeftRight}
+          texto={formatarMoedaComSinal(mes.investimentosETransferencias, mes.investimentosETransferencias < 0 ? 'saida' : 'entrada')}
+          cor="text-texto"
+        />
+        <Valor rotulo="Saldo" icone={Wallet} texto={saldo} cor="text-texto" />
       </div>
     </section>
   )

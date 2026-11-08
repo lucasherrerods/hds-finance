@@ -79,3 +79,44 @@ public class ResumoMensalPorMesTestes
         ResumoMensal.PorMes([]).Should().BeEmpty();
     }
 }
+
+public class ResumoMensalSaldoTestes
+{
+    private static Transacao Em(int mes, int dia, decimal valor, TipoDeTransacao tipo = TipoDeTransacao.Comum) =>
+        new(new DateOnly(2026, mes, dia), valor, "Descrição fictícia", tipo);
+
+    [Fact]
+    public void Fecha_com_investimentos_e_transferencias()
+    {
+        var resumo = ResumoMensal.Calcular(new MesDeReferencia(2026, 10), 100m,
+            [Em(10, 1, 3500m), Em(10, 5, -123.45m), Em(10, 10, -1000m, TipoDeTransacao.MovimentacaoDeInvestimento)]);
+
+        resumo.InvestimentosETransferencias.Should().Be(-1000m);
+        resumo.SaldoFinal.Should().Be(
+            resumo.SaldoInicial + resumo.Entradas - resumo.Saidas + resumo.InvestimentosETransferencias);
+        resumo.SaldoFinal.Should().Be(2476.55m);
+    }
+
+    [Fact]
+    public void Deduz_o_saldo_inicial_de_cada_mes_a_partir_do_saldo_final_do_extrato()
+    {
+        var resumos = ResumoMensal.PorMes(
+            [Em(9, 20, 1000m), Em(10, 1, 3500m), Em(10, 10, -1000m, TipoDeTransacao.MovimentacaoDeInvestimento)],
+            saldoFinalDoExtrato: 4000m);
+
+        resumos[0].SaldoInicial.Should().Be(500m);
+        resumos[0].SaldoFinal.Should().Be(1500m);
+        resumos[1].SaldoInicial.Should().Be(1500m);
+        resumos[1].SaldoFinal.Should().Be(4000m);
+    }
+
+    [Fact]
+    public void Sem_saldo_no_extrato_o_saldo_fica_desconhecido()
+    {
+        var resumo = ResumoMensal.PorMes([Em(10, 1, 50m)]).Single();
+
+        resumo.SaldoInicial.Should().BeNull();
+        resumo.SaldoFinal.Should().BeNull();
+        resumo.Resultado.Should().Be(50m);
+    }
+}

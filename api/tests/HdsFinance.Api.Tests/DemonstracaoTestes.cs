@@ -37,7 +37,7 @@ public class DemonstracaoTestes(WebApplicationFactory<Program> fabrica) : IClass
         resposta.StatusCode.Should().Be(HttpStatusCode.OK);
         var corpo = await resposta.Content.ReadFromJsonAsync<ResumoDoExtratoJson>();
         corpo!.TransacoesNovas.Should().Be(3);
-        corpo.Meses.Should().ContainSingle().Which.Should().Be(new MesJson(2026, 10, 3500m, 123.45m, 3376.55m));
+        corpo.Meses.Should().ContainSingle().Which.Should().Be(new MesJson(2026, 10, 3500m, 123.45m, 3376.55m, -1000m, 0m, 2376.55m));
     }
 
     [Fact]
@@ -84,5 +84,7 @@ public class DemonstracaoTestes(WebApplicationFactory<Program> fabrica) : IClass
 
     private sealed record ResumoDoExtratoJson(int TransacoesNovas, int Duplicadas, IReadOnlyList<MesJson> Meses);
 
-    private sealed record MesJson(int Ano, int Mes, decimal Entradas, decimal Saidas, decimal Resultado);
+    private sealed record MesJson(
+        int Ano, int Mes, decimal Entradas, decimal Saidas, decimal Resultado,
+        decimal InvestimentosETransferencias, decimal? SaldoInicial, decimal? SaldoFinal);
 }

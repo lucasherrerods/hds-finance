@@ -143,7 +143,8 @@ Regras:
 ### Regras do domínio
 - Importar o mesmo extrato duas vezes não duplica transações: cada transação tem uma chave de deduplicação (id do OFX, ou data + valor + descrição normalizada).
 - Entrada é valor positivo, saída é negativo. Transferências entre contas próprias e aplicações/resgates de investimento não contam como receita nem despesa.
-- O resumo do mês fecha: saldo inicial + entradas − saídas = saldo final. Existe teste para isso.
+- O resumo do mês fecha: saldo inicial + entradas − saídas + investimentos e transferências = saldo final. Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas próprias mexem no saldo, mas ficam num campo próprio. Existe teste para isso.
+- O saldo vem do próprio extrato (saldo final informado no arquivo). Sem ele, o saldo do mês fica como não informado.
 - Categorização por regras configuráveis (palavras na descrição → categoria), com "Sem categoria" como padrão.
 - O fechamento automático do modo pessoal só sai quando o mês está completo, e o mesmo mês não é enviado duas vezes, a menos que forçado pela CLI.
 

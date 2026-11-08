@@ -56,3 +56,26 @@ public class LeitorOfxTestes
         resultado.Should().BeOfType<ResultadoDaLeitura.Falha>();
     }
 }
+
+public class LeitorOfxSaldoTestes
+{
+    [Fact]
+    public async Task Le_o_saldo_final_do_ledgerbal()
+    {
+        await using var arquivo = Amostras.Abrir("inter-extrato.ofx");
+
+        var resultado = await new LeitorOfx().LerAsync(arquivo);
+
+        resultado.Should().BeOfType<ResultadoDaLeitura.Sucesso>().Which.SaldoFinal.Should().Be(2376.55m);
+    }
+
+    [Fact]
+    public async Task Sem_ledgerbal_o_saldo_fica_desconhecido()
+    {
+        const string ofx = "<OFX><STMTTRN><DTPOSTED>20261002</DTPOSTED><TRNAMT>-10.50</TRNAMT><FITID>X1</FITID></STMTTRN></OFX>";
+
+        var resultado = await new LeitorOfx().LerAsync(Amostras.DeTexto(ofx));
+
+        resultado.Should().BeOfType<ResultadoDaLeitura.Sucesso>().Which.SaldoFinal.Should().BeNull();
+    }
+}

@@ -1,0 +1,43 @@
+# Dados financeiros: nunca entram no git
+*.ofx
+*.csv
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+relatorios/
+extratos/
+!api/tests/amostras/
+!api/tests/amostras/**
+
+# Segredos e configuração local
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# .NET
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+.vs/
+*.trx
+coverage*.xml
+
+# Node / web
+node_modules/
+dist/
+coverage/
+*.local
+npm-debug.log*
+
+# Editores e sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

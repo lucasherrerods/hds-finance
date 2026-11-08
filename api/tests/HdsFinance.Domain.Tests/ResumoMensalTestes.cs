@@ -49,3 +49,33 @@ public class ResumoMensalTestes
         resumo.Entradas.Should().Be(10m);
     }
 }
+
+public class ResumoMensalPorMesTestes
+{
+    private static Transacao Em(int mes, int dia, decimal valor) =>
+        new(new DateOnly(2026, mes, dia), valor, "Descrição fictícia", TipoDeTransacao.Comum);
+
+    [Fact]
+    public void Gera_um_resumo_por_mes_em_ordem_cronologica()
+    {
+        var resumos = ResumoMensal.PorMes([Em(10, 3, -20m), Em(9, 30, 100m), Em(10, 1, 50m)]);
+
+        resumos.Select(r => r.Mes).Should().Equal(new MesDeReferencia(2026, 9), new MesDeReferencia(2026, 10));
+        resumos[1].Entradas.Should().Be(50m);
+        resumos[1].Saidas.Should().Be(20m);
+    }
+
+    [Fact]
+    public void Resultado_e_entradas_menos_saidas()
+    {
+        var resumo = ResumoMensal.PorMes([Em(10, 1, 50m), Em(10, 2, -20m)]).Single();
+
+        resumo.Resultado.Should().Be(30m);
+    }
+
+    [Fact]
+    public void Sem_transacoes_nao_ha_resumo()
+    {
+        ResumoMensal.PorMes([]).Should().BeEmpty();
+    }
+}

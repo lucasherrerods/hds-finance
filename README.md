@@ -47,7 +47,13 @@ cd api && dotnet run --project src/HdsFinance.Api
 cd web && npm install && npm run dev
 ```
 
-A aplicação ainda está no começo: por enquanto existem a estrutura, o cálculo do resumo mensal e a rota `/health`.
+Para ler um extrato pelo terminal, sem gravar nada:
+
+```bash
+cd api && dotnet run --project src/HdsFinance.Cli -- importar caminho/extrato.ofx
+```
+
+O comando mostra quantas transações leu e as entradas, saídas e o resultado de cada mês.
 
 ## Privacidade
 

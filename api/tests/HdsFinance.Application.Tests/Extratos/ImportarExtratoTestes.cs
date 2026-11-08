@@ -86,5 +86,8 @@ public class ImportarExtratoTestes
             Gravadas.AddRange(transacoes);
             return Task.CompletedTask;
         }
+
+        public Task<IReadOnlyList<Transacao>> ListarAsync(CancellationToken cancelamento = default) =>
+            Task.FromResult<IReadOnlyList<Transacao>>(Gravadas);
     }
 }

@@ -41,7 +41,15 @@ docs/   arquitetura e imagens
 
 ## Rodando
 
-Em construção. As instruções entram aqui assim que a primeira versão estiver pronta.
+```bash
+cd api && dotnet test
+cd api && dotnet run --project src/HdsFinance.Api
+cd web && npm install && npm run dev
+```
+
+Ou, com Docker, `docker compose up --build` (API em `localhost:5000`, web em `localhost:5173`).
+
+A aplicação ainda está no começo: por enquanto existem a estrutura, o cálculo do resumo mensal e a rota `/saude`.
 
 ## Privacidade
 

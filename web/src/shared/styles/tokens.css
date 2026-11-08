@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+
+/*
+  Neutros frios levemente tingidos de azul, sem preto e branco puros.
+  Escuro: elevação por brilho (superfície mais clara que o fundo), sem sombras.
+  Paleta de gráficos com brilhos distintos entre as séries, legível nos dois temas.
+*/
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --color-fundo: #f7f8fa;
+  --color-superficie: #fcfdfe;
+  --color-borda: #dfe3ea;
+  --color-texto: #161a22;
+  --color-texto-suave: #5a6375;
+  --color-primaria: #2f5bd3;
+  --color-primaria-texto: #f7f8fa;
+  --color-entrada: #1f7a4d;
+  --color-saida: #b4362f;
+
+  --color-grafico-1: #2f5bd3;
+  --color-grafico-2: #e0a42b;
+  --color-grafico-3: #1f8f7a;
+  --color-grafico-4: #8a5ad6;
+  --color-grafico-5: #d0613c;
+
+  --shadow-elevacao: 0 2px 4px rgb(22 26 34 / 0.08);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root[data-tema='escuro'] {
+    color-scheme: dark;
+    --color-fundo: #12151b;
+    --color-superficie: #1b2029;
+    --color-borda: #2c3340;
+    --color-texto: #e8ebf1;
+    --color-texto-suave: #9aa3b4;
+    --color-primaria: #7d9ff0;
+    --color-primaria-texto: #12151b;
+    --color-entrada: #5cc290;
+    --color-saida: #ef8077;
+    --color-grafico-1: #7d9ff0;
+    --color-grafico-2: #f0c060;
+    --color-grafico-3: #4cc2ab;
+    --color-grafico-4: #b494ee;
+    --color-grafico-5: #f2946f;
+    --shadow-elevacao: none;
+  }
+
+  body {
+    background: var(--color-fundo);
+    color: var(--color-texto);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}

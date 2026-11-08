@@ -1,0 +1,1 @@
+export { AvisoDePrivacidade } from './AvisoDePrivacidade'

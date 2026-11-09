@@ -10,7 +10,11 @@ export type ResumoMensal = {
   saldoInicial: number | null
   saldoFinal: number | null
   gastosPorCategoria: GastoPorCategoria[]
+  investimentos: Investimentos
 }
+
+/** O extrato da conta não traz rendimentos: é só o que saiu para investir e o que voltou. */
+export type Investimentos = { aplicado: number; resgatado: number; aplicadoAcumulado: number }
 
 export type GastoPorCategoria = {
   categoria: string

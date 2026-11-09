@@ -19,7 +19,11 @@ public sealed record MesJson(
     decimal InvestimentosETransferencias,
     decimal? SaldoInicial,
     decimal? SaldoFinal,
-    IReadOnlyList<GastoJson> GastosPorCategoria);
+    IReadOnlyList<GastoJson> GastosPorCategoria,
+    InvestimentosJson Investimentos);
+
+/// <summary>Aplicado e resgatado no mês e o aplicado líquido desde o início do histórico, sem rendimentos.</summary>
+public sealed record InvestimentosJson(decimal Aplicado, decimal Resgatado, decimal AplicadoAcumulado);
 
 public sealed record GastoJson(string Categoria, decimal Valor);
 
@@ -54,12 +58,13 @@ public static class JsonDoResumo
         resumido.Painel is null ? null : De(resumido.Painel),
         resumido.Transacoes.Select(De).ToList());
 
-    private static MesJson De(ResumoMensal m) => new(
+    internal static MesJson De(ResumoMensal m) => new(
         m.Mes.Ano, m.Mes.Mes, m.Entradas, m.Saidas, m.Resultado,
         m.InvestimentosETransferencias, m.SaldoInicial, m.SaldoFinal,
-        m.GastosPorCategoria.Select(g => new GastoJson(g.Categoria, g.Valor)).ToList());
+        m.GastosPorCategoria.Select(g => new GastoJson(g.Categoria, g.Valor)).ToList(),
+        new InvestimentosJson(m.Investimentos.Aplicado, m.Investimentos.Resgatado, m.Investimentos.AplicadoAcumulado));
 
-    private static PainelJson De(PainelDoMes p) => new(
+    internal static PainelJson De(PainelDoMes p) => new(
         p.Mes.Ano,
         p.Mes.Mes,
         p.GastoNoMes,
@@ -72,7 +77,7 @@ public static class JsonDoResumo
         p.PrincipaisCategorias.Select(c => new CategoriaComparadaJson(c.Categoria, c.Atual, c.Anterior, c.VariacaoPercentual)).ToList(),
         p.TransacoesRecentes.Select(De).ToList());
 
-    private static TransacaoJson De(TransacaoCategorizada t) => new(t.Data, t.Descricao, t.Categoria, t.Valor);
+    internal static TransacaoJson De(TransacaoCategorizada t) => new(t.Data, t.Descricao, t.Categoria, t.Valor);
 
     private static GastoDoDiaJson De(GastoDoDia d) => new(d.Dia, (int)d.DiaDaSemana, d.Semana, d.Valor);
 }

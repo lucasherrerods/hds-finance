@@ -43,6 +43,10 @@ public sealed class RelatorioQuestPdf : IGeradorDeRelatorio
             }
 
             c.Item().Element(e => GastosPorCategoria(e, relatorio.Mes));
+            if (relatorio.Historico.Any(m => m.Investimentos.AplicadoAcumulado != 0m || m.Investimentos.Aplicado != 0m))
+            {
+                c.Item().Element(e => Investimentos(e, relatorio.Mes, relatorio.Historico[0]));
+            }
         });
 
         pagina.Footer().Row(r =>
@@ -130,6 +134,20 @@ public sealed class RelatorioQuestPdf : IGeradorDeRelatorio
             });
         }
     });
+
+    private static void Investimentos(IContainer container, ResumoMensal mes, ResumoMensal inicio) =>
+        Cartao(container, "Investimentos", c =>
+        {
+            c.Item().Row(r =>
+            {
+                r.Spacing(8);
+                Indicador(r.RelativeItem(), "Aplicado no mês", Moeda(mes.Investimentos.Aplicado), CoresDoRelatorio.Texto);
+                Indicador(r.RelativeItem(), "Resgatado no mês", Moeda(mes.Investimentos.Resgatado), CoresDoRelatorio.Texto);
+                Indicador(r.RelativeItem(), $"Aplicado desde {MesCurto(inicio.Mes)}", Moeda(mes.Investimentos.AplicadoAcumulado), CoresDoRelatorio.Texto);
+            });
+            c.Item().Text("O extrato da conta não traz rendimentos: os valores são o que saiu e voltou da conta.")
+                .FontSize(8).FontColor(CoresDoRelatorio.TextoSuave);
+        });
 
     private static void Cartao(IContainer container, string titulo, Action<ColumnDescriptor> conteudo) =>
         container.Background(CoresDoRelatorio.Superficie).Border(1).BorderColor(CoresDoRelatorio.Borda).CornerRadius(12).Padding(16)

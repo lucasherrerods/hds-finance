@@ -12,6 +12,7 @@ const outubro = {
   saldoInicial: 0,
   saldoFinal: 2376.55,
   gastosPorCategoria: [],
+  investimentos: { aplicado: 1000, resgatado: 200, aplicadoAcumulado: 4800 },
 }
 
 describe('ResumoDoMes', () => {
@@ -78,5 +79,20 @@ describe('vários meses na mesma página', () => {
 
     const ids = screen.getAllByRole('list', { name: 'Gastos por categoria' }).map((l) => l.getAttribute('aria-labelledby'))
     expect(new Set(ids).size).toBe(2)
+  })
+
+  it('mostra o que foi aplicado e resgatado e avisa que não inclui rendimentos', () => {
+    render(<ResumoDoMes mes={outubro} />)
+
+    expect(screen.getByRole('group', { name: 'Aplicado no mês' })).toHaveTextContent('R$ 1.000,00')
+    expect(screen.getByRole('group', { name: 'Resgatado no mês' })).toHaveTextContent('R$ 200,00')
+    expect(screen.getByRole('group', { name: 'Aplicado no período' })).toHaveTextContent('R$ 4.800,00')
+    expect(screen.getByText(/sem rendimentos/i)).toBeInTheDocument()
+  })
+
+  it('sem movimentação de investimento não mostra a seção', () => {
+    render(<ResumoDoMes mes={{ ...outubro, investimentos: { aplicado: 0, resgatado: 0, aplicadoAcumulado: 0 } }} />)
+
+    expect(screen.queryByRole('group', { name: 'Aplicado no mês' })).not.toBeInTheDocument()
   })
 })

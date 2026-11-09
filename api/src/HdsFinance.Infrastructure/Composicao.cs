@@ -1,7 +1,10 @@
+using System.Security.Cryptography;
+using HdsFinance.Application.EmailDaDemo;
 using HdsFinance.Application.Extratos;
 using HdsFinance.Application.ModoPessoal;
 using HdsFinance.Application.Relatorios;
 using HdsFinance.Domain;
+using HdsFinance.Infrastructure.EmailDaDemo;
 using HdsFinance.Infrastructure.Extratos;
 using HdsFinance.Infrastructure.Notificacoes;
 using HdsFinance.Infrastructure.Relatorios;
@@ -33,12 +36,29 @@ public static class Composicao
         services.AddSingleton<GerarRelatorio>();
         services.AddScoped<ImportarExtrato>();
         services.AddScoped<ResumirExtrato>();
+
+        services.Configure<OpcoesDeEmail>(configuracao.GetSection(OpcoesDeEmail.Secao));
+        services.AddHttpClient<IEnvioDeEmail, EnvioDeEmailResend>(cliente =>
+            cliente.BaseAddress = new Uri(configuracao[$"{OpcoesDeEmail.Secao}:Endereco"] ?? OpcoesDeEmail.EnderecoPadrao));
         return services;
     }
 
     /// <summary>Demonstração: o repositório vive só durante a requisição.</summary>
-    public static IServiceCollection AdicionarDemonstracao(this IServiceCollection services) =>
+    public static IServiceCollection AdicionarDemonstracao(this IServiceCollection services, IConfiguration configuracao)
+    {
         services.AddScoped<IRepositorioDeTransacoes, RepositorioEmMemoria>();
+
+        // Sem chave configurada, uma aleatória vale até a api reiniciar: os e-mails confirmados antes precisam confirmar de novo.
+        var chave = configuracao["Demonstracao:ChaveDeAssinatura"] is { Length: > 0 } definida
+            ? definida
+            : Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
+        services.AddSingleton<IAssinador>(new AssinadorHmac(chave));
+        services.AddSingleton<IGeradorDeCodigo, GeradorDeCodigoAleatorio>();
+        services.AddSingleton<ILimiteDeEnvios, LimiteDeEnviosEmMemoria>();
+        services.AddScoped<ConfirmacaoDeEmail>();
+        services.AddScoped<EnviarRelatorioDaDemo>();
+        return services;
+    }
 
     /// <summary>Pessoal: histórico no SQLite local e fechamento enviado por e-mail.</summary>
     public static IServiceCollection AdicionarModoPessoal(this IServiceCollection services, IConfiguration configuracao)
@@ -49,11 +69,10 @@ public static class Composicao
         services.AddDbContext<BancoDoModoPessoal>(o => o.UseSqlite($"Data Source={caminho}"));
         services.AddScoped<IRepositorioDeTransacoes, RepositorioSqlite>();
         services.AddScoped<IRegistroDoModoPessoal, RegistroSqlite>();
-        services.Configure<OpcoesDeEmail>(configuracao.GetSection(OpcoesDeEmail.Secao));
-        services.AddHttpClient<INotificador, NotificadorEmail>((provedor, cliente) =>
-            cliente.BaseAddress = new Uri(configuracao[$"{OpcoesDeEmail.Secao}:Endereco"] ?? OpcoesDeEmail.EnderecoPadrao));
+        services.AddScoped<INotificador, NotificadorEmail>();
         services.AddScoped<FecharMes>();
         services.AddScoped<ProcessarExtratoRecebido>();
+        services.AddScoped<ConsultarHistorico>();
         return services;
     }
 

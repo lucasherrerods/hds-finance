@@ -2,7 +2,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { GraficosDoPeriodo, MesesPorAbas, PainelDoMes } from '../modules/dashboard'
 import { AvisoDePrivacidade, EnvioDeExtrato, type ResumoDoExtrato } from '../modules/import'
+import { EnviarPorEmail } from '../modules/email'
 import { BaixarRelatorio } from '../modules/report'
+import { emModoPessoal } from '../shared'
 
 const SUAVE = [0.22, 1, 0.36, 1] as const
 
@@ -78,7 +80,12 @@ export function PaginaDeTeste() {
                   {resumo.duplicadas > 0 && `, ${resumo.duplicadas} repetidas deixadas de fora`}.
                 </p>
               </div>
-              {ultimoMes && <BaixarRelatorio arquivo={envio.arquivo} mes={ultimoMes} />}
+              {ultimoMes && (
+                <div className="flex flex-col items-start gap-4">
+                  <BaixarRelatorio arquivo={envio.arquivo} mes={ultimoMes} />
+                  {!emModoPessoal() && <EnviarPorEmail arquivo={envio.arquivo} mes={ultimoMes} />}
+                </div>
+              )}
             </motion.div>
             {resumo.painel && (
               <motion.div variants={bloco}>

@@ -48,14 +48,21 @@ describe('âncoras', () => {
 })
 
 describe('modo pessoal', () => {
-  const historico = { meses: mesesDeExemplo, painel: painelDeExemplo, transacoes: painelDeExemplo.transacoesRecentes }
+  const historico = {
+    meses: mesesDeExemplo,
+    painel: painelDeExemplo,
+    transacoes: painelDeExemplo.transacoesRecentes,
+    categorias: ['Alimentação', 'Lazer', 'Sem categoria'],
+  }
 
   function apiLocal(dados: unknown = historico) {
-    const fetchFalso = vi.fn((url: string) =>
+    const fetchFalso = vi.fn((url: string, _opcoes?: RequestInit) =>
       Promise.resolve(
         url.endsWith('/pessoal/extratos')
           ? new Response(JSON.stringify({ transacoesNovas: 3, duplicadas: 0, fechamento: 'Nenhum mês completo para fechar.' }))
-          : new Response(JSON.stringify(dados)),
+          : url.endsWith('/pessoal/categorias')
+            ? new Response(null, { status: 204 })
+            : new Response(JSON.stringify(dados)),
       ),
     )
     vi.stubGlobal('fetch', fetchFalso)
@@ -96,8 +103,21 @@ describe('modo pessoal', () => {
     expect(chamadasDoHistorico).toHaveLength(2)
   })
 
+  it('trocar a categoria de uma transação guarda a escolha e recarrega', async () => {
+    const fetchFalso = apiLocal()
+    abrir('/dashboard/transacoes')
+
+    const [seletor] = await screen.findAllByRole('combobox', { name: /^categoria de /i }, { timeout: 5000 })
+    fireEvent.change(seletor, { target: { value: 'Lazer' } })
+
+    expect(await screen.findByRole('status')).toHaveTextContent('agora é Lazer')
+    const correcao = fetchFalso.mock.calls.find(([url]) => url.endsWith('/pessoal/categorias'))
+    expect(correcao?.[1]).toMatchObject({ method: 'PUT' })
+    await vi.waitFor(() => expect(fetchFalso.mock.calls.filter(([url]) => url.endsWith('/pessoal/historico'))).toHaveLength(2))
+  })
+
   it('com o histórico vazio, convida a adicionar o primeiro extrato', async () => {
-    apiLocal({ meses: [], painel: null, transacoes: [] })
+    apiLocal({ meses: [], painel: null, transacoes: [], categorias: [] })
 
     abrir('/dashboard')
 

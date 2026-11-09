@@ -118,16 +118,20 @@ function TabelaDosMeses({ meses }: { meses: ResumoMensal[] }) {
 }
 
 export function Transacoes() {
-  const resumo = useResumo()
+  const { dados: resumo, edicao } = useDashboard()
 
   return (
     <>
       <CabecalhoDaSecao
         sobretitulo={`${resumo.quantidade} transações`}
         titulo="Transações"
-        descricao="Escolha o mês para ver o fechamento, os gastos por categoria e cada lançamento."
+        descricao={
+          edicao
+            ? 'Escolha o mês para ver cada lançamento. Trocou a categoria de um, os iguais seguem a escolha daqui pra frente.'
+            : 'Escolha o mês para ver o fechamento, os gastos por categoria e cada lançamento.'
+        }
       />
-      <MesesPorAbas meses={resumo.meses} transacoes={resumo.transacoes} />
+      <MesesPorAbas meses={resumo.meses} transacoes={resumo.transacoes} edicao={edicao} />
     </>
   )
 }

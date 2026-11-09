@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { adicionarExtrato, buscarHistorico, enviarFechamento } from './api'
+import { adicionarExtrato, buscarHistorico, corrigirCategoria, enviarFechamento } from './api'
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -62,5 +62,19 @@ describe('enviarFechamento', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: 'Já tinha sido enviado.' }), { status: 409 })))
 
     expect(await enviarFechamento({ ano: 2026, mes: 10 })).toEqual({ ok: false, mensagem: 'Já tinha sido enviado.', jaEnviado: true })
+  })
+})
+
+describe('corrigirCategoria', () => {
+  it('guarda a categoria escolhida para a descrição', async () => {
+    vi.stubEnv('VITE_URL_DA_API', 'http://api.test')
+    const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchFalso)
+
+    expect(await corrigirCategoria('Pix enviado Joao', 'Moradia')).toEqual({ ok: true })
+    const [url, opcoes] = fetchFalso.mock.calls[0]
+    expect(url).toBe('http://api.test/pessoal/categorias')
+    expect(opcoes.method).toBe('PUT')
+    expect(JSON.parse(opcoes.body as string)).toEqual({ descricao: 'Pix enviado Joao', categoria: 'Moradia' })
   })
 })

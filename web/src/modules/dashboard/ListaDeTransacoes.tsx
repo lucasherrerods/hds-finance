@@ -6,7 +6,13 @@ import { Cartao } from './Cartao'
 import { IconeDaCategoria } from './IconeDaCategoria'
 import { categoriasDe, filtrarTransacoes, type Filtros, type Ordem } from './periodos'
 
-type Props = { transacoes: TransacaoCategorizada[]; mes: ResumoMensal }
+/** Só no modo pessoal: as categorias que dá para escolher e o que fazer quando a pessoa troca uma. */
+export type EdicaoDeCategoria = { categorias: string[]; aoMudar: (descricao: string, categoria: string) => void }
+
+type Props = { transacoes: TransacaoCategorizada[]; mes: ResumoMensal; edicao?: EdicaoDeCategoria }
+
+// Aplicações, resgates e transferências entre contas próprias não são gasto, então não têm categoria para trocar.
+const MOVIMENTACAO_INTERNA = 'Investimentos e transferências'
 
 const ordens: { valor: Ordem; rotulo: string }[] = [
   { valor: 'recentes', rotulo: 'Data (mais recentes)' },
@@ -15,7 +21,7 @@ const ordens: { valor: Ordem; rotulo: string }[] = [
   { valor: 'menor', rotulo: 'Menor valor' },
 ]
 
-export function ListaDeTransacoes({ transacoes, mes }: Props) {
+export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
   const [filtros, setFiltros] = useState<Filtros>({ busca: '', categoria: '', ordem: 'recentes' })
   const visiveis = filtrarTransacoes(transacoes, filtros)
   const idDaBusca = useId()
@@ -126,9 +132,24 @@ export function ListaDeTransacoes({ transacoes, mes }: Props) {
                       </span>
                     </td>
                     <td className="hidden py-3 pr-4 sm:table-cell">
-                      <span className="rounded-md bg-fundo px-2 py-1 text-sm whitespace-nowrap text-texto-suave">
-                        {t.categoria}
-                      </span>
+                      {edicao && t.categoria !== MOVIMENTACAO_INTERNA ? (
+                        <select
+                          aria-label={`Categoria de ${t.descricao}`}
+                          value={t.categoria}
+                          onChange={(e) => edicao.aoMudar(t.descricao, e.target.value)}
+                          className="rounded-md border border-borda bg-fundo px-2 py-1 text-sm text-texto-suave focus:border-primaria focus:outline-none"
+                        >
+                          {[...new Set([...edicao.categorias, t.categoria])].map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="rounded-md bg-fundo px-2 py-1 text-sm whitespace-nowrap text-texto-suave">
+                          {t.categoria}
+                        </span>
+                      )}
                     </td>
                     <td className="hidden py-3 pr-4 whitespace-nowrap text-texto-suave tabular-nums md:table-cell">
                       {formatarData(t.data)}

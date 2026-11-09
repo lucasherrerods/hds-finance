@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import type { EdicaoDeCategoria } from '../../modules/dashboard'
 import type { Painel, ResumoMensal, TransacaoCategorizada } from '../../modules/import'
 
 /** O que as seções mostram, venha do extrato recém-enviado (demonstração) ou do histórico local (modo pessoal). */
@@ -13,6 +14,8 @@ export type ValorDoDashboard = {
   dados: DadosDoDashboard
   /** Só na demonstração: o arquivo é reenviado para gerar o PDF ou o e-mail. No modo pessoal, tudo sai do histórico. */
   arquivo: File | null
+  /** Só no modo pessoal: trocar a categoria de uma transação e lembrar da escolha. */
+  edicao?: EdicaoDeCategoria
 }
 
 export const ContextoDoDashboard = createContext<ValorDoDashboard | null>(null)

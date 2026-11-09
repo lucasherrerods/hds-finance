@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-HdsFinance.Worker-f9c4f34b-8053-4cc2-a1c8-f49cbb717e72</UserSecretsId>
+    <UserSecretsId>hds-finance-modo-pessoal</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

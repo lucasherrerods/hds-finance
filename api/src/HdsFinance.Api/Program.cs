@@ -1,10 +1,5 @@
 using HdsFinance.Api.Demonstracao;
-using HdsFinance.Application.Extratos;
-using HdsFinance.Application.Relatorios;
-using HdsFinance.Infrastructure.Relatorios;
-using HdsFinance.Domain;
-using HdsFinance.Infrastructure.Extratos;
-using HdsFinance.Infrastructure.Repositorios;
+using HdsFinance.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,21 +10,25 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .AllowAnyHeader()
     .WithMethods("POST")));
 
-// Modo demonstração: nada sobrevive à requisição.
-builder.Services.AddSingleton<ILeitorDeExtrato, LeitorOfx>();
-builder.Services.AddSingleton<ILeitorDeExtrato, LeitorCsvInter>();
-builder.Services.AddSingleton(new ClassificadorDeTipo());
-var regras = builder.Configuration.GetSection("Categorias").Get<List<RegraDeCategoria>>();
-builder.Services.AddSingleton(regras is { Count: > 0 } ? new Categorizador(regras) : Categorizador.Padrao);
-builder.Services.AddScoped<IRepositorioDeTransacoes, RepositorioEmMemoria>();
-builder.Services.AddScoped<ImportarExtrato>();
-builder.Services.AddScoped<ResumirExtrato>();
-builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<IGeradorDeRelatorio, RelatorioQuestPdf>();
-builder.Services.AddSingleton<GerarRelatorio>();
-builder.Services.AdicionarDemonstracao(builder.Configuration);
+builder.Services.AdicionarNucleo(builder.Configuration);
+var modoPessoal = builder.Configuration["Modo"] == Composicao.ModoPessoal;
+if (modoPessoal)
+{
+    builder.Services.AdicionarModoPessoal(builder.Configuration);
+}
+else
+{
+    builder.Services.AdicionarDemonstracao();
+}
+
+builder.Services.AdicionarLimitesDaDemonstracao(builder.Configuration);
 
 var app = builder.Build();
+
+if (modoPessoal)
+{
+    await app.Services.PrepararBancoAsync();
+}
 
 app.UseExceptionHandler();
 app.UseCors();

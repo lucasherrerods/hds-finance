@@ -4,8 +4,13 @@
     <ProjectReference Include="..\HdsFinance.Infrastructure\HdsFinance.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.15" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <UserSecretsId>hds-finance-modo-pessoal</UserSecretsId>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

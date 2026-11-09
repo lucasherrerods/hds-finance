@@ -100,3 +100,6 @@ export const painelDeExemplo: Painel = {
     { data: '2026-10-25', descricao: 'Pix recebido - Cliente Fictício', categoria: 'Entrada', valor: 1200 },
   ],
 }
+
+/** Lista do mês de exemplo, a mesma que aparece nas transações recentes do painel. */
+export const transacoesDeExemplo = painelDeExemplo.transacoesRecentes

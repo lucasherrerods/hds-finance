@@ -7,7 +7,11 @@ public abstract record ResultadoDoResumo
     public sealed record Resumido(
         ResultadoDaImportacao.Importado Importacao,
         IReadOnlyList<ResumoMensal> Meses,
-        PainelDoMes? Painel = null) : ResultadoDoResumo;
+        PainelDoMes? Painel = null,
+        IReadOnlyList<TransacaoCategorizada>? Transacoes = null) : ResultadoDoResumo
+    {
+        public IReadOnlyList<TransacaoCategorizada> Transacoes { get; init; } = Transacoes ?? [];
+    }
 
     public sealed record NaoImportado(ResultadoDaImportacao Motivo) : ResultadoDoResumo;
 }
@@ -32,6 +36,7 @@ public sealed class ResumirExtrato(
         return new ResultadoDoResumo.Resumido(
             importado,
             ResumoMensal.PorMes(transacoes, importado.SaldoFinal, regras),
-            PainelDoMes.Montar(transacoes, regras));
+            PainelDoMes.Montar(transacoes, regras),
+            TransacaoCategorizada.Listar(transacoes, regras));
     }
 }

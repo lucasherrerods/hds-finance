@@ -20,6 +20,7 @@ export type ResumoDoExtrato = {
   duplicadas: number
   meses: ResumoMensal[]
   painel: Painel | null
+  transacoes: TransacaoCategorizada[]
 }
 
 export type ResultadoDoEnvio = { ok: true; resumo: ResumoDoExtrato } | { ok: false; mensagem: string }
@@ -58,7 +59,7 @@ export type CategoriaComparada = {
   variacaoPercentual: number | null
 }
 
-export type TransacaoDoPainel = { data: string; descricao: string; categoria: string; valor: number }
+export type TransacaoCategorizada = { data: string; descricao: string; categoria: string; valor: number }
 
 export type Painel = {
   ano: number
@@ -71,5 +72,5 @@ export type Painel = {
   ritmo: PontoDoRitmo[]
   mapaDeCalor: GastoDoDia[]
   principaisCategorias: CategoriaComparada[]
-  transacoesRecentes: TransacaoDoPainel[]
+  transacoesRecentes: TransacaoCategorizada[]
 }

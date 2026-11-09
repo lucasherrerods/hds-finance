@@ -1,5 +1,5 @@
 import { formatarDiaCurto } from '../../shared'
-import type { Painel, PontoDoRitmo, TransacaoDoPainel } from '../import'
+import type { Painel, PontoDoRitmo, TransacaoCategorizada } from '../import'
 
 const ALTA_RELEVANTE = 15
 
@@ -46,9 +46,9 @@ export function nivelDeCalor(valor: number, maximo: number): 0 | 1 | 2 | 3 | 4 {
   return 4
 }
 
-export type GrupoDeTransacoes = { data: string; rotulo: string; transacoes: TransacaoDoPainel[] }
+export type GrupoDeTransacoes = { data: string; rotulo: string; transacoes: TransacaoCategorizada[] }
 
-export function agruparPorDia(transacoes: TransacaoDoPainel[]): GrupoDeTransacoes[] {
+export function agruparPorDia(transacoes: TransacaoCategorizada[]): GrupoDeTransacoes[] {
   const grupos: GrupoDeTransacoes[] = []
   for (const transacao of transacoes) {
     const ultimo = grupos[grupos.length - 1]

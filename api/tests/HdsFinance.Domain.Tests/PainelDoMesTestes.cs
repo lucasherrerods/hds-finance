@@ -115,8 +115,8 @@ public class PainelDoMesTestes
 
         painel.TransacoesRecentes.Select(t => (t.Data.Day, t.Categoria)).Should().Equal(
             (3, "Transporte"),
-            (2, PainelDoMes.CategoriaDeMovimentacaoInterna),
-            (1, PainelDoMes.CategoriaDeEntrada));
+            (2, TransacaoCategorizada.CategoriaDeMovimentacaoInterna),
+            (1, TransacaoCategorizada.CategoriaDeEntrada));
     }
 
     [Fact]

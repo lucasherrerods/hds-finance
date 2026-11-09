@@ -3,7 +3,12 @@ using HdsFinance.Domain;
 
 namespace HdsFinance.Api.Demonstracao;
 
-public sealed record ResumoDoExtratoJson(int TransacoesNovas, int Duplicadas, IReadOnlyList<MesJson> Meses, PainelJson? Painel);
+public sealed record ResumoDoExtratoJson(
+    int TransacoesNovas,
+    int Duplicadas,
+    IReadOnlyList<MesJson> Meses,
+    PainelJson? Painel,
+    IReadOnlyList<TransacaoJson> Transacoes);
 
 public sealed record MesJson(
     int Ano,
@@ -46,7 +51,8 @@ public static class JsonDoResumo
         resumido.Importacao.Novas,
         resumido.Importacao.Duplicadas,
         resumido.Meses.Select(De).ToList(),
-        resumido.Painel is null ? null : De(resumido.Painel));
+        resumido.Painel is null ? null : De(resumido.Painel),
+        resumido.Transacoes.Select(De).ToList());
 
     private static MesJson De(ResumoMensal m) => new(
         m.Mes.Ano, m.Mes.Mes, m.Entradas, m.Saidas, m.Resultado,
@@ -64,7 +70,9 @@ public static class JsonDoResumo
         p.Ritmo.Select(r => new PontoDoRitmoJson(r.Dia, r.AcumuladoAtual, r.AcumuladoAnterior)).ToList(),
         p.MapaDeCalor.Select(De).ToList(),
         p.PrincipaisCategorias.Select(c => new CategoriaComparadaJson(c.Categoria, c.Atual, c.Anterior, c.VariacaoPercentual)).ToList(),
-        p.TransacoesRecentes.Select(t => new TransacaoJson(t.Data, t.Descricao, t.Categoria, t.Valor)).ToList());
+        p.TransacoesRecentes.Select(De).ToList());
+
+    private static TransacaoJson De(TransacaoCategorizada t) => new(t.Data, t.Descricao, t.Categoria, t.Valor);
 
     private static GastoDoDiaJson De(GastoDoDia d) => new(d.Dia, (int)d.DiaDaSemana, d.Semana, d.Valor);
 }

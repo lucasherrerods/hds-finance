@@ -132,3 +132,22 @@ public class DemonstracaoPainelTestes(WebApplicationFactory<Program> fabrica) : 
         painel.GetProperty("transacoesRecentes")[0].GetProperty("categoria").GetString().Should().Be("Investimentos e transferências");
     }
 }
+
+public class DemonstracaoTransacoesTestes(WebApplicationFactory<Program> fabrica) : IClassFixture<WebApplicationFactory<Program>>
+{
+    [Fact]
+    public async Task Devolve_todas_as_transacoes_do_extrato_com_categoria()
+    {
+        var arquivo = new ByteArrayContent(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "samples", "inter-extrato.csv")));
+
+        var resposta = await fabrica.CreateClient()
+            .PostAsync("/demonstracao/resumo", new MultipartFormDataContent { { arquivo, "arquivo", "extrato.csv" } });
+
+        using var json = System.Text.Json.JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        var transacoes = json.RootElement.GetProperty("transacoes");
+        transacoes.GetArrayLength().Should().Be(3);
+        transacoes[1].GetProperty("data").GetString().Should().Be("2026-10-05");
+        transacoes[1].GetProperty("categoria").GetString().Should().Be("Alimentação");
+        transacoes[1].GetProperty("valor").GetDecimal().Should().Be(-123.45m);
+    }
+}

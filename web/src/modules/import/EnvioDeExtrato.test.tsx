@@ -13,7 +13,7 @@ function escolherArquivo() {
 
 describe('EnvioDeExtrato', () => {
   it('entrega o resumo devolvido pela api', async () => {
-    const resumo = { transacoesNovas: 1, duplicadas: 0, meses: [], painel: null }
+    const resumo = { transacoesNovas: 1, duplicadas: 0, meses: [], painel: null, transacoes: [] }
     vi.mocked(enviarExtrato).mockResolvedValue({ ok: true, resumo })
     const aoResumir = vi.fn()
     render(<EnvioDeExtrato aoResumir={aoResumir} />)

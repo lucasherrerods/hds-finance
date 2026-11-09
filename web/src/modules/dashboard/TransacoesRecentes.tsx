@@ -1,10 +1,10 @@
 import { formatarMoedaComSinal } from '../../shared'
-import type { TransacaoDoPainel } from '../import'
+import type { TransacaoCategorizada } from '../import'
 import { Cartao } from './Cartao'
 import { IconeDaCategoria } from './IconeDaCategoria'
 import { agruparPorDia } from './painel'
 
-type Props = { transacoes: TransacaoDoPainel[] }
+type Props = { transacoes: TransacaoCategorizada[] }
 
 export function TransacoesRecentes({ transacoes }: Props) {
   return (

@@ -51,7 +51,7 @@ describe('landing', () => {
     render(<ExemploDeResultado />)
 
     expect(screen.getByText(/dados fictícios/i)).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Entradas' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Destaque do mês' })).toBeInTheDocument()
   })
 
   it('a seção de privacidade avisa que nada é armazenado', () => {
@@ -62,29 +62,21 @@ describe('landing', () => {
   })
 })
 
-describe('exemplo de resultado', () => {
-  it('mostra o saldo e os investimentos do mês fictício', () => {
-    render(<ExemploDeResultado />)
-
-    expect(screen.getByRole('group', { name: 'Saldo' })).toHaveTextContent('R$ 3.593,15 → R$ 4.695,35')
-    expect(screen.getByRole('group', { name: 'Investimentos e transferências' })).toHaveTextContent('−R$ 2.000,00')
-  })
-})
-
 describe('exemplo com gráficos', () => {
   beforeAll(async () => {
     // Os gráficos carregam sob demanda. Carregar os módulos antes evita que o teste dependa
     // do tempo do primeiro import do Recharts, que com a suíte inteira às vezes passava de 5 s.
-    await Promise.all([import('../dashboard/GraficosDoPeriodo'), import('../dashboard/RitmoDeGastos')])
+    await import('../dashboard/RitmoDeGastos')
   })
 
-  it('mostra o painel e a evolução dos meses fictícios', async () => {
+  it('mostra só o painel do mês fictício, sem o período nem as transações', async () => {
     render(<ExemploDeResultado />)
 
     expect(screen.getByRole('region', { name: 'Destaque do mês' })).toHaveTextContent('Sem categoria subiu 24%')
     expect(screen.getByRole('table', { name: 'Principais categorias' })).toBeInTheDocument()
-    expect(await screen.findByRole('table', { name: 'Entradas e saídas por mês' })).toBeInTheDocument()
     expect(await screen.findByRole('table', { name: 'Gasto acumulado por dia' })).toBeInTheDocument()
-    expect(screen.queryByRole('table', { name: 'Saldo no fim de cada mês' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Entradas e saídas por mês' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Transações' })).not.toBeInTheDocument()
   })
 })

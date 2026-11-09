@@ -8,4 +8,5 @@ export {
   formatarPercentual,
 } from './format/formatar'
 export { aplicarTema, salvarTema, temaAtual, temaInicial, type Tema } from './tema/tema'
+export { AbreNaRolagem } from './ui/AbreNaRolagem'
 export { Revelar } from './ui/Revelar'

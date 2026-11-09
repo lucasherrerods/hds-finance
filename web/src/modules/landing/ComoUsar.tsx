@@ -1,88 +1,42 @@
-import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from 'motion/react'
-import { useRef } from 'react'
-import { passoDaRolagem } from './rolagem'
+import { BarChart3, Download, Upload, type LucideIcon } from 'lucide-react'
+import { AbreNaRolagem, Revelar } from '../../shared'
 
-const passos = [
-  { titulo: 'Exporta', texto: 'No app do Inter: Extrato, escolhe o período e exporta em OFX ou CSV.' },
-  { titulo: 'Solta aqui', texto: 'O arquivo é lido na hora e esquecido logo depois. Não fica nada com a gente.' },
-  { titulo: 'Confere', texto: 'Quanto entrou, quanto saiu, quanto sobrou. E onde foi parar o resto.' },
+const passos: { icone: LucideIcon; titulo: string; texto: string }[] = [
+  { icone: Download, titulo: 'Exporta', texto: 'No app do Inter: Extrato, escolhe o período e exporta em OFX ou CSV.' },
+  { icone: Upload, titulo: 'Solta aqui', texto: 'O arquivo é lido na hora e esquecido logo depois.' },
+  { icone: BarChart3, titulo: 'Confere', texto: 'Quanto entrou, quanto saiu, quanto sobrou. E onde foi parar o resto.' },
 ]
 
-const TOTAL = passos.length
-const numero = (indice: number) => String(indice + 1).padStart(2, '0')
-
-/** Um passo por vez ocupa a tela: entra por baixo, segura e sai por cima. */
-function Passo({ indice, progresso }: { indice: number; progresso: MotionValue<number> }) {
-  const { titulo, texto } = passos[indice]
-  const inicio = indice / TOTAL
-  const fim = (indice + 1) / TOTAL
-  const primeiro = indice === 0
-  const ultimo = indice === TOTAL - 1
-  const marcos = [inicio, inicio + 0.08, fim - 0.08, fim]
-  const y = useTransform(progresso, marcos, [primeiro ? '0%' : '100%', '0%', '0%', ultimo ? '0%' : '-100%'])
-  const opacity = useTransform(progresso, marcos, [primeiro ? 1 : 0, 1, 1, ultimo ? 1 : 0])
-
-  return (
-    <motion.li style={{ opacity }} className="absolute inset-x-6 inset-y-0 flex flex-col justify-center">
-      <div className="overflow-hidden">
-        <motion.h3
-          style={{ y }}
-          className="text-[clamp(3.5rem,14vw,11rem)] leading-[0.95] font-bold tracking-[-0.04em]"
-        >
-          {titulo}
-        </motion.h3>
-      </div>
-      <p className="mt-6 max-w-[40ch] text-lg leading-relaxed text-texto-suave md:text-xl">{texto}</p>
-    </motion.li>
-  )
-}
-
-/** Os três passos presos na tela enquanto a página desce. */
+/** Título ao lado da frase e, embaixo, o bloco dos passos que abre conforme a página desce. */
 export function ComoUsar() {
-  const ref = useRef<HTMLElement>(null)
-  const parado = useReducedMotion()
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
-  const contador = useTransform(scrollYProgress, (p) => numero(passoDaRolagem(p, TOTAL)))
-
-  if (parado) {
-    return (
-      <section id="como-usar" aria-labelledby="como-usar-titulo" className="mx-auto max-w-6xl px-6 py-24">
-        <h2 id="como-usar-titulo" className="mb-12 text-2xl text-texto-suave">
+  return (
+    <section id="como-usar" aria-labelledby="como-usar-titulo" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-24">
+      <Revelar className="mb-12 flex flex-wrap items-end justify-between gap-6">
+        <h2 id="como-usar-titulo" className="text-5xl leading-[0.95] font-bold tracking-[-0.03em] sm:text-6xl md:text-7xl">
           Como usar
         </h2>
-        <ol className="flex flex-col gap-12">
-          {passos.map((passo) => (
-            <li key={passo.titulo}>
-              <h3 className="text-6xl font-bold tracking-[-0.03em]">{passo.titulo}</h3>
-              <p className="mt-4 text-lg text-texto-suave">{passo.texto}</p>
+        <p className="max-w-[40ch] text-lg leading-relaxed text-texto-suave">
+          Três passos, um minuto. Sem cadastro, sem senha do banco e sem planilha.
+        </p>
+      </Revelar>
+      <AbreNaRolagem className="bg-superficie">
+        <ol className="grid gap-12 p-8 md:grid-cols-3 md:gap-8 md:p-12">
+          {passos.map((passo, indice) => (
+            <li key={passo.titulo} className="flex flex-col gap-4">
+              <span className="flex items-center justify-between">
+                <span className="grid size-12 place-items-center rounded-xl bg-primaria-suave text-primaria">
+                  <passo.icone aria-hidden className="size-6" />
+                </span>
+                <span aria-hidden className="text-lg text-texto-suave tabular-nums">
+                  {String(indice + 1).padStart(2, '0')}
+                </span>
+              </span>
+              <h3 className="text-3xl font-bold tracking-[-0.02em]">{passo.titulo}</h3>
+              <p className="leading-relaxed text-texto-suave">{passo.texto}</p>
             </li>
           ))}
         </ol>
-      </section>
-    )
-  }
-
-  return (
-    <section ref={ref} id="como-usar" aria-labelledby="como-usar-titulo" className="relative h-[300svh]">
-      <div className="sticky top-0 flex h-svh flex-col overflow-hidden">
-        <div className="mx-auto flex w-full max-w-6xl items-end justify-between gap-4 px-6 pt-28">
-          <h2 id="como-usar-titulo" className="text-2xl text-texto-suave">
-            Como usar
-          </h2>
-          <p className="text-2xl text-texto-suave tabular-nums">
-            <motion.span className="text-texto">{contador}</motion.span> / {numero(TOTAL - 1)}
-          </p>
-        </div>
-        <ol className="relative mx-auto w-full max-w-6xl flex-1">
-          {passos.map((passo, indice) => (
-            <Passo key={passo.titulo} indice={indice} progresso={scrollYProgress} />
-          ))}
-        </ol>
-        {/* A barra enche conforme os passos passam. */}
-        <div className="mx-auto mb-12 h-1 w-[calc(100%-3rem)] max-w-6xl overflow-hidden rounded-full bg-borda">
-          <motion.div className="h-full origin-left bg-primaria" style={{ scaleX: scrollYProgress }} />
-        </div>
-      </div>
+      </AbreNaRolagem>
     </section>
   )
 }

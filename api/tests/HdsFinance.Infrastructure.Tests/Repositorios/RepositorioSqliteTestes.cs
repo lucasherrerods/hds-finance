@@ -86,4 +86,16 @@ public sealed class RepositorioSqliteTestes : IDisposable
         (await registro.JaEnviadoAsync(outubro)).Should().BeTrue();
         (await registro.JaEnviadoAsync(new MesDeReferencia(2026, 9))).Should().BeFalse();
     }
+
+    [Fact]
+    public async Task Guarda_uma_correcao_por_descricao_e_a_ultima_vence()
+    {
+        await using var banco = NovoBanco();
+        var aprendidas = new CategoriasAprendidasSqlite(banco);
+
+        await aprendidas.SalvarAsync(new CategoriaAprendida("Pix enviado João", "Moradia"));
+        await aprendidas.SalvarAsync(new CategoriaAprendida("PIX ENVIADO JOAO", "Lazer"));
+
+        (await aprendidas.ListarAsync()).Should().ContainSingle().Which.Should().Be(new CategoriaAprendida("PIX ENVIADO JOAO", "Lazer"));
+    }
 }

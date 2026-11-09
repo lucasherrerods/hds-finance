@@ -68,4 +68,27 @@ public class CategorizadorTestes
     {
         Categorizador.Padrao.Categorizar(Gasto(descricao)).Should().Be(esperada);
     }
+
+    [Fact]
+    public void A_correcao_aprendida_vale_para_a_mesma_descricao_e_vence_as_regras()
+    {
+        var comCorrecao = _categorizador.ComAprendidas([new CategoriaAprendida("PIX ENVIADO JOAO S", "Moradia")]);
+
+        comCorrecao.Categorizar(Gasto("Pix enviado João S.")).Should().Be("Moradia");
+        comCorrecao.Categorizar(Gasto("Pix enviado Maria")).Should().Be(Categorizador.SemCategoria);
+        comCorrecao.ComAprendidas([new CategoriaAprendida("Mercado Exemplo", "Lazer")])
+            .Categorizar(Gasto("MERCADO EXEMPLO")).Should().Be("Lazer");
+    }
+
+    [Fact]
+    public void A_chave_da_correcao_ignora_acento_caixa_e_pontuacao()
+    {
+        Categorizador.ChaveDaDescricao("Pix enviado: João S.").Should().Be(Categorizador.ChaveDaDescricao("PIX ENVIADO JOAO S"));
+    }
+
+    [Fact]
+    public void Lista_as_categorias_possiveis_para_escolher()
+    {
+        _categorizador.Categorias.Should().Equal("Alimentação", "Transporte", Categorizador.SemCategoria);
+    }
 }

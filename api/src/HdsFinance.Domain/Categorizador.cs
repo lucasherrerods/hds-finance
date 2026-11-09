@@ -4,6 +4,9 @@ public sealed record RegraDeCategoria(string Categoria, IReadOnlyList<string> Pa
 
 public sealed record GastoPorCategoria(string Categoria, decimal Valor);
 
+/// <summary>Uma correção feita pela pessoa: aquela descrição, inteira, vai sempre para aquela categoria.</summary>
+public sealed record CategoriaAprendida(string Descricao, string Categoria);
+
 /// <summary>
 /// A primeira regra com alguma palavra presente na descrição define a categoria.
 /// As palavras são comparadas inteiras, sem acento e sem diferenciar maiúsculas.
@@ -56,6 +59,7 @@ public sealed class Categorizador
     ]);
 
     private readonly (string Categoria, string[] Palavras)[] _regras;
+    private readonly IReadOnlyDictionary<string, string> _aprendidas = new Dictionary<string, string>();
 
     public Categorizador(IEnumerable<RegraDeCategoria> regras)
     {
@@ -64,6 +68,32 @@ public sealed class Categorizador
             .ToArray();
     }
 
+    private Categorizador(Categorizador original, IReadOnlyDictionary<string, string> aprendidas)
+    {
+        _regras = original._regras;
+        _aprendidas = aprendidas;
+    }
+
+    /// <summary>As categorias que as regras conhecem, na ordem delas, e "Sem categoria" no fim.</summary>
+    public IReadOnlyList<string> Categorias => [.. _regras.Select(r => r.Categoria).Distinct(), SemCategoria];
+
+    /// <summary>A forma da descrição usada para lembrar uma correção: sem acento, caixa nem pontuação.</summary>
+    public static string ChaveDaDescricao(string descricao) => TextoNormalizado.ParaComparar(descricao);
+
+    /// <summary>As mesmas regras, com as correções da pessoa na frente. Correções novas substituem as antigas.</summary>
+    public Categorizador ComAprendidas(IEnumerable<CategoriaAprendida> aprendidas)
+    {
+        var juntas = new Dictionary<string, string>(_aprendidas);
+        foreach (var aprendida in aprendidas)
+        {
+            juntas[ChaveDaDescricao(aprendida.Descricao)] = aprendida.Categoria;
+        }
+
+        return new Categorizador(this, juntas);
+    }
+
     public string Categorizar(Transacao transacao) =>
-        _regras.FirstOrDefault(r => TextoNormalizado.ContemAlgum(transacao.Descricao, r.Palavras)).Categoria ?? SemCategoria;
+        _aprendidas.TryGetValue(ChaveDaDescricao(transacao.Descricao), out var aprendida)
+            ? aprendida
+            : _regras.FirstOrDefault(r => TextoNormalizado.ContemAlgum(transacao.Descricao, r.Palavras)).Categoria ?? SemCategoria;
 }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\HdsFinance.Infrastructure\HdsFinance.Infrastructure.csproj" />
@@ -16,6 +16,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>067818a0-e438-44ea-a7b8-78ac18389ea4</UserSecretsId>
   </PropertyGroup>
 
 </Project>

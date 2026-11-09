@@ -9,7 +9,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins(builder.Configuration.GetSection("Cors:OrigensPermitidas").Get<string[]>() ?? [])
     .AllowAnyHeader()
-    .WithMethods("GET", "POST")));
+    .WithMethods("GET", "POST", "PUT")));
 
 builder.Services.AdicionarNucleo(builder.Configuration);
 var modoPessoal = builder.Configuration["Modo"] == Composicao.ModoPessoal;

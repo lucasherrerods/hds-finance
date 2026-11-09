@@ -39,6 +39,16 @@ public sealed class MesEnviado
     public DateTimeOffset EnviadoEm { get; set; }
 }
 
+/// <summary>A chave é a descrição limpa (<see cref="Categorizador.ChaveDaDescricao"/>), então cada descrição tem uma correção só.</summary>
+public sealed class CategoriaAprendidaSalva
+{
+    public required string Chave { get; set; }
+
+    public required string Descricao { get; set; }
+
+    public required string Categoria { get; set; }
+}
+
 /// <summary>O banco SQLite do modo pessoal. Só existe na máquina do dono.</summary>
 public sealed class BancoDoModoPessoal(DbContextOptions<BancoDoModoPessoal> opcoes) : DbContext(opcoes)
 {
@@ -48,6 +58,8 @@ public sealed class BancoDoModoPessoal(DbContextOptions<BancoDoModoPessoal> opco
 
     public DbSet<MesEnviado> MesesEnviados => Set<MesEnviado>();
 
+    public DbSet<CategoriaAprendidaSalva> CategoriasAprendidas => Set<CategoriaAprendidaSalva>();
+
     protected override void OnModelCreating(ModelBuilder modelo)
     {
         modelo.Entity<TransacaoSalva>(t =>
@@ -56,6 +68,7 @@ public sealed class BancoDoModoPessoal(DbContextOptions<BancoDoModoPessoal> opco
             t.Property(x => x.Tipo).HasConversion<string>();
         });
         modelo.Entity<MesEnviado>().HasKey(m => new { m.Ano, m.Mes });
+        modelo.Entity<CategoriaAprendidaSalva>().HasKey(c => c.Chave);
     }
 
     // O SQLite não ordena decimal nem DateTimeOffset; guardar como texto e número mantém o valor exato.

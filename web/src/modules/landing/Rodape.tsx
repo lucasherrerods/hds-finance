@@ -1,14 +1,22 @@
-import { IconeGithub, IconeLinkedin } from '../../shared'
+import { IconeGithub, IconeLinkedin } from "../../shared";
 
 const links = [
-  { href: 'https://github.com/lucasherrerods/hds-finance', rotulo: 'Código no GitHub', Icone: IconeGithub },
-  { href: 'https://www.linkedin.com/in/lucasherrero/', rotulo: 'LinkedIn', Icone: IconeLinkedin },
-]
+  {
+    href: "https://github.com/lucasherrerods/hds-finance",
+    rotulo: "GitHub",
+    Icone: IconeGithub,
+  },
+  {
+    href: "https://www.linkedin.com/in/lucasherrero/",
+    rotulo: "LinkedIn",
+    Icone: IconeLinkedin,
+  },
+];
 
 export function Rodape() {
   return (
     <footer className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-12 text-texto-suave sm:flex-row">
-      <span>© 2026 hds finance · projeto pessoal e de portfólio</span>
+      <span>© 2026 hds finance · cada centavo no seu lugar</span>
       <nav aria-label="Links do autor" className="flex items-center gap-6">
         {links.map(({ href, rotulo, Icone }) => (
           <a
@@ -24,5 +32,5 @@ export function Rodape() {
         ))}
       </nav>
     </footer>
-  )
+  );
 }

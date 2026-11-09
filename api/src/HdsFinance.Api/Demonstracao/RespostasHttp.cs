@@ -1,5 +1,6 @@
 using HdsFinance.Application.EmailDaDemo;
 using HdsFinance.Application.Extratos;
+using HdsFinance.Application.ModoPessoal;
 using HdsFinance.Application.Relatorios;
 
 namespace HdsFinance.Api.Demonstracao;
@@ -60,6 +61,19 @@ public static class RespostasHttp
         ResultadoDoEnvioDaDemo.FalhaNoEnvio => FalhaNoEmail(),
         _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
     };
+
+    /// <summary>No modo pessoal o motivo vai inteiro: quem lê é o próprio dono, na máquina dele.</summary>
+    public static IResult De(ResultadoDoFechamento resultado) => resultado switch
+    {
+        ResultadoDoFechamento.Enviado => Results.Ok(new { mensagem = TextoDoFechamento.De(resultado) }),
+        ResultadoDoFechamento.JaEnviado => Fechamento(resultado, "Já enviado", StatusCodes.Status409Conflict),
+        ResultadoDoFechamento.MesIncompleto => Fechamento(resultado, "Mês incompleto", StatusCodes.Status422UnprocessableEntity),
+        ResultadoDoFechamento.SemDados => Fechamento(resultado, "Mês sem dados", StatusCodes.Status404NotFound),
+        _ => Fechamento(resultado, "Falha no envio", StatusCodes.Status502BadGateway),
+    };
+
+    private static IResult Fechamento(ResultadoDoFechamento resultado, string titulo, int status) =>
+        Results.Problem(title: titulo, detail: TextoDoFechamento.De(resultado), statusCode: status);
 
     private static IResult LimiteDeEmails() => Results.Problem(
         title: "Limite de e-mails", detail: "Muitos envios para este endereço. Tente mais tarde.", statusCode: StatusCodes.Status429TooManyRequests);

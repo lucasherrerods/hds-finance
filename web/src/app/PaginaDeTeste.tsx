@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { GraficosDoPeriodo, MesesPorAbas, PainelDoMes } from '../modules/dashboard'
 import { AvisoDePrivacidade, EnvioDeExtrato, type ResumoDoExtrato } from '../modules/import'
+import { BaixarRelatorio } from '../modules/report'
 
 const SUAVE = [0.22, 1, 0.36, 1] as const
 
@@ -11,15 +12,19 @@ const bloco = {
   dentro: { opacity: 1, y: 0, transition: { duration: 0.5, ease: SUAVE } },
 }
 
+type Envio = { resumo: ResumoDoExtrato; arquivo: File }
+
 export function PaginaDeTeste() {
-  const [resumo, setResumo] = useState<ResumoDoExtrato | null>(null)
+  const [envio, setEnvio] = useState<Envio | null>(null)
   const resultado = useRef<HTMLElement>(null)
+  const resumo = envio?.resumo
 
   useEffect(() => {
-    if (resumo) resultado.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
-  }, [resumo])
+    if (envio) resultado.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  }, [envio])
 
   const meses = resumo?.meses.length ?? 0
+  const ultimoMes = resumo?.meses.at(-1)
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-12 px-6 pt-16 pb-24">
@@ -44,12 +49,12 @@ export function PaginaDeTeste() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.15, ease: SUAVE }}
         >
-          <EnvioDeExtrato aoResumir={setResumo} />
+          <EnvioDeExtrato aoResumir={(novo, arquivo) => setEnvio({ resumo: novo, arquivo })} />
         </motion.div>
       </div>
 
       <AnimatePresence mode="wait">
-        {resumo && (
+        {envio && resumo && (
           <motion.section
             ref={resultado}
             key={JSON.stringify(resumo)}
@@ -60,14 +65,20 @@ export function PaginaDeTeste() {
             exit={{ opacity: 0, y: -12 }}
             transition={{ staggerChildren: 0.12 }}
           >
-            <motion.div variants={bloco} className="flex flex-col gap-2 border-t border-borda pt-12">
-              <h2 className="text-4xl leading-[1.05] font-bold tracking-[-0.03em] sm:text-5xl">
-                {meses === 1 ? 'Aqui está o seu mês' : `Aqui estão os seus ${meses} meses`}
-              </h2>
-              <p className="text-texto-suave">
-                {resumo.transacoesNovas} transações lidas
-                {resumo.duplicadas > 0 && `, ${resumo.duplicadas} repetidas deixadas de fora`}.
-              </p>
+            <motion.div
+              variants={bloco}
+              className="flex flex-wrap items-end justify-between gap-6 border-t border-borda pt-12"
+            >
+              <div className="flex flex-col gap-2">
+                <h2 className="text-4xl leading-[1.05] font-bold tracking-[-0.03em] sm:text-5xl">
+                  {meses === 1 ? 'Aqui está o seu mês' : `Aqui estão os seus ${meses} meses`}
+                </h2>
+                <p className="text-texto-suave">
+                  {resumo.transacoesNovas} transações lidas
+                  {resumo.duplicadas > 0 && `, ${resumo.duplicadas} repetidas deixadas de fora`}.
+                </p>
+              </div>
+              {ultimoMes && <BaixarRelatorio arquivo={envio.arquivo} mes={ultimoMes} />}
             </motion.div>
             {resumo.painel && (
               <motion.div variants={bloco}>

@@ -1,3 +1,5 @@
+import { MENSAGEM_SEM_SERVIDOR, mensagemDoProblema } from '../../shared'
+
 export type ResumoMensal = {
   ano: number
   mes: number
@@ -25,8 +27,6 @@ export type ResumoDoExtrato = {
 
 export type ResultadoDoEnvio = { ok: true; resumo: ResumoDoExtrato } | { ok: false; mensagem: string }
 
-type Problema = { title?: string; detail?: string; linha?: number }
-
 export async function enviarExtrato(arquivo: File): Promise<ResultadoDoEnvio> {
   const corpo = new FormData()
   corpo.append('arquivo', arquivo)
@@ -35,16 +35,14 @@ export async function enviarExtrato(arquivo: File): Promise<ResultadoDoEnvio> {
   try {
     resposta = await fetch(`${import.meta.env.VITE_URL_DA_API}/demonstracao/resumo`, { method: 'POST', body: corpo })
   } catch {
-    return { ok: false, mensagem: 'Não foi possível falar com o servidor. Tente de novo.' }
+    return { ok: false, mensagem: MENSAGEM_SEM_SERVIDOR }
   }
 
   if (resposta.ok) {
     return { ok: true, resumo: (await resposta.json()) as ResumoDoExtrato }
   }
 
-  const problema = (await resposta.json().catch(() => ({}))) as Problema
-  const mensagem = problema.detail ?? problema.title ?? 'Não foi possível ler o extrato.'
-  return { ok: false, mensagem: problema.linha ? `${mensagem} (linha ${problema.linha})` : mensagem }
+  return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível ler o extrato.') }
 }
 
 export type PontoDoRitmo = { dia: number; acumuladoAtual: number | null; acumuladoAnterior: number | null }

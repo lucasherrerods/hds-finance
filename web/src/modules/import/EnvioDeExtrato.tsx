@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { useState, type DragEvent, type FormEvent } from 'react'
 import { enviarExtrato, type ResumoDoExtrato } from './api'
 
-type Props = { aoResumir: (resumo: ResumoDoExtrato) => void }
+type Props = { aoResumir: (resumo: ResumoDoExtrato, arquivo: File) => void }
 
 export function EnvioDeExtrato({ aoResumir }: Props) {
   const [arquivo, setArquivo] = useState<File | null>(null)
@@ -31,7 +31,7 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
     const resultado = await enviarExtrato(arquivo)
     setEnviando(false)
 
-    if (resultado.ok) aoResumir(resultado.resumo)
+    if (resultado.ok) aoResumir(resultado.resumo, arquivo)
     else setErro(resultado.mensagem)
   }
 

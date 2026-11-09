@@ -20,7 +20,7 @@ describe('EnvioDeExtrato', () => {
 
     escolherArquivo()
 
-    await vi.waitFor(() => expect(aoResumir).toHaveBeenCalledWith(resumo))
+    await vi.waitFor(() => expect(aoResumir).toHaveBeenCalledWith(resumo, expect.any(File)))
   })
 
   it('mostra o erro devolvido pela api', async () => {

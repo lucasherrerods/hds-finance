@@ -1,48 +1,88 @@
-import { BarChart3, Download, Upload, type LucideIcon } from 'lucide-react'
-import { Revelar } from '../../shared'
-import { Secao } from './Secao'
+import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from 'motion/react'
+import { useRef } from 'react'
+import { passoDaRolagem } from './rolagem'
 
-const passos: { icone: LucideIcon; titulo: string; texto: string }[] = [
-  {
-    icone: Download,
-    titulo: 'Exporte o extrato',
-    texto: 'No app ou no site do Inter, abra o extrato da conta, escolha o período e exporte em OFX ou CSV.',
-  },
-  {
-    icone: Upload,
-    titulo: 'Envie o arquivo aqui',
-    texto: 'O arquivo é lido em memória, aplicações e transferências são separadas e as duplicadas são ignoradas.',
-  },
-  {
-    icone: BarChart3,
-    titulo: 'Veja o fechamento',
-    texto: 'Entradas, saídas e o resultado de cada mês, prontos para conferir.',
-  },
+const passos = [
+  { titulo: 'Exporta', texto: 'No app do Inter: Extrato, escolhe o período e exporta em OFX ou CSV.' },
+  { titulo: 'Solta aqui', texto: 'O arquivo é lido na hora e esquecido logo depois. Não fica nada com a gente.' },
+  { titulo: 'Confere', texto: 'Quanto entrou, quanto saiu, quanto sobrou. E onde foi parar o resto.' },
 ]
 
-export function ComoUsar() {
+const TOTAL = passos.length
+const numero = (indice: number) => String(indice + 1).padStart(2, '0')
+
+/** Um passo por vez ocupa a tela: entra por baixo, segura e sai por cima. */
+function Passo({ indice, progresso }: { indice: number; progresso: MotionValue<number> }) {
+  const { titulo, texto } = passos[indice]
+  const inicio = indice / TOTAL
+  const fim = (indice + 1) / TOTAL
+  const primeiro = indice === 0
+  const ultimo = indice === TOTAL - 1
+  const marcos = [inicio, inicio + 0.08, fim - 0.08, fim]
+  const y = useTransform(progresso, marcos, [primeiro ? '0%' : '100%', '0%', '0%', ultimo ? '0%' : '-100%'])
+  const opacity = useTransform(progresso, marcos, [primeiro ? 1 : 0, 1, 1, ultimo ? 1 : 0])
+
   return (
-    <Secao id="como-usar" titulo="Como usar" descricao="Três passos, sem cadastro e sem senha do banco.">
-      <ol className="grid gap-6 md:grid-cols-3">
-        {passos.map((passo, indice) => (
-          <li key={passo.titulo}>
-            <Revelar atraso={indice * 0.1} className="h-full">
-              <div className="flex h-full flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao transition-transform duration-300 hover:-translate-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="flex size-12 items-center justify-center rounded-xl bg-primaria-suave text-primaria">
-                    <passo.icone aria-hidden className="size-6" />
-                  </span>
-                  <span aria-hidden className="text-4xl font-bold text-texto-suave/30 tabular-nums">
-                    {indice + 1}
-                  </span>
-                </div>
-                <h3 className="text-xl font-semibold tracking-tight">{passo.titulo}</h3>
-                <p className="text-texto-suave">{passo.texto}</p>
-              </div>
-            </Revelar>
-          </li>
-        ))}
-      </ol>
-    </Secao>
+    <motion.li style={{ opacity }} className="absolute inset-x-6 inset-y-0 flex flex-col justify-center">
+      <div className="overflow-hidden">
+        <motion.h3
+          style={{ y }}
+          className="text-[clamp(3.5rem,14vw,11rem)] leading-[0.95] font-bold tracking-[-0.04em]"
+        >
+          {titulo}
+        </motion.h3>
+      </div>
+      <p className="mt-6 max-w-[40ch] text-lg leading-relaxed text-texto-suave md:text-xl">{texto}</p>
+    </motion.li>
+  )
+}
+
+/** Os três passos presos na tela enquanto a página desce. */
+export function ComoUsar() {
+  const ref = useRef<HTMLElement>(null)
+  const parado = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
+  const contador = useTransform(scrollYProgress, (p) => numero(passoDaRolagem(p, TOTAL)))
+
+  if (parado) {
+    return (
+      <section id="como-usar" aria-labelledby="como-usar-titulo" className="mx-auto max-w-6xl px-6 py-24">
+        <h2 id="como-usar-titulo" className="mb-12 text-2xl text-texto-suave">
+          Como usar
+        </h2>
+        <ol className="flex flex-col gap-12">
+          {passos.map((passo) => (
+            <li key={passo.titulo}>
+              <h3 className="text-6xl font-bold tracking-[-0.03em]">{passo.titulo}</h3>
+              <p className="mt-4 text-lg text-texto-suave">{passo.texto}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )
+  }
+
+  return (
+    <section ref={ref} id="como-usar" aria-labelledby="como-usar-titulo" className="relative h-[300svh]">
+      <div className="sticky top-0 flex h-svh flex-col overflow-hidden">
+        <div className="mx-auto flex w-full max-w-6xl items-end justify-between gap-4 px-6 pt-28">
+          <h2 id="como-usar-titulo" className="text-2xl text-texto-suave">
+            Como usar
+          </h2>
+          <p className="text-2xl text-texto-suave tabular-nums">
+            <motion.span className="text-texto">{contador}</motion.span> / {numero(TOTAL - 1)}
+          </p>
+        </div>
+        <ol className="relative mx-auto w-full max-w-6xl flex-1">
+          {passos.map((passo, indice) => (
+            <Passo key={passo.titulo} indice={indice} progresso={scrollYProgress} />
+          ))}
+        </ol>
+        {/* A barra enche conforme os passos passam. */}
+        <div className="mx-auto mb-12 h-1 w-[calc(100%-3rem)] max-w-6xl overflow-hidden rounded-full bg-borda">
+          <motion.div className="h-full origin-left bg-primaria" style={{ scaleX: scrollYProgress }} />
+        </div>
+      </div>
+    </section>
   )
 }

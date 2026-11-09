@@ -15,14 +15,14 @@ describe('rotas', () => {
   it('a página inicial apresenta o projeto sem o formulário de envio', () => {
     abrir('/')
 
-    expect(screen.getByRole('heading', { level: 1, name: /fechamento do seu mês/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /pra onde foi o seu dinheiro/i })).toBeInTheDocument()
     expect(screen.queryByLabelText(/extrato do inter/i)).not.toBeInTheDocument()
   })
 
   it('a página de teste tem o envio do extrato e o aviso de privacidade', () => {
     abrir('/testar')
 
-    expect(screen.getByRole('heading', { level: 1, name: /teste com o seu extrato/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /solta o extrato aqui/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/extrato do inter/i)).toBeInTheDocument()
     expect(screen.getByText(/nada é armazenado/i)).toBeInTheDocument()
   })
@@ -30,7 +30,7 @@ describe('rotas', () => {
   it('um endereço desconhecido volta para a página inicial', () => {
     abrir('/qualquer-coisa')
 
-    expect(screen.getByRole('heading', { level: 1, name: /fechamento do seu mês/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /pra onde foi o seu dinheiro/i })).toBeInTheDocument()
   })
 })
 

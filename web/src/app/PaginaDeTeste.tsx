@@ -1,53 +1,86 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { GraficosDoPeriodo, MesesPorAbas, PainelDoMes } from '../modules/dashboard'
 import { AvisoDePrivacidade, EnvioDeExtrato, type ResumoDoExtrato } from '../modules/import'
 
+const SUAVE = [0.22, 1, 0.36, 1] as const
+
+// Cada bloco do resultado entra um depois do outro, de baixo para cima.
+const bloco = {
+  fora: { opacity: 0, y: 32 },
+  dentro: { opacity: 1, y: 0, transition: { duration: 0.5, ease: SUAVE } },
+}
+
 export function PaginaDeTeste() {
   const [resumo, setResumo] = useState<ResumoDoExtrato | null>(null)
+  const resultado = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (resumo) resultado.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  }, [resumo])
+
+  const meses = resumo?.meses.length ?? 0
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-12 px-6 pt-16 pb-24">
-      <motion.header
-        className="flex max-w-[60ch] flex-col gap-4"
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <h1 className="text-4xl leading-[1.1] font-bold tracking-[-0.02em] sm:text-5xl">Teste com o seu extrato</h1>
-        <p className="text-lg text-texto-suave">
-          Escolha o arquivo .ofx ou .csv exportado pelo Inter. O resultado aparece logo abaixo.
-        </p>
-        <AvisoDePrivacidade />
-      </motion.header>
+      <div className="grid gap-12 lg:grid-cols-12 lg:items-end">
+        <motion.header
+          className="flex flex-col gap-6 lg:col-span-6"
+          initial={{ opacity: 0, y: 32 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: SUAVE }}
+        >
+          <h1 className="text-5xl leading-[1.02] font-bold tracking-[-0.03em] sm:text-6xl">Solta o extrato aqui</h1>
+          <p className="max-w-[48ch] text-lg leading-relaxed text-texto-suave">
+            No app do Inter, vá em Extrato, escolha o período e exporte em OFX ou CSV. Depois é só largar o arquivo
+            ao lado.
+          </p>
+          <AvisoDePrivacidade />
+        </motion.header>
 
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <EnvioDeExtrato aoResumir={setResumo} />
-      </motion.div>
+        <motion.div
+          className="lg:col-span-6"
+          initial={{ opacity: 0, y: 32 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.15, ease: SUAVE }}
+        >
+          <EnvioDeExtrato aoResumir={setResumo} />
+        </motion.div>
+      </div>
 
       <AnimatePresence mode="wait">
         {resumo && (
           <motion.section
+            ref={resultado}
             key={JSON.stringify(resumo)}
             aria-label="Resultado"
-            className="flex flex-col gap-6"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
+            className="flex scroll-mt-24 flex-col gap-6"
+            initial="fora"
+            animate="dentro"
             exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ staggerChildren: 0.12 }}
           >
-            <p className="text-texto-suave">
-              {resumo.transacoesNovas} transações lidas
-              {resumo.duplicadas > 0 && `, ${resumo.duplicadas} duplicadas ignoradas`}.
-            </p>
-            {resumo.painel && <PainelDoMes painel={resumo.painel} />}
-            <GraficosDoPeriodo meses={resumo.meses} />
-            <h2 className="pt-6 text-2xl leading-tight font-bold tracking-[-0.02em] sm:text-3xl">Mês a mês</h2>
-            <MesesPorAbas meses={resumo.meses} transacoes={resumo.transacoes} />
+            <motion.div variants={bloco} className="flex flex-col gap-2 border-t border-borda pt-12">
+              <h2 className="text-4xl leading-[1.05] font-bold tracking-[-0.03em] sm:text-5xl">
+                {meses === 1 ? 'Aqui está o seu mês' : `Aqui estão os seus ${meses} meses`}
+              </h2>
+              <p className="text-texto-suave">
+                {resumo.transacoesNovas} transações lidas
+                {resumo.duplicadas > 0 && `, ${resumo.duplicadas} repetidas deixadas de fora`}.
+              </p>
+            </motion.div>
+            {resumo.painel && (
+              <motion.div variants={bloco}>
+                <PainelDoMes painel={resumo.painel} />
+              </motion.div>
+            )}
+            <motion.div variants={bloco}>
+              <GraficosDoPeriodo meses={resumo.meses} />
+            </motion.div>
+            <motion.div variants={bloco} className="flex flex-col gap-6">
+              <h2 className="pt-6 text-2xl leading-tight font-bold tracking-[-0.02em] sm:text-3xl">Mês a mês</h2>
+              <MesesPorAbas meses={resumo.meses} transacoes={resumo.transacoes} />
+            </motion.div>
           </motion.section>
         )}
       </AnimatePresence>

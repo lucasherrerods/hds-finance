@@ -1,25 +1,54 @@
 import { ArrowRight } from 'lucide-react'
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
+import { useRef } from 'react'
 import { Link } from 'react-router'
-import { Revelar } from '../../shared'
 
+const LinkAnimado = motion.create(Link)
+
+/** O convite final: um bloco que abre com a rolagem, e o próprio título é o botão. */
 export function ChamadaFinal() {
+  const ref = useRef<HTMLDivElement>(null)
+  const parado = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'center center'] })
+  const progresso = useSpring(scrollYProgress, { stiffness: 140, damping: 30 })
+  const recuo = useTransform(progresso, [0, 1], [12, 0], { clamp: true })
+  const clipPath = useTransform(recuo, (r) => `inset(${r}% ${r}% ${r}% ${r}% round 24px)`)
+  const escala = useTransform(progresso, [0, 1], [0.9, 1], { clamp: true })
+
   return (
-    <section className="mx-auto max-w-6xl px-6 py-24">
-      <Revelar className="flex flex-col items-start gap-6 rounded-3xl bg-primaria-suave p-8 sm:p-12">
-        <h2 className="max-w-[24ch] text-3xl leading-tight font-bold tracking-[-0.02em] sm:text-4xl">
-          Pronto para ver o seu mês?
-        </h2>
-        <p className="max-w-[60ch] text-lg text-texto-suave">
-          Leva menos de um minuto: exporte o extrato no app do Inter e envie o arquivo.
-        </p>
-        <Link
-          to="/testar"
-          className="group flex items-center gap-2 rounded-lg bg-primaria px-6 py-3 font-medium text-primaria-texto transition-transform hover:-translate-y-0.5"
-        >
-          Testar com meu extrato
-          <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
-        </Link>
-      </Revelar>
+    <section className="px-6 py-24">
+      <motion.div
+        ref={ref}
+        className="mx-auto max-w-6xl bg-primaria text-primaria-texto"
+        style={parado ? { clipPath: 'inset(0 round 24px)' } : { clipPath, scale: escala }}
+      >
+        <div className="flex flex-col gap-12 px-8 py-16 md:px-12 md:py-20">
+          <p className="max-w-[40ch] text-lg">
+            O extrato já está no app do banco. Exportar leva um minuto, ler leva menos.
+          </p>
+          <LinkAnimado
+            to="/testar"
+            initial="parado"
+            whileHover="mirando"
+            className="flex flex-col items-start gap-6 sm:flex-row sm:items-end sm:justify-between"
+          >
+            <h2 className="text-[clamp(3rem,11vw,8rem)] leading-[0.9] font-bold tracking-[-0.04em]">
+              Ver o meu
+              <br />
+              mês
+            </h2>
+            <motion.span
+              variants={{ parado: { x: 0, rotate: 0 }, mirando: { x: 12, rotate: -45 } }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              className="grid size-16 shrink-0 place-items-center rounded-2xl bg-primaria-texto text-primaria sm:mb-2 md:size-24"
+            >
+              <ArrowRight aria-hidden className="size-8 md:size-10" />
+            </motion.span>
+            <span className="sr-only">Testar com meu extrato</span>
+          </LinkAnimado>
+          <p className="border-t border-primaria-texto/30 pt-6">Grátis · sem cadastro · nada fica guardado</p>
+        </div>
+      </motion.div>
     </section>
   )
 }

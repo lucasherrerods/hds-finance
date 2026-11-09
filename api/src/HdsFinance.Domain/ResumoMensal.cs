@@ -19,8 +19,14 @@ public sealed record ResumoMensal(
 
     public IReadOnlyList<GastoPorCategoria> GastosPorCategoria { get; init; } = [];
 
+    public PosicaoDeInvestimento Investimentos { get; init; } = PosicaoDeInvestimento.Zerada;
+
     public static ResumoMensal Calcular(
-        MesDeReferencia mes, decimal? saldoInicial, IEnumerable<Transacao> transacoes, Categorizador? categorizador = null)
+        MesDeReferencia mes,
+        decimal? saldoInicial,
+        IEnumerable<Transacao> transacoes,
+        Categorizador? categorizador = null,
+        decimal investidoAntes = 0m)
     {
         var doMes = transacoes.Where(t => mes.Contem(t.Data)).ToList();
         var fluxo = doMes.Where(t => t.ContaNoFluxoDeCaixa).ToList();
@@ -35,7 +41,11 @@ public sealed record ResumoMensal(
             .OrderByDescending(g => g.Valor)
             .ToList();
 
-        return new ResumoMensal(mes, saldoInicial, entradas, saidas, internas) { GastosPorCategoria = gastos };
+        return new ResumoMensal(mes, saldoInicial, entradas, saidas, internas)
+        {
+            GastosPorCategoria = gastos,
+            Investimentos = PosicaoDeInvestimento.Do(doMes, investidoAntes),
+        };
     }
 
     /// <summary>
@@ -54,7 +64,7 @@ public sealed record ResumoMensal(
             .Distinct()
             .OrderBy(m => m.Ano).ThenBy(m => m.Mes))
         {
-            var resumo = Calcular(mes, saldo, lista, categorizador);
+            var resumo = Calcular(mes, saldo, lista, categorizador, resumos.LastOrDefault()?.Investimentos.AplicadoAcumulado ?? 0m);
             resumos.Add(resumo);
             saldo = resumo.SaldoFinal;
         }

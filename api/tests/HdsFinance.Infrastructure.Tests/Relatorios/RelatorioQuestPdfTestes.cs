@@ -12,6 +12,7 @@ public class RelatorioQuestPdfTestes
         new ResumoMensal(new MesDeReferencia(2026, mes), saldoInicial, 3500m, 1234.56m, -1000m)
         {
             GastosPorCategoria = [new GastoPorCategoria("Alimentação", 800m), new GastoPorCategoria("Transporte", 434.56m)],
+            Investimentos = new PosicaoDeInvestimento(1000m, 0m, 1000m * mes),
         };
 
     private static bool EhPdf(byte[] bytes) => Encoding.ASCII.GetString(bytes, 0, 5) == "%PDF-";

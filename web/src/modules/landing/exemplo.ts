@@ -25,6 +25,9 @@ export const mesesDeExemplo: ResumoMensal[] = [
   },
 ]
 
+// O acumulado de cada mês soma o que foi aplicado até ele, como a api faz.
+mesesDeExemplo.reduce((acumulado, m) => (m.investimentos.aplicadoAcumulado = acumulado + m.investimentos.aplicado), 0)
+
 export const mesDeExemplo = mesesDeExemplo[mesesDeExemplo.length - 1]
 
 function mes(
@@ -46,6 +49,7 @@ function mes(
     saldoInicial,
     saldoFinal,
     gastosPorCategoria: [],
+    investimentos: { aplicado: -investimentosETransferencias, resgatado: 0, aplicadoAcumulado: 0 },
   }
 }
 

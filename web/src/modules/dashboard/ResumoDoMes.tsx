@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Equal, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Equal, PiggyBank, Sigma, Undo2, Wallet, type LucideIcon } from 'lucide-react'
 import { formatarMes, formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal } from '../import'
 import { GastosPorCategoria } from './GastosPorCategoria'
@@ -30,8 +30,26 @@ export function ResumoDoMes({ mes }: Props) {
         />
         <Valor rotulo="Saldo" icone={Wallet} texto={saldo} cor="text-texto" />
       </div>
+      <Investimentos mes={mes} />
       <GastosPorCategoria gastos={mes.gastosPorCategoria} totalDeSaidas={mes.saidas} />
     </section>
+  )
+}
+
+function Investimentos({ mes }: Props) {
+  const { aplicado, resgatado, aplicadoAcumulado } = mes.investimentos
+  if (aplicado === 0 && resgatado === 0 && aplicadoAcumulado === 0) return null
+
+  return (
+    <div className="flex flex-col gap-4">
+      <h3 className="text-sm font-medium tracking-wider text-texto-suave uppercase">Investimentos</h3>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Valor rotulo="Aplicado no mês" icone={PiggyBank} texto={formatarMoeda(aplicado)} cor="text-texto" />
+        <Valor rotulo="Resgatado no mês" icone={Undo2} texto={formatarMoeda(resgatado)} cor="text-texto" />
+        <Valor rotulo="Aplicado no período" icone={Sigma} texto={formatarMoeda(aplicadoAcumulado)} cor="text-texto" />
+      </div>
+      <p className="text-sm text-texto-suave">Valores sem rendimentos: o extrato da conta só mostra o que saiu e o que voltou.</p>
+    </div>
   )
 }
 

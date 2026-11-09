@@ -14,6 +14,7 @@ function mes(numero: number, parcial: Partial<ResumoMensal> = {}): ResumoMensal 
     saldoInicial: 0,
     saldoFinal: 1800,
     gastosPorCategoria: [],
+    investimentos: { aplicado: 0, resgatado: 0, aplicadoAcumulado: 0 },
     ...parcial,
   }
 }

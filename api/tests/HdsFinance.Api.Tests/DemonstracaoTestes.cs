@@ -133,6 +133,24 @@ public class DemonstracaoPainelTestes(WebApplicationFactory<Program> fabrica) : 
     }
 }
 
+public class DemonstracaoInvestimentosTestes(WebApplicationFactory<Program> fabrica) : IClassFixture<WebApplicationFactory<Program>>
+{
+    [Fact]
+    public async Task Devolve_o_que_foi_aplicado_e_resgatado_no_mes()
+    {
+        var arquivo = new ByteArrayContent(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "samples", "inter-extrato.ofx")));
+
+        var resposta = await fabrica.CreateClient()
+            .PostAsync("/demonstracao/resumo", new MultipartFormDataContent { { arquivo, "arquivo", "extrato.ofx" } });
+
+        using var json = System.Text.Json.JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        var investimentos = json.RootElement.GetProperty("meses")[0].GetProperty("investimentos");
+        investimentos.GetProperty("aplicado").GetDecimal().Should().Be(1000m);
+        investimentos.GetProperty("resgatado").GetDecimal().Should().Be(0m);
+        investimentos.GetProperty("aplicadoAcumulado").GetDecimal().Should().Be(1000m);
+    }
+}
+
 public class DemonstracaoTransacoesTestes(WebApplicationFactory<Program> fabrica) : IClassFixture<WebApplicationFactory<Program>>
 {
     [Fact]

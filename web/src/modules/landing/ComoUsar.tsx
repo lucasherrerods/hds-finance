@@ -1,48 +1,42 @@
 import { BarChart3, Download, Upload, type LucideIcon } from 'lucide-react'
-import { Revelar } from '../../shared'
-import { Secao } from './Secao'
+import { AbreNaRolagem, Revelar } from '../../shared'
 
 const passos: { icone: LucideIcon; titulo: string; texto: string }[] = [
-  {
-    icone: Download,
-    titulo: 'Exporte o extrato',
-    texto: 'No app ou no site do Inter, abra o extrato da conta, escolha o período e exporte em OFX ou CSV.',
-  },
-  {
-    icone: Upload,
-    titulo: 'Envie o arquivo aqui',
-    texto: 'O arquivo é lido em memória, aplicações e transferências são separadas e as duplicadas são ignoradas.',
-  },
-  {
-    icone: BarChart3,
-    titulo: 'Veja o fechamento',
-    texto: 'Entradas, saídas e o resultado de cada mês, prontos para conferir.',
-  },
+  { icone: Download, titulo: 'Exporta', texto: 'No app do Inter: Extrato, escolhe o período e exporta em OFX ou CSV.' },
+  { icone: Upload, titulo: 'Solta aqui', texto: 'O arquivo é lido na hora e esquecido logo depois.' },
+  { icone: BarChart3, titulo: 'Confere', texto: 'Quanto entrou, quanto saiu, quanto sobrou. E onde foi parar o resto.' },
 ]
 
+/** Título ao lado da frase e, embaixo, o bloco dos passos que abre conforme a página desce. */
 export function ComoUsar() {
   return (
-    <Secao id="como-usar" titulo="Como usar" descricao="Três passos, sem cadastro e sem senha do banco.">
-      <ol className="grid gap-6 md:grid-cols-3">
-        {passos.map((passo, indice) => (
-          <li key={passo.titulo}>
-            <Revelar atraso={indice * 0.1} className="h-full">
-              <div className="flex h-full flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao transition-transform duration-300 hover:-translate-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="flex size-12 items-center justify-center rounded-xl bg-primaria-suave text-primaria">
-                    <passo.icone aria-hidden className="size-6" />
-                  </span>
-                  <span aria-hidden className="text-4xl font-bold text-texto-suave/30 tabular-nums">
-                    {indice + 1}
-                  </span>
-                </div>
-                <h3 className="text-xl font-semibold tracking-tight">{passo.titulo}</h3>
-                <p className="text-texto-suave">{passo.texto}</p>
-              </div>
-            </Revelar>
-          </li>
-        ))}
-      </ol>
-    </Secao>
+    <section id="como-usar" aria-labelledby="como-usar-titulo" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-24">
+      <Revelar className="mb-12 flex flex-wrap items-end justify-between gap-6">
+        <h2 id="como-usar-titulo" className="text-5xl leading-[0.95] font-bold tracking-[-0.03em] sm:text-6xl md:text-7xl">
+          Como usar
+        </h2>
+        <p className="max-w-[40ch] text-lg leading-relaxed text-texto-suave">
+          Três passos, um minuto. Sem cadastro, sem senha do banco e sem planilha.
+        </p>
+      </Revelar>
+      <AbreNaRolagem className="bg-superficie">
+        <ol className="grid gap-12 p-8 md:grid-cols-3 md:gap-8 md:p-12">
+          {passos.map((passo, indice) => (
+            <li key={passo.titulo} className="flex flex-col gap-4">
+              <span className="flex items-center justify-between">
+                <span className="grid size-12 place-items-center rounded-xl bg-primaria-suave text-primaria">
+                  <passo.icone aria-hidden className="size-6" />
+                </span>
+                <span aria-hidden className="text-lg text-texto-suave tabular-nums">
+                  {String(indice + 1).padStart(2, '0')}
+                </span>
+              </span>
+              <h3 className="text-3xl font-bold tracking-[-0.02em]">{passo.titulo}</h3>
+              <p className="leading-relaxed text-texto-suave">{passo.texto}</p>
+            </li>
+          ))}
+        </ol>
+      </AbreNaRolagem>
+    </section>
   )
 }

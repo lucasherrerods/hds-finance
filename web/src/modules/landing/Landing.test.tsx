@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
-import { Cabecalho as CabecalhoSemRota, ComoUsar, ExemploDeResultado, Inicio as InicioSemRota, Privacidade } from '.'
+import { Cabecalho as CabecalhoSemRota, ComoUsar, ExemploDeResultado, Inicio as InicioSemRota, Privacidade, Rodape } from '.'
 
 const Cabecalho = () => (
   <MemoryRouter>
@@ -51,7 +51,7 @@ describe('landing', () => {
     render(<ExemploDeResultado />)
 
     expect(screen.getByText(/dados fictícios/i)).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Entradas' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Destaque do mês' })).toBeInTheDocument()
   })
 
   it('a seção de privacidade avisa que nada é armazenado', () => {
@@ -62,12 +62,13 @@ describe('landing', () => {
   })
 })
 
-describe('exemplo de resultado', () => {
-  it('mostra o saldo e os investimentos do mês fictício', () => {
-    render(<ExemploDeResultado />)
+describe('rodapé', () => {
+  it('leva ao repositório e ao perfil do autor e mostra o copyright', () => {
+    render(<Rodape />)
 
-    expect(screen.getByRole('group', { name: 'Saldo' })).toHaveTextContent('R$ 3.593,15 → R$ 4.695,35')
-    expect(screen.getByRole('group', { name: 'Investimentos e transferências' })).toHaveTextContent('−R$ 2.000,00')
+    expect(screen.getByRole('link', { name: /github/i })).toHaveAttribute('href', 'https://github.com/lucasherrerods/hds-finance')
+    expect(screen.getByRole('link', { name: /linkedin/i })).toHaveAttribute('href', 'https://www.linkedin.com/in/lucasherrero/')
+    expect(screen.getByText(/© 2026 hds finance/i)).toBeInTheDocument()
   })
 })
 
@@ -75,16 +76,17 @@ describe('exemplo com gráficos', () => {
   beforeAll(async () => {
     // Os gráficos carregam sob demanda. Carregar os módulos antes evita que o teste dependa
     // do tempo do primeiro import do Recharts, que com a suíte inteira às vezes passava de 5 s.
-    await Promise.all([import('../dashboard/GraficosDoPeriodo'), import('../dashboard/RitmoDeGastos')])
+    await import('../dashboard/RitmoDeGastos')
   })
 
-  it('mostra o painel e a evolução dos meses fictícios', async () => {
+  it('mostra só o painel do mês fictício, sem o período nem as transações', async () => {
     render(<ExemploDeResultado />)
 
     expect(screen.getByRole('region', { name: 'Destaque do mês' })).toHaveTextContent('Sem categoria subiu 24%')
     expect(screen.getByRole('table', { name: 'Principais categorias' })).toBeInTheDocument()
-    expect(await screen.findByRole('table', { name: 'Entradas e saídas por mês' })).toBeInTheDocument()
     expect(await screen.findByRole('table', { name: 'Gasto acumulado por dia' })).toBeInTheDocument()
-    expect(screen.queryByRole('table', { name: 'Saldo no fim de cada mês' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Entradas e saídas por mês' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Transações' })).not.toBeInTheDocument()
   })
 })

@@ -24,7 +24,7 @@ export function Cabecalho() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
           <Wallet aria-hidden className="size-5 text-primaria" />
-          hds-finance
+          hds finance
         </Link>
 
         <nav aria-label="Seções" className="hidden items-center gap-8 md:flex">

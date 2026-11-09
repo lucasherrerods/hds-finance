@@ -37,4 +37,15 @@ describe('EnvioDeExtrato', () => {
 
     expect(screen.getByRole('button', { name: /ver resumo/i })).toBeDisabled()
   })
+
+  it('aceita o arquivo arrastado e mostra o nome dele', () => {
+    render(<EnvioDeExtrato aoResumir={vi.fn()} />)
+
+    fireEvent.drop(screen.getByTestId('area-do-arquivo'), {
+      dataTransfer: { files: [new File(['x'], 'outubro.ofx')] },
+    })
+
+    expect(screen.getByText('outubro.ofx')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /ver resumo/i })).toBeEnabled()
+  })
 })

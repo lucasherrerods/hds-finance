@@ -102,4 +102,3 @@ export const painelDeExemplo: Painel = {
 }
 
 /** Lista do mês de exemplo, a mesma que aparece nas transações recentes do painel. */
-export const transacoesDeExemplo = painelDeExemplo.transacoesRecentes

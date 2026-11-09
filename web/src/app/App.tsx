@@ -1,23 +1,43 @@
 import { useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import { PaginaDoHistorico } from '../modules/history'
 import { Cabecalho, Rodape } from '../modules/landing'
 import { emModoPessoal } from '../shared'
+import { LayoutDoDashboard } from './dashboard/LayoutDoDashboard'
+import { Evolucao, Investimentos, Relatorio, Transacoes, VisaoGeral } from './dashboard/Secoes'
 import { PaginaDeTeste } from './PaginaDeTeste'
 import { PaginaInicial } from './PaginaInicial'
+import { ProvedorDoResultado } from './resultado'
 
 export function App() {
   return (
-    <>
+    <ProvedorDoResultado>
       <RolarAoTrocarDePagina />
-      <Cabecalho />
-      <main>
-        <Routes>
+      <Routes>
+        <Route element={<LayoutDoSite />}>
           <Route path="/" element={<PaginaInicial />} />
           <Route path="/testar" element={<PaginaDeTeste />} />
           {emModoPessoal() && <Route path="/historico" element={<PaginaDoHistorico />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        </Route>
+        <Route path="/dashboard" element={<LayoutDoDashboard />}>
+          <Route index element={<VisaoGeral />} />
+          <Route path="evolucao" element={<Evolucao />} />
+          <Route path="transacoes" element={<Transacoes />} />
+          <Route path="investimentos" element={<Investimentos />} />
+          <Route path="relatorio" element={<Relatorio />} />
+        </Route>
+      </Routes>
+    </ProvedorDoResultado>
+  )
+}
+
+function LayoutDoSite() {
+  return (
+    <>
+      <Cabecalho />
+      <main>
+        <Outlet />
       </main>
       <Rodape />
     </>

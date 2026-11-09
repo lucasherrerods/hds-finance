@@ -26,17 +26,12 @@ export function Cabecalho() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {emModoPessoal() && (
-            <Link to="/historico" className="rounded-lg px-4 py-2 font-medium text-texto-suave transition-colors hover:text-texto">
-              Histórico
-            </Link>
-          )}
           <BotaoDeTema />
           <Link
-            to="/testar"
+            to={emModoPessoal() ? '/dashboard' : '/testar'}
             className="rounded-lg bg-primaria px-4 py-2 font-medium text-primaria-texto transition-transform hover:-translate-y-0.5"
           >
-            Testar
+            {emModoPessoal() ? 'Ver dashboard' : 'Testar'}
           </Link>
         </div>
       </div>

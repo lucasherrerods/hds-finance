@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
-import { PaginaDoHistorico } from '../modules/history'
 import { Cabecalho, Rodape } from '../modules/landing'
 import { emModoPessoal } from '../shared'
 import { LayoutDoDashboard } from './dashboard/LayoutDoDashboard'
@@ -16,8 +15,8 @@ export function App() {
       <Routes>
         <Route element={<LayoutDoSite />}>
           <Route path="/" element={<PaginaInicial />} />
-          <Route path="/testar" element={<PaginaDeTeste />} />
-          {emModoPessoal() && <Route path="/historico" element={<PaginaDoHistorico />} />}
+          {/* No modo pessoal o histórico já está guardado: o caminho de envio é o "Adicionar extrato" do dashboard. */}
+          <Route path="/testar" element={emModoPessoal() ? <Navigate to="/dashboard" replace /> : <PaginaDeTeste />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
         <Route path="/dashboard" element={<LayoutDoDashboard />}>

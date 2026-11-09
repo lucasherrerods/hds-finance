@@ -1,5 +1,7 @@
 using HdsFinance.Api.Demonstracao;
 using HdsFinance.Application.Extratos;
+using HdsFinance.Application.Relatorios;
+using HdsFinance.Infrastructure.Relatorios;
 using HdsFinance.Domain;
 using HdsFinance.Infrastructure.Extratos;
 using HdsFinance.Infrastructure.Repositorios;
@@ -22,6 +24,9 @@ builder.Services.AddSingleton(regras is { Count: > 0 } ? new Categorizador(regra
 builder.Services.AddScoped<IRepositorioDeTransacoes, RepositorioEmMemoria>();
 builder.Services.AddScoped<ImportarExtrato>();
 builder.Services.AddScoped<ResumirExtrato>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IGeradorDeRelatorio, RelatorioQuestPdf>();
+builder.Services.AddSingleton<GerarRelatorio>();
 builder.Services.AdicionarDemonstracao(builder.Configuration);
 
 var app = builder.Build();

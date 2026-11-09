@@ -1,7 +1,7 @@
 import { Info } from 'lucide-react'
 import { Revelar } from '../../shared'
-import { GraficosDoPeriodo, PainelDoMes, ResumoDoMes } from '../dashboard'
-import { mesDeExemplo, mesesDeExemplo, painelDeExemplo } from './exemplo'
+import { GraficosDoPeriodo, MesesPorAbas, PainelDoMes } from '../dashboard'
+import { mesesDeExemplo, painelDeExemplo, transacoesDeExemplo } from './exemplo'
 import { Secao } from './Secao'
 
 export function ExemploDeResultado() {
@@ -9,7 +9,7 @@ export function ExemploDeResultado() {
     <Secao
       id="exemplo"
       titulo="Exemplo de resultado"
-      descricao="É isto que aparece depois de enviar o extrato: o painel do mês, a evolução do período e o fechamento."
+      descricao="É isto que aparece depois de enviar o extrato: o painel do mês, a evolução do período e o fechamento de cada mês com as transações."
     >
       <div className="flex flex-col gap-6">
         <Revelar>
@@ -23,7 +23,7 @@ export function ExemploDeResultado() {
           <GraficosDoPeriodo meses={mesesDeExemplo} />
         </Revelar>
         <Revelar>
-          <ResumoDoMes mes={mesDeExemplo} />
+          <MesesPorAbas meses={mesesDeExemplo} transacoes={transacoesDeExemplo} />
         </Revelar>
       </div>
     </Secao>

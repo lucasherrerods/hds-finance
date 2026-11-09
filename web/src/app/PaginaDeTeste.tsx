@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
-import { GraficosDoPeriodo, PainelDoMes, ResumoDoMes } from '../modules/dashboard'
+import { GraficosDoPeriodo, MesesPorAbas, PainelDoMes } from '../modules/dashboard'
 import { AvisoDePrivacidade, EnvioDeExtrato, type ResumoDoExtrato } from '../modules/import'
 
 export function PaginaDeTeste() {
@@ -46,16 +46,8 @@ export function PaginaDeTeste() {
             </p>
             {resumo.painel && <PainelDoMes painel={resumo.painel} />}
             <GraficosDoPeriodo meses={resumo.meses} />
-            {resumo.meses.map((mes, indice) => (
-              <motion.div
-                key={`${mes.ano}-${mes.mes}`}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * indice }}
-              >
-                <ResumoDoMes mes={mes} />
-              </motion.div>
-            ))}
+            <h2 className="pt-6 text-2xl leading-tight font-bold tracking-[-0.02em] sm:text-3xl">Mês a mês</h2>
+            <MesesPorAbas meses={resumo.meses} transacoes={resumo.transacoes} />
           </motion.section>
         )}
       </AnimatePresence>

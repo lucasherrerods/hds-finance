@@ -109,3 +109,26 @@ public class ResumirExtratoPainelTestes
         painel.GastoNoMes.Should().Be(80m);
     }
 }
+
+public class ResumirExtratoTransacoesTestes
+{
+    [Fact]
+    public async Task Devolve_todas_as_transacoes_categorizadas()
+    {
+        var outubro = new Transacao(new DateOnly(2026, 10, 3), -80m, "Mercado", TipoDeTransacao.Comum);
+        var novembro = new Transacao(new DateOnly(2026, 11, 3), 500m, "Pix recebido", TipoDeTransacao.Comum);
+        var leitor = Substitute.For<ILeitorDeExtrato>();
+        leitor.Formato.Returns(FormatoDeExtrato.Csv);
+        leitor.LerAsync(Arg.Any<Stream>(), Arg.Any<CancellationToken>()).Returns(new ResultadoDaLeitura.Sucesso([outubro, novembro]));
+        var repositorio = Substitute.For<IRepositorioDeTransacoes>();
+        repositorio.ChavesExistentesAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>()).Returns(new HashSet<string>());
+        repositorio.ListarAsync(Arg.Any<CancellationToken>()).Returns([outubro, novembro]);
+
+        var resultado = await new ResumirExtrato(new ImportarExtrato([leitor], repositorio), repositorio)
+            .ExecutarAsync(Stream.Null, FormatoDeExtrato.Csv);
+
+        ((ResultadoDoResumo.Resumido)resultado).Transacoes.Select(t => (t.Data.Month, t.Categoria)).Should().Equal(
+            (11, TransacaoCategorizada.CategoriaDeEntrada),
+            (10, "Alimentação"));
+    }
+}

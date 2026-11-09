@@ -8,8 +8,6 @@ public sealed record GastoDoDia(int Dia, DayOfWeek DiaDaSemana, int Semana, deci
 
 public sealed record CategoriaComparada(string Categoria, decimal Atual, decimal? Anterior, decimal? VariacaoPercentual);
 
-public sealed record TransacaoDoPainel(DateOnly Data, string Descricao, string Categoria, decimal Valor);
-
 /// <summary>
 /// Visão do último mês do extrato, comparada com o mês anterior quando ele também está no extrato.
 /// Gasto aqui é só despesa: investimentos e transferências entre contas próprias ficam de fora.
@@ -24,11 +22,8 @@ public sealed record PainelDoMes(
     IReadOnlyList<PontoDoRitmo> Ritmo,
     IReadOnlyList<GastoDoDia> MapaDeCalor,
     IReadOnlyList<CategoriaComparada> PrincipaisCategorias,
-    IReadOnlyList<TransacaoDoPainel> TransacoesRecentes)
+    IReadOnlyList<TransacaoCategorizada> TransacoesRecentes)
 {
-    public const string CategoriaDeEntrada = "Entrada";
-    public const string CategoriaDeMovimentacaoInterna = "Investimentos e transferências";
-
     private const int LimiteDeCategorias = 5;
     private const int LimiteDeTransacoes = 10;
 
@@ -75,11 +70,7 @@ public sealed record PainelDoMes(
             CalcularRitmo(gastos, gastosAnteriores, temAnterior, diasNoMes, ultimoDiaComMovimento),
             mapa,
             CompararCategorias(gastos, gastosAnteriores, temAnterior, categorizador),
-            doMes
-                .OrderByDescending(t => t.Data)
-                .Take(LimiteDeTransacoes)
-                .Select(t => new TransacaoDoPainel(t.Data, t.Descricao, CategoriaDe(t, categorizador), t.Valor))
-                .ToList());
+            TransacaoCategorizada.Listar(doMes, categorizador).Take(LimiteDeTransacoes).ToList());
     }
 
     private static List<Transacao> Gastos(IEnumerable<Transacao> transacoes) =>
@@ -120,9 +111,4 @@ public sealed record PainelDoMes(
             .Take(LimiteDeCategorias)
             .ToList();
     }
-
-    private static string CategoriaDe(Transacao transacao, Categorizador categorizador) =>
-        !transacao.ContaNoFluxoDeCaixa ? CategoriaDeMovimentacaoInterna
-        : transacao.Valor > 0 ? CategoriaDeEntrada
-        : categorizador.Categorizar(transacao);
 }

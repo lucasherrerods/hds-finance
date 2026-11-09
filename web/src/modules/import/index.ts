@@ -8,5 +8,5 @@ export type {
   PontoDoRitmo,
   ResumoDoExtrato,
   ResumoMensal,
-  TransacaoDoPainel,
+  TransacaoCategorizada,
 } from './api'

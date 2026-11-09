@@ -59,7 +59,17 @@ public sealed class LeitorCsvInter : ILeitorDeExtrato
 
         return transacoes.Count == 0
             ? new ResultadoDaLeitura.Falha(cabecalho + 1, "Nenhuma transação encontrada no CSV.")
-            : new ResultadoDaLeitura.Sucesso(transacoes, SaldoFinal(transacoes, saldos));
+            : new ResultadoDaLeitura.Sucesso(transacoes, SaldoFinal(transacoes, saldos), FimDoPeriodo(linhas[..cabecalho]));
+    }
+
+    // O resumo antes da tabela traz "Período ;01/10/2026 a 31/10/2026".
+    private static DateOnly? FimDoPeriodo(IEnumerable<string> resumo)
+    {
+        var periodo = resumo.FirstOrDefault(l => l.StartsWith("Período", StringComparison.OrdinalIgnoreCase));
+        var fim = periodo?.Split(" a ", StringSplitOptions.TrimEntries).LastOrDefault();
+        return fim is not null && DateOnly.TryParseExact(fim, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dia)
+            ? dia
+            : null;
     }
 
     // Cada linha traz o saldo depois dela. A ordem do arquivo (crescente ou decrescente)

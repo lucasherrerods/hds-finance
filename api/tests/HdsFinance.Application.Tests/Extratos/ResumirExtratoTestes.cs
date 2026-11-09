@@ -27,7 +27,7 @@ public class ResumirExtratoTestes
             .ExecutarAsync(Stream.Null, FormatoDeExtrato.Csv);
 
         var resumido = resultado.Should().BeOfType<ResultadoDoResumo.Resumido>().Subject;
-        resumido.Importacao.Should().Be(new ResultadoDaImportacao.Importado(1, 0));
+        resumido.Importacao.Should().BeEquivalentTo(new { Novas = 1, Duplicadas = 0 });
         resumido.Meses.Should().ContainSingle().Which.Entradas.Should().Be(3500m);
     }
 

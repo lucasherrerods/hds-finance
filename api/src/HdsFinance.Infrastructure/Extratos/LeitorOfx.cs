@@ -49,7 +49,7 @@ public sealed partial class LeitorOfx : ILeitorDeExtrato
             transacoes.Add(new Transacao(dia, valor, descricao, TipoDeTransacao.Comum, id));
         }
 
-        return new ResultadoDaLeitura.Sucesso(transacoes, SaldoFinal(texto));
+        return new ResultadoDaLeitura.Sucesso(transacoes, SaldoFinal(texto), FimDoPeriodo(texto));
     }
 
     [GeneratedRegex(@"<STMTTRN>(.*?)</STMTTRN>", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
@@ -63,6 +63,15 @@ public sealed partial class LeitorOfx : ILeitorDeExtrato
         decimal.TryParse(saldo.Groups[1].Value.Trim().Replace(',', '.'), NumberStyles.Number | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var valor)
             ? valor
             : null;
+
+    private static DateOnly? FimDoPeriodo(string texto) =>
+        FimDaLista().Match(texto) is { Success: true } fim &&
+        DateOnly.TryParseExact(fim.Groups[1].Value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dia)
+            ? dia
+            : null;
+
+    [GeneratedRegex(@"<DTEND>\s*(\d{8})", RegexOptions.IgnoreCase)]
+    private static partial Regex FimDaLista();
 
     [GeneratedRegex(@"<LEDGERBAL>.*?<BALAMT>([^<\r\n]*)", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
     private static partial Regex SaldoDoLedger();

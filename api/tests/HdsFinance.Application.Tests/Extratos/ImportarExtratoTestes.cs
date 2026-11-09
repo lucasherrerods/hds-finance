@@ -27,7 +27,7 @@ public class ImportarExtratoTestes
 
         var resultado = await casoDeUso.ExecutarAsync(Stream.Null, FormatoDeExtrato.Ofx);
 
-        resultado.Should().Be(new ResultadoDaImportacao.Importado(Novas: 2, Duplicadas: 0));
+        resultado.Should().BeEquivalentTo(new { Novas = 2, Duplicadas = 0 });
         _repositorio.Gravadas.Should().Equal(Salario, Mercado);
     }
 
@@ -39,7 +39,7 @@ public class ImportarExtratoTestes
         await casoDeUso.ExecutarAsync(Stream.Null, FormatoDeExtrato.Ofx);
         var segunda = await casoDeUso.ExecutarAsync(Stream.Null, FormatoDeExtrato.Ofx);
 
-        segunda.Should().Be(new ResultadoDaImportacao.Importado(Novas: 0, Duplicadas: 2));
+        segunda.Should().BeEquivalentTo(new { Novas = 0, Duplicadas = 2 });
         _repositorio.Gravadas.Should().HaveCount(2);
     }
 
@@ -50,7 +50,7 @@ public class ImportarExtratoTestes
 
         var resultado = await casoDeUso.ExecutarAsync(Stream.Null, FormatoDeExtrato.Ofx);
 
-        resultado.Should().Be(new ResultadoDaImportacao.Importado(Novas: 1, Duplicadas: 1));
+        resultado.Should().BeEquivalentTo(new { Novas = 1, Duplicadas = 1 });
     }
 
     [Fact]

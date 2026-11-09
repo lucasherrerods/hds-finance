@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Threading.RateLimiting;
 using HdsFinance.Application.Extratos;
 using HdsFinance.Application.Relatorios;
@@ -13,7 +12,7 @@ public static class RotasDaDemonstracao
     public const long TamanhoMaximoDoArquivo = 2 * 1024 * 1024;
     private const string PoliticaDeLimite = "demonstracao";
 
-    public static IServiceCollection AdicionarDemonstracao(this IServiceCollection services, IConfiguration configuracao)
+    public static IServiceCollection AdicionarLimitesDaDemonstracao(this IServiceCollection services, IConfiguration configuracao)
     {
         // O buffer em memória cobre o limite inteiro, então o upload nunca vira arquivo temporário em disco.
         services.Configure<FormOptions>(o =>
@@ -60,15 +59,10 @@ public static class RotasDaDemonstracao
     private static async Task<IResult> RelatorioAsync(
         HttpRequest requisicao, ResumirExtrato resumir, GerarRelatorio gerar, string? mes, CancellationToken cancelamento)
     {
-        MesDeReferencia? pedido = null;
-        if (mes is not null)
+        var pedido = mes is null ? null : MesDeReferencia.TentarLer(mes);
+        if (mes is not null && pedido is null)
         {
-            if (!DateOnly.TryParseExact(mes, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var data))
-            {
-                return RespostasHttp.MesInvalido();
-            }
-
-            pedido = new MesDeReferencia(data.Year, data.Month);
+            return RespostasHttp.MesInvalido();
         }
 
         var (arquivo, erro) = await LerArquivoAsync(requisicao, cancelamento);

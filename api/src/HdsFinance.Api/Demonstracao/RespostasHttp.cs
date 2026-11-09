@@ -21,7 +21,7 @@ public static class RespostasHttp
     public static IResult De(ResultadoDoRelatorio resultado) => resultado switch
     {
         ResultadoDoRelatorio.Gerado g => Results.File(
-            g.Pdf, "application/pdf", $"fechamento-{g.Mes.Ano:0000}-{g.Mes.Mes:00}.pdf"),
+            g.Pdf, "application/pdf", $"fechamento-{g.Mes}.pdf"),
         ResultadoDoRelatorio.MesSemDados => Results.Problem(
             title: "Mês sem dados",
             detail: "O extrato não tem transações no mês pedido.",

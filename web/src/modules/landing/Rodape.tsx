@@ -13,10 +13,12 @@ const links = [
   },
 ];
 
+const anoAtual = new Date().getFullYear();
+
 export function Rodape() {
   return (
     <footer className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-12 text-texto-suave sm:flex-row">
-      <span>© 2026 hds finance · cada centavo no seu lugar</span>
+      <span>© {anoAtual} hds finance · cada centavo no seu lugar</span>
       <nav aria-label="Links do autor" className="flex items-center gap-6">
         {links.map(({ href, rotulo, Icone }) => (
           <a

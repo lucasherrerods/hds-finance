@@ -17,7 +17,7 @@ public sealed class ClassificadorDeTipo
     public ClassificadorDeTipo(IEnumerable<string>? termosDeTransferenciaPropria = null)
     {
         _transferenciaPropria = TermosDeTransferenciaPropriaPadrao
-            .Concat((termosDeTransferenciaPropria ?? []).Select(TextoNormalizado.De))
+            .Concat((termosDeTransferenciaPropria ?? []).Select(TextoNormalizado.ParaComparar))
             .Where(t => t.Length > 0)
             .ToArray();
     }

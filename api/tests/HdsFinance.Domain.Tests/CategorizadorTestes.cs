@@ -42,4 +42,30 @@ public class CategorizadorTestes
         Categorizador.Padrao.Categorizar(Gasto("Pag*Ifood Restaurante")).Should().Be("Alimentação");
         Categorizador.Padrao.Categorizar(Gasto("Drogaria Exemplo")).Should().Be("Saúde");
     }
+
+    [Theory]
+    [InlineData("IFD*IFOOD SAO PAULO")]
+    [InlineData("PG *UBER TRIP")]
+    [InlineData("MERCADO.EXEMPLO-LTDA")]
+    public void Pontuacao_colada_nas_palavras_nao_atrapalha(string descricao)
+    {
+        Categorizador.Padrao.Categorizar(Gasto(descricao)).Should().NotBe(Categorizador.SemCategoria);
+    }
+
+    [Theory]
+    [InlineData("Compra no debito Netflix.com", "Assinaturas")]
+    [InlineData("Compra no debito Amazon Prime Video", "Assinaturas")]
+    [InlineData("MERCADOLIVRE*LOJAFICTICIA", "Compras")]
+    [InlineData("Compra no debito Assai Atacadista", "Alimentação")]
+    [InlineData("Pagamento efetuado Sabesp", "Moradia")]
+    [InlineData("Compra no debito Drogasil", "Saúde")]
+    [InlineData("Compra no debito Sympla Ingresso", "Lazer")]
+    [InlineData("Compra no debito Udemy Curso", "Educação")]
+    [InlineData("Compra no debito Petz Loja", "Pets")]
+    [InlineData("Tarifa IOF compra internacional", "Tarifas e impostos")]
+    [InlineData("Pagamento IPVA 2026", "Tarifas e impostos")]
+    public void As_regras_padrao_reconhecem_os_nomes_mais_comuns(string descricao, string esperada)
+    {
+        Categorizador.Padrao.Categorizar(Gasto(descricao)).Should().Be(esperada);
+    }
 }

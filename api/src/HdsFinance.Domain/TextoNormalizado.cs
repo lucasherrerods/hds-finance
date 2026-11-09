@@ -22,10 +22,27 @@ internal static class TextoNormalizado
         return string.Join(' ', palavras);
     }
 
-    /// <summary>Termos já normalizados, comparados como palavras inteiras.</summary>
-    public static bool ContemAlgum(string texto, IEnumerable<string> termosNormalizados)
+    /// <summary>
+    /// Para comparar com regras: além de normalizar, troca pontuação por espaço, para "IFD*IFOOD" e
+    /// "NETFLIX.COM" virarem palavras. Fica separado de <see cref="De"/> porque ele forma a chave de
+    /// deduplicação, que não pode mudar para transações já guardadas.
+    /// </summary>
+    public static string ParaComparar(string texto)
     {
-        var comBordas = $" {De(texto)} ";
-        return termosNormalizados.Any(t => comBordas.Contains($" {t} ", StringComparison.Ordinal));
+        var normalizado = De(texto);
+        var limpo = new StringBuilder(normalizado.Length);
+        foreach (var c in normalizado)
+        {
+            limpo.Append(char.IsLetterOrDigit(c) ? c : ' ');
+        }
+
+        return string.Join(' ', limpo.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    /// <summary>Termos já passados por <see cref="ParaComparar"/>, comparados como palavras inteiras.</summary>
+    public static bool ContemAlgum(string texto, IEnumerable<string> termos)
+    {
+        var comBordas = $" {ParaComparar(texto)} ";
+        return termos.Any(t => comBordas.Contains($" {t} ", StringComparison.Ordinal));
     }
 }

@@ -1,0 +1,1 @@
+export { PaginaDoHistorico } from './PaginaDoHistorico'

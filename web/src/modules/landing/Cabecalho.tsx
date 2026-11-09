@@ -1,7 +1,7 @@
 import { Moon, Sun, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { aplicarTema, salvarTema, temaAtual, type Tema } from '../../shared'
+import { aplicarTema, emModoPessoal, salvarTema, temaAtual, type Tema } from '../../shared'
 
 const secoes = [
   { href: '/#como-usar', rotulo: 'Como usar' },
@@ -36,6 +36,11 @@ export function Cabecalho() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {emModoPessoal() && (
+            <Link to="/historico" className="rounded-lg px-4 py-2 font-medium text-texto-suave transition-colors hover:text-texto">
+              Histórico
+            </Link>
+          )}
           <button
             type="button"
             onClick={alternarTema}

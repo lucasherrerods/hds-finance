@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
 
 function abrir(caminho: string) {
@@ -43,5 +43,29 @@ describe('âncoras', () => {
 
     expect(rolar).toHaveBeenCalled()
     expect(rolar.mock.contexts[0]).toBe(document.getElementById('exemplo'))
+  })
+})
+
+describe('modo pessoal', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('no modo pessoal, o histórico tem página e link no cabeçalho', async () => {
+    vi.stubEnv('VITE_MODO', 'pessoal')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ meses: [], painel: null, transacoes: [] }))))
+
+    abrir('/historico')
+
+    expect(await screen.findByRole('heading', { level: 1, name: /seu histórico/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Histórico' })).toHaveAttribute('href', '/historico')
+    vi.unstubAllGlobals()
+  })
+
+  it('na demonstração, o histórico não existe', () => {
+    vi.stubEnv('VITE_MODO', 'demonstracao')
+
+    abrir('/historico')
+
+    expect(screen.getByRole('heading', { level: 1, name: /pra onde foi o seu dinheiro/i })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Histórico' })).not.toBeInTheDocument()
   })
 })

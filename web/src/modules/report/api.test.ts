@@ -9,14 +9,16 @@ afterEach(() => {
 describe('baixarRelatorio', () => {
   it('envia o extrato para a rota do relatório e devolve o pdf', async () => {
     vi.stubEnv('VITE_URL_DA_API', 'http://api.test')
-    const pdf = new Blob(['%PDF-'], { type: 'application/pdf' })
-    const fetchFalso = vi.fn().mockResolvedValue(new Response(pdf, { status: 200 }))
+    // Corpo em texto: o Blob do jsdom não é aceito pelo Response do Node em todas as versões.
+    const resposta = new Response('%PDF-', { status: 200, headers: { 'Content-Type': 'application/pdf' } })
+    const fetchFalso = vi.fn().mockResolvedValue(resposta)
     vi.stubGlobal('fetch', fetchFalso)
     const arquivo = new File(['conteudo'], 'extrato.ofx')
 
     const resultado = await baixarRelatorio(arquivo, { ano: 2026, mes: 10 })
 
     expect(resultado.ok).toBe(true)
+    if (resultado.ok) expect(resultado.pdf.size).toBe(5)
     const [url, opcoes] = fetchFalso.mock.calls[0]
     expect(url).toBe('http://api.test/demonstracao/relatorio?mes=2026-10')
     expect((opcoes.body as FormData).get('arquivo')).toBe(arquivo)

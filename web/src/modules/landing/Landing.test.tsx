@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
-import { Cabecalho as CabecalhoSemRota, ComoUsar, ExemploDeResultado, Inicio as InicioSemRota, Privacidade } from '.'
+import { Cabecalho as CabecalhoSemRota, ComoUsar, ExemploDeResultado, Inicio as InicioSemRota, Privacidade, Rodape } from '.'
 
 const Cabecalho = () => (
   <MemoryRouter>
@@ -59,6 +59,16 @@ describe('landing', () => {
 
     expect(screen.getByRole('heading', { name: /privacidade/i })).toBeInTheDocument()
     expect(screen.getAllByText(/nada|nunca/i).length).toBeGreaterThan(0)
+  })
+})
+
+describe('rodapé', () => {
+  it('leva ao código e ao perfil do autor e mostra o copyright', () => {
+    render(<Rodape />)
+
+    expect(screen.getByRole('link', { name: /código no github/i })).toHaveAttribute('href', 'https://github.com/lucasherrerods/hds-finance')
+    expect(screen.getByRole('link', { name: /linkedin/i })).toHaveAttribute('href', 'https://www.linkedin.com/in/lucasherrero/')
+    expect(screen.getByText(/© 2026 hds finance/i)).toBeInTheDocument()
   })
 })
 

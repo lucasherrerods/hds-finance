@@ -1,7 +1,6 @@
-import { Moon, Sun, Wallet } from 'lucide-react'
-import { useState } from 'react'
+import { Wallet } from 'lucide-react'
 import { Link } from 'react-router'
-import { aplicarTema, emModoPessoal, salvarTema, temaAtual, type Tema } from '../../shared'
+import { BotaoDeTema, emModoPessoal } from '../../shared'
 
 const secoes = [
   { href: '/#como-usar', rotulo: 'Como usar' },
@@ -10,15 +9,6 @@ const secoes = [
 ]
 
 export function Cabecalho() {
-  const [tema, setTema] = useState<Tema>(temaAtual)
-  const proximo: Tema = tema === 'escuro' ? 'claro' : 'escuro'
-
-  function alternarTema() {
-    aplicarTema(proximo)
-    salvarTema(proximo)
-    setTema(proximo)
-  }
-
   return (
     <header className="sticky top-0 z-10 bg-fundo/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
@@ -41,14 +31,7 @@ export function Cabecalho() {
               Histórico
             </Link>
           )}
-          <button
-            type="button"
-            onClick={alternarTema}
-            aria-label={`Usar tema ${proximo}`}
-            className="rounded-lg p-2 text-texto-suave transition-colors hover:bg-superficie hover:text-texto"
-          >
-            {tema === 'escuro' ? <Sun aria-hidden className="size-5" /> : <Moon aria-hidden className="size-5" />}
-          </button>
+          <BotaoDeTema />
           <Link
             to="/testar"
             className="rounded-lg bg-primaria px-4 py-2 font-medium text-primaria-texto transition-transform hover:-translate-y-0.5"

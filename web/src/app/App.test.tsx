@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { mesesDeExemplo, painelDeExemplo } from '../modules/landing'
 import { App } from './App'
 
 function abrir(caminho: string) {
@@ -67,5 +68,63 @@ describe('modo pessoal', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: /pra onde foi o seu dinheiro/i })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Histórico' })).not.toBeInTheDocument()
+  })
+})
+
+describe('dashboard', () => {
+  const resumo = {
+    transacoesNovas: 3,
+    duplicadas: 0,
+    meses: mesesDeExemplo,
+    painel: painelDeExemplo,
+    transacoes: painelDeExemplo.transacoesRecentes,
+  }
+
+  async function verResumo() {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(resumo))))
+    abrir('/testar')
+    fireEvent.drop(screen.getByTestId('area-do-arquivo'), { dataTransfer: { files: [new File(['x'], 'outubro.ofx')] } })
+    fireEvent.click(screen.getByRole('button', { name: /ver resumo/i }))
+    return within(await screen.findByRole('navigation', { name: 'Seções do dashboard' }, { timeout: 5000 }))
+  }
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('sem extrato enviado, o dashboard volta para a página de envio', () => {
+    abrir('/dashboard')
+
+    expect(screen.getByRole('heading', { level: 1, name: /solta o extrato aqui/i })).toBeInTheDocument()
+  })
+
+  it('depois de ver o resumo, abre a visão geral com a sidebar', async () => {
+    const menu = await verResumo()
+
+    expect(menu.getByRole('link', { name: /visão geral/i })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('heading', { level: 1, name: /outubro de 2026/i })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Entrou' })).toBeInTheDocument()
+    expect(screen.getByText('outubro.ofx')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Como usar' })).not.toBeInTheDocument()
+  })
+
+  it('a sidebar leva a cada seção', async () => {
+    const menu = await verResumo()
+
+    fireEvent.click(menu.getByRole('link', { name: /transações/i }))
+    expect(await screen.findByRole('tablist', { name: 'Anos' })).toBeInTheDocument()
+
+    fireEvent.click(menu.getByRole('link', { name: /investimentos/i }))
+    expect(await screen.findByRole('heading', { level: 1, name: /investimentos/i })).toBeInTheDocument()
+
+    fireEvent.click(menu.getByRole('link', { name: /relatório/i }))
+    expect(await screen.findByRole('button', { name: /baixar pdf/i })).toBeInTheDocument()
+  })
+
+  it('trocar o extrato esquece o resultado e volta para o envio', async () => {
+    await verResumo()
+
+    // Há um botão para celular e outro para computador; o CSS mostra um de cada vez, o jsdom vê os dois.
+    fireEvent.click(screen.getAllByRole('button', { name: /trocar extrato/i })[0])
+
+    expect(await screen.findByRole('heading', { level: 1, name: /solta o extrato aqui/i })).toBeInTheDocument()
   })
 })

@@ -20,3 +20,45 @@ export async function buscarHistorico(): Promise<ResultadoDoHistorico> {
 
   return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível ler o histórico.') }
 }
+
+export type ResultadoDaImportacao =
+  | { ok: true; transacoesNovas: number; duplicadas: number; fechamento: string }
+  | { ok: false; mensagem: string }
+
+/** Importa no SQLite local pelo mesmo caminho do Worker: guarda, anota a cobertura e fecha o mês completo. */
+export async function adicionarExtrato(arquivo: File): Promise<ResultadoDaImportacao> {
+  const corpo = new FormData()
+  corpo.append('arquivo', arquivo)
+
+  let resposta: Response
+  try {
+    resposta = await fetch(`${import.meta.env.VITE_URL_DA_API}/pessoal/extratos`, { method: 'POST', body: corpo })
+  } catch {
+    return { ok: false, mensagem: MENSAGEM_SEM_SERVIDOR }
+  }
+
+  if (resposta.ok) return { ok: true, ...((await resposta.json()) as Omit<Extract<ResultadoDaImportacao, { ok: true }>, 'ok'>) }
+  return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível importar o extrato.') }
+}
+
+export type MesDoFechamento = { ano: number; mes: number }
+
+export type ResultadoDoFechamento = { ok: true; mensagem: string } | { ok: false; mensagem: string; jaEnviado: boolean }
+
+export async function enviarFechamento(mes: MesDoFechamento, forcar = false): Promise<ResultadoDoFechamento> {
+  const consulta = `mes=${mes.ano}-${String(mes.mes).padStart(2, '0')}${forcar ? '&forcar=true' : ''}`
+
+  let resposta: Response
+  try {
+    resposta = await fetch(`${import.meta.env.VITE_URL_DA_API}/pessoal/fechamento?${consulta}`, { method: 'POST' })
+  } catch {
+    return { ok: false, mensagem: MENSAGEM_SEM_SERVIDOR, jaEnviado: false }
+  }
+
+  if (resposta.ok) return { ok: true, mensagem: ((await resposta.json()) as { mensagem: string }).mensagem }
+  return {
+    ok: false,
+    mensagem: await mensagemDoProblema(resposta, 'Não foi possível enviar o fechamento.'),
+    jaEnviado: resposta.status === 409,
+  }
+}

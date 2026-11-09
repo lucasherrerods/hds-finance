@@ -120,7 +120,7 @@ public static class RotasDaDemonstracao
     }
 
     /// <summary>Lê o campo "arquivo" do formulário e confere tamanho e formato.</summary>
-    private static async Task<((IFormFile Conteudo, FormatoDeExtrato Formato)? Arquivo, IResult? Erro)> LerArquivoAsync(
+    internal static async Task<((IFormFile Conteudo, FormatoDeExtrato Formato)? Arquivo, IResult? Erro)> LerArquivoAsync(
         HttpRequest requisicao, CancellationToken cancelamento)
     {
         IFormFile? arquivo;

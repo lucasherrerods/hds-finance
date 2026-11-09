@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { baixarRelatorio } from './api'
+import { baixarRelatorio, baixarRelatorioDoHistorico } from './api'
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -39,5 +39,18 @@ describe('baixarRelatorio', () => {
     const resultado = await baixarRelatorio(new File([''], 'extrato.ofx'))
 
     expect(resultado).toEqual({ ok: false, mensagem: 'Não foi possível falar com o servidor. Tente de novo.' })
+  })
+})
+
+describe('baixarRelatorioDoHistorico', () => {
+  it('pede o pdf de um mês do histórico local', async () => {
+    vi.stubEnv('VITE_URL_DA_API', 'http://api.test')
+    const fetchFalso = vi.fn().mockResolvedValue(new Response('%PDF-', { status: 200, headers: { 'Content-Type': 'application/pdf' } }))
+    vi.stubGlobal('fetch', fetchFalso)
+
+    const resultado = await baixarRelatorioDoHistorico({ ano: 2026, mes: 10 })
+
+    expect(resultado.ok).toBe(true)
+    expect(fetchFalso.mock.calls[0][0]).toBe('http://api.test/pessoal/relatorio?mes=2026-10')
   })
 })

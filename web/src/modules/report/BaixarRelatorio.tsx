@@ -1,8 +1,9 @@
 import { FileDown } from 'lucide-react'
 import { useState } from 'react'
-import { baixarRelatorio, type MesDoRelatorio } from './api'
+import { baixarRelatorio, baixarRelatorioDoHistorico, type MesDoRelatorio } from './api'
 
-type Props = { arquivo: File; mes: MesDoRelatorio }
+/** Com arquivo, reenvia o extrato (demonstração); sem arquivo, usa o histórico local (modo pessoal). */
+type Props = { arquivo?: File; mes: MesDoRelatorio }
 
 const nomeDoArquivo = ({ ano, mes }: MesDoRelatorio) => `fechamento-${ano}-${String(mes).padStart(2, '0')}.pdf`
 
@@ -22,7 +23,7 @@ export function BaixarRelatorio({ arquivo, mes }: Props) {
   async function baixar() {
     setGerando(true)
     setErro(null)
-    const resultado = await baixarRelatorio(arquivo, mes)
+    const resultado = arquivo ? await baixarRelatorio(arquivo, mes) : await baixarRelatorioDoHistorico(mes)
     setGerando(false)
 
     if (resultado.ok) salvar(resultado.pdf, nomeDoArquivo(mes))

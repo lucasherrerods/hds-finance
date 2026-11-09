@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mesesDeExemplo, painelDeExemplo } from '../modules/landing'
 import { App } from './App'
 
@@ -48,26 +48,78 @@ describe('âncoras', () => {
 })
 
 describe('modo pessoal', () => {
-  afterEach(() => vi.unstubAllEnvs())
+  const historico = { meses: mesesDeExemplo, painel: painelDeExemplo, transacoes: painelDeExemplo.transacoesRecentes }
 
-  it('no modo pessoal, o histórico tem página e link no cabeçalho', async () => {
-    vi.stubEnv('VITE_MODO', 'pessoal')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ meses: [], painel: null, transacoes: [] }))))
+  function apiLocal(dados: unknown = historico) {
+    const fetchFalso = vi.fn((url: string) =>
+      Promise.resolve(
+        url.endsWith('/pessoal/extratos')
+          ? new Response(JSON.stringify({ transacoesNovas: 3, duplicadas: 0, fechamento: 'Nenhum mês completo para fechar.' }))
+          : new Response(JSON.stringify(dados)),
+      ),
+    )
+    vi.stubGlobal('fetch', fetchFalso)
+    return fetchFalso
+  }
 
-    abrir('/historico')
-
-    expect(await screen.findByRole('heading', { level: 1, name: /seu histórico/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Histórico' })).toHaveAttribute('href', '/historico')
+  beforeEach(() => vi.stubEnv('VITE_MODO', 'pessoal'))
+  afterEach(() => {
+    vi.unstubAllEnvs()
     vi.unstubAllGlobals()
   })
 
-  it('na demonstração, o histórico não existe', () => {
-    vi.stubEnv('VITE_MODO', 'demonstracao')
+  it('o cabeçalho leva ao dashboard em vez da página de teste', () => {
+    abrir('/')
 
-    abrir('/historico')
+    expect(screen.getByRole('link', { name: 'Ver dashboard' })).toHaveAttribute('href', '/dashboard')
+    expect(screen.queryByRole('link', { name: 'Testar' })).not.toBeInTheDocument()
+  })
 
-    expect(screen.getByRole('heading', { level: 1, name: /pra onde foi o seu dinheiro/i })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Histórico' })).not.toBeInTheDocument()
+  it('o dashboard abre com o histórico guardado, sem enviar nada', async () => {
+    apiLocal()
+
+    abrir('/dashboard')
+
+    expect(await screen.findByRole('heading', { level: 1, name: /outubro de 2026/i }, { timeout: 5000 })).toBeInTheDocument()
+    expect(screen.getByText('Histórico local')).toBeInTheDocument()
+  })
+
+  it('adicionar extrato importa no histórico e recarrega o dashboard', async () => {
+    const fetchFalso = apiLocal()
+    abrir('/dashboard')
+    await screen.findByRole('heading', { level: 1, name: /outubro de 2026/i }, { timeout: 5000 })
+
+    fireEvent.change(screen.getAllByLabelText(/adicionar extrato/i)[0], { target: { files: [new File(['x'], 'novembro.ofx')] } })
+
+    expect(await screen.findByRole('status')).toHaveTextContent('3 transações novas, 0 já existiam.')
+    const chamadasDoHistorico = fetchFalso.mock.calls.filter(([url]) => url.endsWith('/pessoal/historico'))
+    expect(chamadasDoHistorico).toHaveLength(2)
+  })
+
+  it('com o histórico vazio, convida a adicionar o primeiro extrato', async () => {
+    apiLocal({ meses: [], painel: null, transacoes: [] })
+
+    abrir('/dashboard')
+
+    expect(await screen.findByRole('heading', { level: 1, name: /nenhum extrato ainda/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/adicionar o primeiro extrato/i)).toBeInTheDocument()
+  })
+
+  it('a página de teste leva direto ao dashboard', async () => {
+    apiLocal()
+
+    abrir('/testar')
+
+    expect(await screen.findByRole('navigation', { name: 'Seções do dashboard' }, { timeout: 5000 })).toBeInTheDocument()
+  })
+
+  it('o relatório gera do histórico e envia o fechamento para o dono', async () => {
+    apiLocal()
+    abrir('/dashboard/relatorio')
+
+    expect(await screen.findByRole('button', { name: /enviar fechamento/i }, { timeout: 5000 })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /baixar pdf/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /mandar código/i })).not.toBeInTheDocument()
   })
 })
 

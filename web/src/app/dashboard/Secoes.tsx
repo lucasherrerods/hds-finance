@@ -9,16 +9,15 @@ import {
   type Indicador,
 } from '../../modules/dashboard'
 import { EnviarPorEmail } from '../../modules/email'
+import { EnviarFechamento } from '../../modules/history'
 import type { ResumoMensal } from '../../modules/import'
 import { BaixarRelatorio } from '../../modules/report'
 import { emModoPessoal, formatarMes, formatarMesCurto, formatarMoeda, formatarMoedaComSinal } from '../../shared'
-import { useResultado } from '../contextoDoResultado'
+import { useDashboard } from './contextoDoDashboard'
 import { CabecalhoDaSecao, CartaoDeNumero, SemDados } from './partes'
 
-// O layout só desenha as seções quando há resultado, então aqui ele sempre existe.
-function useResumo() {
-  return useResultado().resultado!.resumo
-}
+// O layout só desenha as seções quando há pelo menos um mês, então `meses.at(-1)` sempre existe.
+const useResumo = () => useDashboard().dados
 
 const iconeDoIndicador: Record<string, LucideIcon> = {
   Entrou: ArrowDownLeft,
@@ -124,7 +123,7 @@ export function Transacoes() {
   return (
     <>
       <CabecalhoDaSecao
-        sobretitulo={`${resumo.transacoesNovas} transações`}
+        sobretitulo={`${resumo.quantidade} transações`}
         titulo="Transações"
         descricao="Escolha o mês para ver o fechamento, os gastos por categoria e cada lançamento."
       />
@@ -183,9 +182,8 @@ export function Investimentos() {
 }
 
 export function Relatorio() {
-  const { resultado } = useResultado()
-  const { resumo, arquivo } = resultado!
-  const ultimo = resumo.meses.at(-1)!
+  const { dados, arquivo } = useDashboard()
+  const ultimo = dados.meses.at(-1)!
 
   return (
     <>
@@ -197,15 +195,25 @@ export function Relatorio() {
       <div className="grid gap-4 md:grid-cols-2">
         <section aria-label="PDF do fechamento" className="flex flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao">
           <h2 className="text-xl font-semibold tracking-tight">Baixar o PDF</h2>
-          <p className="text-texto-suave">O arquivo é montado na hora e não fica salvo no servidor.</p>
-          <BaixarRelatorio arquivo={arquivo} mes={ultimo} />
+          <p className="text-texto-suave">
+            {arquivo ? 'O arquivo é montado na hora e não fica salvo no servidor.' : 'Montado a partir do histórico guardado nesta máquina.'}
+          </p>
+          <BaixarRelatorio arquivo={arquivo ?? undefined} mes={ultimo} />
         </section>
-        {!emModoPessoal() && (
-          <section aria-label="Receber por e-mail" className="flex flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao">
-            <h2 className="text-xl font-semibold tracking-tight">Receber por e-mail</h2>
-            <p className="text-texto-suave">Na primeira vez você confirma o e-mail com um código. O endereço fica só neste navegador.</p>
-            <EnviarPorEmail arquivo={arquivo} mes={ultimo} />
+        {emModoPessoal() ? (
+          <section aria-label="Enviar o fechamento" className="flex flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao">
+            <h2 className="text-xl font-semibold tracking-tight">Enviar por e-mail</h2>
+            <p className="text-texto-suave">Vai para o e-mail configurado na api. Um mês já enviado só sai de novo se você pedir.</p>
+            <EnviarFechamento mes={ultimo} />
           </section>
+        ) : (
+          arquivo && (
+            <section aria-label="Receber por e-mail" className="flex flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao">
+              <h2 className="text-xl font-semibold tracking-tight">Receber por e-mail</h2>
+              <p className="text-texto-suave">Na primeira vez você confirma o e-mail com um código. O endereço fica só neste navegador.</p>
+              <EnviarPorEmail arquivo={arquivo} mes={ultimo} />
+            </section>
+          )
         )}
       </div>
     </>

@@ -15,8 +15,8 @@ import {
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
-import { periodoDosMeses } from '../../modules/dashboard'
-import { AdicionarExtrato, buscarHistorico, type Historico } from '../../modules/history'
+import { periodoDosMeses, type EdicaoDeCategoria } from '../../modules/dashboard'
+import { AdicionarExtrato, buscarHistorico, corrigirCategoria, type Historico } from '../../modules/history'
 import { BotaoDeTema, emModoPessoal } from '../../shared'
 import { useResultado } from '../contextoDoResultado'
 import { ContextoDoDashboard, type DadosDoDashboard } from './contextoDoDashboard'
@@ -89,6 +89,12 @@ function DashboardPessoal() {
     setVersao((v) => v + 1)
   }
 
+  async function aoMudarCategoria(descricao: string, categoria: string) {
+    const resultado = await corrigirCategoria(descricao, categoria)
+    setAviso(resultado.ok ? `"${descricao}" agora é ${categoria}, aqui e nas próximas importações.` : resultado.mensagem)
+    if (resultado.ok) setVersao((v) => v + 1)
+  }
+
   if (estado.tipo === 'carregando') return <TelaCheia>Lendo o histórico local…</TelaCheia>
   if (estado.tipo === 'erro') {
     return (
@@ -114,6 +120,7 @@ function DashboardPessoal() {
     <Moldura
       dados={{ ...historico, quantidade: historico.transacoes.length }}
       arquivo={null}
+      edicao={{ categorias: historico.categorias, aoMudar: (descricao, categoria) => void aoMudarCategoria(descricao, categoria) }}
       origem={{ icone: Database, nome: 'Histórico local' }}
       acao={<AdicionarExtrato aoImportar={aoImportar} className={acaoDaSidebar} />}
       rodape="Guardado só nesta máquina, no SQLite local."
@@ -132,6 +139,7 @@ function TelaCheia({ children }: { children: ReactNode }) {
 type MolduraProps = {
   dados: DadosDoDashboard
   arquivo: File | null
+  edicao?: EdicaoDeCategoria
   origem: { icone: LucideIcon; nome: string }
   acao: ReactNode
   rodape: string
@@ -140,12 +148,12 @@ type MolduraProps = {
 }
 
 /** Sidebar fixa no computador, barra no topo no celular, e a seção da rota ao lado. */
-function Moldura({ dados, arquivo, origem, acao, rodape, aviso, fecharAviso }: MolduraProps) {
+function Moldura({ dados, arquivo, edicao, origem, acao, rodape, aviso, fecharAviso }: MolduraProps) {
   const { pathname } = useLocation()
   const IconeDaOrigem = origem.icone
 
   return (
-    <ContextoDoDashboard.Provider value={{ dados, arquivo }}>
+    <ContextoDoDashboard.Provider value={{ dados, arquivo, edicao }}>
       <div className="min-h-svh lg:grid lg:grid-cols-[17rem_1fr]">
         <aside className="sticky top-0 z-10 flex flex-col gap-4 bg-superficie p-4 lg:h-svh lg:gap-8 lg:p-6">
           <div className="flex items-center justify-between gap-4">

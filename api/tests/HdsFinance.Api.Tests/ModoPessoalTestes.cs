@@ -91,6 +91,24 @@ public sealed class ModoPessoalTestes(WebApplicationFactory<Program> fabrica) : 
     }
 
     [Fact]
+    public async Task Corrigir_a_categoria_vale_para_a_descricao_no_historico()
+    {
+        var cliente = Cliente("Pessoal");
+        await cliente.PostAsync("/pessoal/extratos", Amostra());
+
+        var resposta = await cliente.PutAsJsonAsync("/pessoal/categorias", new { descricao = "Compra no debito Mercado Exemplo", categoria = "Lazer" });
+        var invalida = await cliente.PutAsJsonAsync("/pessoal/categorias", new { descricao = "Compra no debito Mercado Exemplo", categoria = "Inventada" });
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        invalida.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        using var json = JsonDocument.Parse(await cliente.GetStringAsync("/pessoal/historico"));
+        json.RootElement.GetProperty("transacoes").EnumerateArray()
+            .Single(t => t.GetProperty("descricao").GetString() == "Compra no debito Mercado Exemplo")
+            .GetProperty("categoria").GetString().Should().Be("Lazer");
+        json.RootElement.GetProperty("categorias").EnumerateArray().Select(c => c.GetString()).Should().Contain(["Lazer", "Sem categoria"]);
+    }
+
+    [Fact]
     public async Task O_historico_mostra_o_que_foi_importado_antes()
     {
         var cliente = Cliente("Pessoal");

@@ -17,6 +17,24 @@ namespace HdsFinance.Infrastructure.Repositorios.Migracoes
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.15");
 
+            modelBuilder.Entity("HdsFinance.Infrastructure.Repositorios.CategoriaAprendidaSalva", b =>
+                {
+                    b.Property<string>("Chave")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Chave");
+
+                    b.ToTable("CategoriasAprendidas");
+                });
+
             modelBuilder.Entity("HdsFinance.Infrastructure.Repositorios.ExtratoImportado", b =>
                 {
                     b.Property<int>("Id")

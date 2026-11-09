@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using HdsFinance.Application.Categorias;
 using HdsFinance.Application.EmailDaDemo;
 using HdsFinance.Application.Extratos;
 using HdsFinance.Application.ModoPessoal;
@@ -29,8 +30,7 @@ public static class Composicao
         services.AddSingleton<ILeitorDeExtrato, LeitorOfx>();
         services.AddSingleton<ILeitorDeExtrato, LeitorCsvInter>();
         services.AddSingleton(new ClassificadorDeTipo(configuracao.GetSection("TermosDeTransferenciaPropria").Get<string[]>()));
-        var regras = configuracao.GetSection("Categorias").Get<List<RegraDeCategoria>>();
-        services.AddSingleton(regras is { Count: > 0 } ? new Categorizador(regras) : Categorizador.Padrao);
+        services.AddSingleton(RegrasDaConfiguracao(configuracao));
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IGeradorDeRelatorio, RelatorioQuestPdf>();
         services.AddSingleton<GerarRelatorio>();
@@ -73,8 +73,22 @@ public static class Composicao
         services.AddScoped<FecharMes>();
         services.AddScoped<ProcessarExtratoRecebido>();
         services.AddScoped<ConsultarHistorico>();
+
+        // As correções da pessoa entram na frente das regras; por isso o categorizador nasce a cada requisição.
+        services.AddScoped<ICategoriasAprendidas, CategoriasAprendidasSqlite>();
+        services.AddScoped(provedor => RegrasDaConfiguracao(configuracao).ComAprendidas(
+            provedor.GetRequiredService<BancoDoModoPessoal>().CategoriasAprendidas.AsNoTracking()
+                .Select(c => new CategoriaAprendida(c.Descricao, c.Categoria))
+                .ToList()));
+        services.AddScoped<CorrigirCategoria>();
         return services;
     }
+
+    /// <summary>As regras do appsettings, quando houver; senão, as padrão.</summary>
+    private static Categorizador RegrasDaConfiguracao(IConfiguration configuracao) =>
+        configuracao.GetSection("Categorias").Get<List<RegraDeCategoria>>() is { Count: > 0 } regras
+            ? new Categorizador(regras)
+            : Categorizador.Padrao;
 
     /// <summary>Cria ou atualiza o banco do modo pessoal com as migrações pendentes.</summary>
     public static async Task PrepararBancoAsync(this IServiceProvider provedor, CancellationToken cancelamento = default)

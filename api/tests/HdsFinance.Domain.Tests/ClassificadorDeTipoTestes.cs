@@ -14,6 +14,8 @@ public class ClassificadorDeTipoTestes
     [InlineData("RESGATE LCI")]
     [InlineData("Compra Tesouro Direto")]
     [InlineData("Investimento poupanca")]
+    [InlineData("Débito B3 Corretora Ficticia")]
+    [InlineData("DEBITO B3")]
     public void Aplicacoes_e_resgates_sao_movimentacao_de_investimento(string descricao)
     {
         _padrao.Classificar(Com(descricao)).Tipo.Should().Be(TipoDeTransacao.MovimentacaoDeInvestimento);
@@ -31,6 +33,7 @@ public class ClassificadorDeTipoTestes
     [InlineData("Compra no debito Mercado Exemplo")]
     [InlineData("Pix recebido Fulano de Tal")]
     [InlineData("Restaurante Cdbar")]
+    [InlineData("Compra no debito Loja B3 Games")]
     public void O_resto_continua_comum(string descricao)
     {
         _padrao.Classificar(Com(descricao)).Tipo.Should().Be(TipoDeTransacao.Comum);

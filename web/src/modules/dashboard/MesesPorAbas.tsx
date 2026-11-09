@@ -3,15 +3,15 @@ import { useId, useState } from 'react'
 import { formatarMesCurto } from '../../shared'
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
 import { Abas } from './Abas'
-import { ListaDeTransacoes } from './ListaDeTransacoes'
+import { ListaDeTransacoes, type EdicaoDeCategoria } from './ListaDeTransacoes'
 import { agruparMesesPorAno, transacoesDoMes } from './periodos'
 import { ResumoDoMes } from './ResumoDoMes'
 
-type Props = { meses: ResumoMensal[]; transacoes: TransacaoCategorizada[] }
+type Props = { meses: ResumoMensal[]; transacoes: TransacaoCategorizada[]; edicao?: EdicaoDeCategoria }
 
 const chaveDo = (mes: ResumoMensal) => `${mes.ano}-${mes.mes}`
 
-export function MesesPorAbas({ meses, transacoes }: Props) {
+export function MesesPorAbas({ meses, transacoes, edicao }: Props) {
   const anos = agruparMesesPorAno(meses)
   const [chave, setChave] = useState(() => (meses.length > 0 ? chaveDo(meses[meses.length - 1]) : ''))
   const idDoPainel = useId()
@@ -59,6 +59,7 @@ export function MesesPorAbas({ meses, transacoes }: Props) {
           <ListaDeTransacoes
             mes={selecionado}
             transacoes={transacoesDoMes(transacoes, selecionado.ano, selecionado.mes)}
+            edicao={edicao}
           />
         </motion.div>
       </AnimatePresence>

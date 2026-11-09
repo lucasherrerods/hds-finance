@@ -48,4 +48,17 @@ describe('EnvioDeExtrato', () => {
     expect(screen.getByText('outubro.ofx')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /ver resumo/i })).toBeEnabled()
   })
+
+  it('se a api demora, avisa que o servidor pode estar acordando', async () => {
+    vi.useFakeTimers()
+    vi.mocked(enviarExtrato).mockReturnValue(new Promise(() => {}))
+    render(<EnvioDeExtrato aoResumir={vi.fn()} />)
+
+    escolherArquivo()
+    expect(screen.queryByText(/acordando/i)).not.toBeInTheDocument()
+    await vi.advanceTimersByTimeAsync(5000)
+
+    expect(screen.getByText(/acordando/i)).toBeInTheDocument()
+    vi.useRealTimers()
+  })
 })

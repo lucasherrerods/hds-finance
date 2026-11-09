@@ -1,4 +1,5 @@
 using HdsFinance.Api.Demonstracao;
+using HdsFinance.Api.Pessoal;
 using HdsFinance.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +9,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins(builder.Configuration.GetSection("Cors:OrigensPermitidas").Get<string[]>() ?? [])
     .AllowAnyHeader()
-    .WithMethods("POST")));
+    .WithMethods("GET", "POST")));
 
 builder.Services.AdicionarNucleo(builder.Configuration);
 var modoPessoal = builder.Configuration["Modo"] == Composicao.ModoPessoal;
@@ -18,7 +19,7 @@ if (modoPessoal)
 }
 else
 {
-    builder.Services.AdicionarDemonstracao();
+    builder.Services.AdicionarDemonstracao(builder.Configuration);
 }
 
 builder.Services.AdicionarLimitesDaDemonstracao(builder.Configuration);
@@ -36,7 +37,11 @@ app.UseRateLimiter();
 app.MapOpenApi();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
-app.MapearDemonstracao();
+app.MapearDemonstracao(comEmail: !modoPessoal);
+if (modoPessoal)
+{
+    app.MapearModoPessoal();
+}
 
 app.Run();
 

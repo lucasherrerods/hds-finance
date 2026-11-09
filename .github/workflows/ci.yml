@@ -36,3 +36,17 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t hds-finance-api api
+      - name: Sobe o contêiner e gera um PDF de verdade
+        run: |
+          docker run -d --name api -p 8080:8080 -e Cors__OrigensPermitidas__0=http://localhost hds-finance-api
+          for i in $(seq 1 30); do curl -sf localhost:8080/health && break; sleep 1; done
+          curl -sf -o relatorio.pdf -F "arquivo=@api/tests/samples/inter-extrato.ofx" localhost:8080/demonstracao/relatorio
+          head -c 5 relatorio.pdf | grep -q '%PDF-'
+      - if: failure()
+        run: docker logs api

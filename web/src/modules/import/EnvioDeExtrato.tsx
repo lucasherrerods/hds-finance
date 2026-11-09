@@ -1,6 +1,6 @@
 import { FileCheck2, FileUp } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useState, type DragEvent, type FormEvent } from 'react'
+import { useEffect, useState, type DragEvent, type FormEvent } from 'react'
 import { enviarExtrato, type ResumoDoExtrato } from './api'
 
 type Props = { aoResumir: (resumo: ResumoDoExtrato, arquivo: File) => void }
@@ -10,6 +10,17 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
   const [arrastando, setArrastando] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
+  const [demorando, setDemorando] = useState(false)
+
+  // A api gratuita dorme quando fica parada; a primeira requisição pode levar quase um minuto.
+  useEffect(() => {
+    if (!enviando) return
+    const relogio = setTimeout(() => setDemorando(true), 4000)
+    return () => {
+      clearTimeout(relogio)
+      setDemorando(false)
+    }
+  }, [enviando])
 
   function escolher(novo: File | null) {
     setArquivo(novo)
@@ -86,6 +97,11 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
       >
         {enviando ? 'Fazendo as contas…' : 'Ver resumo'}
       </button>
+      {demorando && (
+        <p role="status" className="text-texto-suave">
+          O servidor gratuito pode estar acordando. Na primeira vez do dia isso leva até um minuto.
+        </p>
+      )}
       {erro && (
         <p role="alert" className="text-saida">
           {erro}

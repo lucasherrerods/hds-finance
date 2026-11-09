@@ -1,0 +1,20 @@
+# Blueprint do Render: a api da demonstração em Docker, no plano gratuito.
+# Os valores marcados com sync: false são preenchidos no painel, nunca aqui.
+services:
+  - type: web
+    name: hds-finance-api
+    runtime: docker
+    plan: free
+    rootDir: api
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: Cors__OrigensPermitidas__0
+        sync: false
+      - key: Demonstracao__ChaveDeAssinatura
+        generateValue: true
+      - key: Email__ChaveDaApi
+        sync: false
+      - key: Email__Remetente
+        sync: false

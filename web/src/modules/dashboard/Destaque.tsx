@@ -16,7 +16,7 @@ export function Destaque({ painel }: Props) {
   return (
     <section
       aria-label="Destaque do mês"
-      className="relative flex h-full flex-col justify-between gap-8 overflow-hidden rounded-2xl bg-superficie p-6 shadow-elevacao sm:p-8"
+      className="relative flex h-full flex-col justify-between gap-8 overflow-hidden rounded-2xl border border-borda bg-superficie p-6 sm:p-8"
     >
       <Sparkles aria-hidden className="pointer-events-none absolute -top-8 -right-8 size-48 text-primaria opacity-5" />
       <div className="relative flex flex-col gap-3">

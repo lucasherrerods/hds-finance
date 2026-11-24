@@ -13,7 +13,7 @@ export function ComoUsar() {
     <section id="como-usar" aria-labelledby="como-usar-titulo" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-24">
       <Revelar className="mb-12 flex flex-wrap items-end justify-between gap-6">
         <h2 id="como-usar-titulo" className="text-5xl leading-[0.95] font-bold tracking-[-0.03em] sm:text-6xl md:text-7xl">
-          Como usar
+          Como funciona
         </h2>
         <p className="max-w-[40ch] text-lg leading-relaxed text-texto-suave">
           Três passos, um minuto. Sem cadastro, sem senha do banco e sem planilha.

@@ -79,7 +79,7 @@ describe('modo pessoal', () => {
     abrir('/')
 
     expect(screen.getByRole('link', { name: 'Ver dashboard' })).toHaveAttribute('href', '/dashboard')
-    expect(screen.queryByRole('link', { name: 'Testar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Testar agora' })).not.toBeInTheDocument()
   })
 
   it('o dashboard abre com o histórico guardado, sem enviar nada', async () => {
@@ -175,7 +175,7 @@ describe('dashboard', () => {
     expect(screen.getByRole('heading', { level: 1, name: /outubro de 2026/i })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Entrou' })).toBeInTheDocument()
     expect(screen.getByText('outubro.ofx')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Como usar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Como funciona' })).not.toBeInTheDocument()
   })
 
   it('a sidebar leva a cada seção', async () => {

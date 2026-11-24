@@ -19,8 +19,8 @@ describe('landing', () => {
     render(<Cabecalho />)
 
     const navegacao = screen.getByRole('navigation', { name: 'Seções' })
-    expect(within(navegacao).getByRole('link', { name: 'Como usar' })).toHaveAttribute('href', '/#como-usar')
-    expect(within(navegacao).getByRole('link', { name: 'Exemplo' })).toHaveAttribute('href', '/#exemplo')
+    expect(within(navegacao).getByRole('link', { name: 'Como funciona' })).toHaveAttribute('href', '/#como-usar')
+    expect(within(navegacao).getByRole('link', { name: 'Ver um exemplo' })).toHaveAttribute('href', '/#exemplo')
     expect(within(navegacao).getByRole('link', { name: 'Privacidade' })).toHaveAttribute('href', '/#privacidade')
   })
 

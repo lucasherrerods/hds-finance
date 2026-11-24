@@ -19,22 +19,32 @@ export function Inicio() {
 
   return (
     <section ref={ref} id="inicio" className="relative isolate overflow-hidden">
+      <div aria-hidden className="fundo-grade pointer-events-none absolute inset-0 -z-20 opacity-60" />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-48 -z-10 mx-auto h-[32rem] max-w-4xl rounded-full bg-primaria-suave blur-3xl"
+        className="pointer-events-none absolute inset-x-0 -top-56 -z-10 mx-auto h-[36rem] max-w-5xl rounded-full bg-brilho blur-[120px]"
       />
       <div className="mx-auto grid min-h-[calc(100svh-4.5rem)] max-w-6xl items-center gap-16 px-6 pt-16 pb-24 lg:grid-cols-12">
         <motion.div
           style={parado ? undefined : { y: textoY, opacity: textoOpacidade }}
           className="flex flex-col gap-6 lg:col-span-7"
         >
+          <motion.span
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: SUAVE }}
+            className="flex w-fit items-center gap-2 rounded-full border border-borda bg-superficie/70 px-4 py-1 text-sm text-texto-suave backdrop-blur"
+          >
+            <span aria-hidden className="size-2 rounded-full bg-primaria motion-safe:animate-pulse" />
+            Nada do seu extrato fica guardado
+          </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: SUAVE }}
             className="text-5xl leading-[1.02] font-bold tracking-[-0.03em] sm:text-6xl lg:text-7xl"
           >
-            Pra onde foi o seu dinheiro <span className="text-primaria">esse mês?</span>
+            Pra onde foi o seu dinheiro <span className="texto-gradiente">esse mês?</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -52,14 +62,14 @@ export function Inicio() {
           >
             <Link
               to="/testar"
-              className="group flex items-center gap-2 rounded-lg bg-primaria px-6 py-3 font-medium text-primaria-texto transition-transform hover:-translate-y-0.5"
+              className="group flex items-center gap-2 rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto shadow-[0_0_32px_var(--color-brilho)] transition-transform hover:-translate-y-0.5"
             >
               Testar com meu extrato
               <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <a
               href="#exemplo"
-              className="rounded-lg px-6 py-3 font-medium text-texto-suave transition-colors hover:text-texto"
+              className="rounded-full border border-borda px-6 py-3 font-medium text-texto-suave transition-colors hover:border-primaria hover:text-texto"
             >
               Ver um mês de mentira
             </a>
@@ -75,7 +85,7 @@ export function Inicio() {
         >
           <motion.div
             style={parado ? undefined : { scale: cartaoEscala, y: cartaoY }}
-            className="flex flex-col gap-2 rounded-3xl bg-superficie p-8 shadow-elevacao-alta"
+            className="flex flex-col gap-2 rounded-3xl border border-borda bg-superficie/80 p-8 shadow-elevacao-alta backdrop-blur-xl"
           >
             <span className="text-texto-suave">Outubro de 2026</span>
             <span className="text-4xl font-bold tracking-tight tabular-nums">

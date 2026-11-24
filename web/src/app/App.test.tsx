@@ -173,6 +173,19 @@ describe('área admin', () => {
     expect(chamadas(fetchFalso, '/admin/meses/')[0][1]).toMatchObject({ method: 'DELETE' })
   })
 
+  it('na evolução, escolher um ano muda a tabela', async () => {
+    const base = mesesDeExemplo[0]
+    const meses = [2024, 2025, 2026].map((ano) => ({ ...base, ano, mes: 5 }))
+    apiDoAdmin({ dados: { ...historico, meses } })
+    abrir('/admin/evolucao')
+
+    fireEvent.click(await screen.findByRole('tab', { name: '2024' }, { timeout: 5000 }))
+
+    const tabela = within(screen.getByRole('region', { name: 'Resumo por mês' }))
+    expect(tabela.getAllByRole('button', { name: /^apagar /i })).toHaveLength(1)
+    expect(tabela.getByRole('button', { name: /2024|\/24/ })).toBeInTheDocument()
+  })
+
   it('com o histórico vazio, convida a incluir o primeiro extrato', async () => {
     apiDoAdmin({ dados: { meses: [], painel: null, transacoes: [], categorias: [] } })
 

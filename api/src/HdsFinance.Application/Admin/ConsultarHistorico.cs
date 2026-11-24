@@ -1,5 +1,4 @@
 using HdsFinance.Application.Extratos;
-using HdsFinance.Application.Relatorios;
 using HdsFinance.Domain;
 
 namespace HdsFinance.Application.Admin;
@@ -9,12 +8,12 @@ public sealed record HistoricoConsultado(
     PainelDoMes? Painel,
     IReadOnlyList<TransacaoCategorizada> Transacoes);
 
-/// <summary>O que o painel da área admin mostra: os últimos 12 meses guardados, o painel do mais recente e as transações deles.</summary>
+/// <summary>O que o painel da área admin mostra: todos os meses guardados, o painel do mais recente e as transações.</summary>
 public sealed class ConsultarHistorico(IRepositorioDeTransacoes transacoes, FecharMes fechar, Categorizador? categorizador = null)
 {
     public async Task<HistoricoConsultado> ExecutarAsync(CancellationToken cancelamento = default)
     {
-        var meses = (await fechar.MesesAsync(cancelamento)).TakeLast(GerarRelatorio.MesesDeHistorico).ToList();
+        var meses = await fechar.MesesAsync(cancelamento);
         if (meses.Count == 0)
         {
             return new HistoricoConsultado([], null, []);
@@ -22,10 +21,9 @@ public sealed class ConsultarHistorico(IRepositorioDeTransacoes transacoes, Fech
 
         var regras = categorizador ?? Categorizador.Padrao;
         var todas = await transacoes.ListarAsync(cancelamento);
-        var inicio = new DateOnly(meses[0].Mes.Ano, meses[0].Mes.Mes, 1);
         return new HistoricoConsultado(
             meses,
             PainelDoMes.Montar(todas, regras),
-            TransacaoCategorizada.Listar(todas.Where(t => t.Data >= inicio), regras));
+            TransacaoCategorizada.Listar(todas, regras));
     }
 }

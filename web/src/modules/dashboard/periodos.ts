@@ -13,6 +13,18 @@ export function agruparMesesPorAno(meses: ResumoMensal[]): MesesDoAno[] {
   return grupos
 }
 
+export type Recorte = { chave: string; rotulo: string; meses: ResumoMensal[] }
+
+const MESES_RECENTES = 12
+
+/** Os períodos que dá para ver na evolução. Com um ano só, sobra o recorte padrão. */
+export function recortesDaEvolucao(meses: ResumoMensal[]): Recorte[] {
+  const recentes = { chave: 'recentes', rotulo: 'Últimos 12 meses', meses: meses.slice(-MESES_RECENTES) }
+  const anos = agruparMesesPorAno(meses)
+  if (anos.length < 2) return [recentes]
+  return [recentes, ...anos.toReversed().map((a) => ({ chave: String(a.ano), rotulo: String(a.ano), meses: a.meses }))]
+}
+
 export function transacoesDoMes(transacoes: TransacaoCategorizada[], ano: number, mes: number): TransacaoCategorizada[] {
   const prefixo = `${ano}-${String(mes).padStart(2, '0')}-`
   return transacoes.filter((t) => t.data.startsWith(prefixo))

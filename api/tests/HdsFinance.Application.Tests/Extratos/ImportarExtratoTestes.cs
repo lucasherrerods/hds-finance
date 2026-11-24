@@ -93,6 +93,12 @@ public class ImportarExtratoTestes
         public Task<bool> RemoverAsync(DateOnly data, decimal valor, string descricao, CancellationToken cancelamento = default) =>
             throw new NotSupportedException();
 
+        public Task<bool> DefinirCategoriaAsync(string chave, string? categoria, CancellationToken cancelamento = default) =>
+            throw new NotSupportedException();
+
+        public Task<bool> DefinirOcultaAsync(string chave, bool oculta, CancellationToken cancelamento = default) =>
+            throw new NotSupportedException();
+
         public Task<int> RemoverMesAsync(MesDeReferencia mes, CancellationToken cancelamento = default) =>
             throw new NotSupportedException();
     }

@@ -19,6 +19,10 @@ public sealed class TransacaoSalva
     public TipoDeTransacao Tipo { get; set; }
 
     public string? IdExterno { get; set; }
+
+    public string? Categoria { get; set; }
+
+    public bool Oculta { get; set; }
 }
 
 public sealed class ExtratoImportado

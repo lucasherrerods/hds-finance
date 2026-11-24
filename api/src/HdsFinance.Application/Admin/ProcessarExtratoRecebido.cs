@@ -5,10 +5,10 @@ namespace HdsFinance.Application.Admin;
 public sealed record ResultadoDoProcessamento(ResultadoDaImportacao Importacao, ResultadoDoFechamento? Fechamento);
 
 /// <summary>O que acontece quando o admin inclui um extrato: importa, anota a cobertura e fecha o mês, se ele ficou completo.</summary>
-public sealed class ProcessarExtratoRecebido(ImportarExtrato importar, IRegistroDoAdmin registro, FecharMes fechar)
+public sealed class ProcessarExtratoRecebido(ImportarExtrato importar, IRegistroDoAdmin registro, FecharMes fecharMes)
 {
     public async Task<ResultadoDoProcessamento> ExecutarAsync(
-        Stream conteudo, FormatoDeExtrato formato, CancellationToken cancelamento = default)
+        Stream conteudo, FormatoDeExtrato formato, CancellationToken cancelamento = default, bool fechar = true)
     {
         var importacao = await importar.ExecutarAsync(conteudo, formato, cancelamento);
         if (importacao is not ResultadoDaImportacao.Importado importado)
@@ -17,6 +17,7 @@ public sealed class ProcessarExtratoRecebido(ImportarExtrato importar, IRegistro
         }
 
         await registro.RegistrarExtratoAsync(importado.CobertoAte, importado.SaldoFinal, cancelamento);
-        return new ResultadoDoProcessamento(importacao, await fechar.EnviarUltimoCompletoAsync(cancelamento));
+        // Num lote, só o último arquivo fecha: senão cada extrato mandaria o seu e-mail.
+        return new ResultadoDoProcessamento(importacao, fechar ? await fecharMes.EnviarUltimoCompletoAsync(cancelamento) : null);
     }
 }

@@ -13,7 +13,7 @@ A mesma api serve os dois, lado a lado. A diferença é só qual adaptador entra
 | Quem usa | só o admin (o dono), com login | amigos e recrutadores, online |
 | Rota no front | `/admin` (sem link no site; entrada em `/admin/entrar`) | `/testar` e `/dashboard` |
 | Armazenamento | Postgres (Neon), só os dados do admin | nada: tudo em memória, durante a requisição |
-| Entrada | "Incluir extrato" no painel, ou a CLI | upload |
+| Entrada | "Incluir extrato" no painel (extratos e faturas do cartão em PDF, vários de uma vez), ou a CLI | upload |
 | Saída | painel, PDF e e-mail para o admin | painel e PDF para baixar |
 
 - **Admin:** liga só quando `Admin:Email` e `ConnectionStrings:Banco` estão configurados. O login é por código enviado ao e-mail do admin; qualquer outro e-mail recebe a mesma resposta e nenhum código. Desafio e sessão são tokens assinados em cookies `HttpOnly`, e o servidor não guarda sessão. Cada extrato incluído soma ao histórico; se o mês ficou completo, o fechamento sai por e-mail. O admin também apaga transações ou meses inteiros.
@@ -110,6 +110,7 @@ dotnet build                                   # compila a solução
 dotnet test --nologo -v q                      # todos os testes
 dotnet run --project src/HdsFinance.Api        # sobe a API (área admin só com Admin:Email e ConnectionStrings:Banco)
 dotnet run --project src/HdsFinance.Cli -- importar caminho/extrato.ofx
+dotnet run --project src/HdsFinance.Cli -- conferir caminho/fatura.pdf   # só confere a leitura, sem gravar
 dotnet run --project src/HdsFinance.Cli -- relatorio --mes 2026-10
 dotnet ef migrations add <Nome> -p src/HdsFinance.Infrastructure -s src/HdsFinance.Api -o Repositorios/Migracoes
 dotnet format                                  # o CI falha se houver diferença
@@ -122,8 +123,8 @@ O domínio fica no centro e não conhece arquivo, banco, HTTP, PDF nem e-mail. O
 ```
 Domain          Transacao, Categoria, PosicaoDeInvestimento, ResumoMensal, regras de cálculo
 Application        casos de uso (ImportarExtrato, ResumirExtrato, FecharMes, GerarRelatorio, ApagarDados, AcessoDoAdmin) e portas:
-                 ILeitorDeExtrato, IRepositorioDeTransacoes, IGeradorDeRelatorio, INotificador, IEnvioDeEmail, IAssinador, TimeProvider
-Infrastructure   LeitorOfx, LeitorCsvInter, RepositorioPostgres, RepositorioEmMemoria,
+                 ILeitorDeExtrato, ILeitorDeFatura, IRepositorioDeTransacoes, IGeradorDeRelatorio, INotificador, IEnvioDeEmail, IAssinador, TimeProvider
+Infrastructure   LeitorOfx, LeitorCsvInter, LeitorFaturaInterPdf (PdfPig), RepositorioPostgres, RepositorioEmMemoria,
                  RelatorioQuestPdf, NotificadorEmail, AssinadorHmac
 Api/Cli          só montam tudo e traduzem entrada e saída
 ```
@@ -144,7 +145,9 @@ Regras:
 ### Regras do domínio
 - Importar o mesmo extrato duas vezes não duplica transações: cada transação tem uma chave de deduplicação (id do OFX, ou data + valor + descrição normalizada).
 - Entrada é valor positivo, saída é negativo. Transferências entre contas próprias e aplicações/resgates de investimento não contam como receita nem despesa.
-- O resumo do mês fecha: saldo inicial + entradas − saídas + investimentos e transferências = saldo final. Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas próprias mexem no saldo, mas ficam num campo próprio. Existe teste para isso.
+- O admin pode mudar a categoria de uma transação só (vence as regras) ou de todas as iguais, e ocultar uma transação: ela continua na lista, sai de todas as somas e só mexe no saldo da conta.
+- Compra no cartão (fatura em PDF, só na área admin) é gasto no dia da compra, e a parcela no mês em que é cobrada; estorno abate o gasto. O pagamento da fatura incluída não é gasto: a conciliação acha o pagamento na conta pelo valor e pela data. Fatura cujos números não fecham é recusada inteira. A senha do PDF nunca é guardada nem vai para log.
+- O resumo do mês fecha: saldo inicial + entradas − saídas + investimentos e transferências + compras no cartão + ocultas = saldo final. A parcela das compras no cartão devolve ao saldo o gasto que ainda não saiu da conta. Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas próprias mexem no saldo, mas ficam num campo próprio. Existe teste para isso.
 - O saldo vem do próprio extrato (saldo final informado no arquivo). Sem ele, o saldo do mês fica como não informado.
 - Categorização por regras configuráveis (palavras na descrição → categoria), com "Sem categoria" como padrão.
 - O fechamento automático da área admin só sai quando o mês está completo, e o mesmo mês não é enviado duas vezes, a menos que forçado (pelo painel ou pela CLI).

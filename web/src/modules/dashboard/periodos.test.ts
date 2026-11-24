@@ -1,6 +1,7 @@
+import { mesesDeExemplo } from '../landing'
 import { describe, expect, it } from 'vitest'
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
-import { agruparMesesPorAno, categoriasDe, filtrarTransacoes, transacoesDoMes } from './periodos'
+import { agruparMesesPorAno, recortesDaEvolucao, categoriasDe, filtrarTransacoes, transacoesDoMes } from './periodos'
 
 const mes = (ano: number, numero: number) => ({ ano, mes: numero }) as ResumoMensal
 
@@ -63,5 +64,21 @@ describe('filtrarTransacoes', () => {
   it('a ordem por data mantém a ordem original dentro do mesmo dia', () => {
     const dia6 = filtrarTransacoes(lista, { ...padrao, ordem: 'antigas' }).filter((t) => t.data === '2026-11-06')
     expect(dia6.map((t) => t.valor)).toEqual([-49, 3000])
+  })
+})
+
+describe('recortesDaEvolucao', () => {
+  const base = mesesDeExemplo[0]
+  const meses = Array.from({ length: 15 }, (_, i) => ({ ...base, ano: 2025 + Math.floor((i + 6) / 12), mes: ((i + 6) % 12) + 1 }))
+
+  it('começa nos últimos 12 meses e depois traz cada ano, do mais novo para o mais antigo', () => {
+    const recortes = recortesDaEvolucao(meses)
+
+    expect(recortes.map((r) => r.rotulo)).toEqual(['Últimos 12 meses', '2026', '2025'])
+    expect(recortes.map((r) => r.meses.length)).toEqual([12, 9, 6])
+  })
+
+  it('com um ano só não há o que escolher', () => {
+    expect(recortesDaEvolucao(meses.slice(-3))).toHaveLength(1)
   })
 })

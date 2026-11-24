@@ -1,4 +1,6 @@
 export { GraficosSobDemanda as GraficosDoPeriodo } from './GraficosSobDemanda'
+export { Abas } from './Abas'
+export { recortesDaEvolucao } from './periodos'
 export { MesesPorAbas } from './MesesPorAbas'
 export { PainelDoMes } from './PainelDoMes'
 export { ResumoDoMes } from './ResumoDoMes'

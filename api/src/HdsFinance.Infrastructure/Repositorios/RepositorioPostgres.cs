@@ -27,6 +27,8 @@ public sealed class RepositorioPostgres(BancoDoAdmin banco) : IRepositorioDeTran
             Descricao = t.Descricao,
             Tipo = t.Tipo,
             IdExterno = t.IdExterno,
+            Categoria = t.Categoria,
+            Oculta = t.Oculta,
         }));
         await banco.SaveChangesAsync(cancelamento);
     }
@@ -34,7 +36,11 @@ public sealed class RepositorioPostgres(BancoDoAdmin banco) : IRepositorioDeTran
     public async Task<IReadOnlyList<Transacao>> ListarAsync(CancellationToken cancelamento = default)
     {
         var salvas = await banco.Transacoes.AsNoTracking().OrderBy(t => t.Id).ToListAsync(cancelamento);
-        return salvas.Select(t => new Transacao(t.Data, t.Valor, t.Descricao, t.Tipo, t.IdExterno)).ToList();
+        return salvas.Select(t => new Transacao(t.Data, t.Valor, t.Descricao, t.Tipo, t.IdExterno)
+        {
+            Categoria = t.Categoria,
+            Oculta = t.Oculta,
+        }).ToList();
     }
 
     public async Task<bool> RemoverAsync(DateOnly data, decimal valor, string descricao, CancellationToken cancelamento = default)
@@ -47,6 +53,24 @@ public sealed class RepositorioPostgres(BancoDoAdmin banco) : IRepositorioDeTran
         }
 
         banco.Transacoes.Remove(alvo);
+        await banco.SaveChangesAsync(cancelamento);
+        return true;
+    }
+
+    public Task<bool> DefinirCategoriaAsync(string chave, string? categoria, CancellationToken cancelamento = default) =>
+        AlterarAsync(chave, t => t.Categoria = categoria, cancelamento);
+
+    public Task<bool> DefinirOcultaAsync(string chave, bool oculta, CancellationToken cancelamento = default) =>
+        AlterarAsync(chave, t => t.Oculta = oculta, cancelamento);
+
+    private async Task<bool> AlterarAsync(string chave, Action<TransacaoSalva> alterar, CancellationToken cancelamento)
+    {
+        if (await banco.Transacoes.FirstOrDefaultAsync(t => t.Chave == chave, cancelamento) is not { } salva)
+        {
+            return false;
+        }
+
+        alterar(salva);
         await banco.SaveChangesAsync(cancelamento);
         return true;
     }

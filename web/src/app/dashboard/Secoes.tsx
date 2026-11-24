@@ -1,11 +1,14 @@
 import { ArrowDownLeft, ArrowUpRight, Equal, PiggyBank, Sigma, Trash2, Undo2, Wallet, type LucideIcon } from 'lucide-react'
+import { useId, useState } from 'react'
 import { EnviarFechamento } from '../../modules/admin'
 import {
+  Abas,
   GraficosDoPeriodo,
   indicadoresDoMes,
   MesesPorAbas,
   PainelDoMes,
   periodoDosMeses,
+  recortesDaEvolucao,
   totaisDoPeriodo,
   type EdicaoDoHistorico,
   type Indicador,
@@ -64,26 +67,41 @@ export function VisaoGeral() {
 
 export function Evolucao() {
   const { dados: resumo, edicao } = useDashboard()
-  const totais = totaisDoPeriodo(resumo.meses)
+  const [chave, setChave] = useState('recentes')
+  const idDoPainel = useId()
+  const recortes = recortesDaEvolucao(resumo.meses)
+  // Se o ano escolhido sumir (o último mês dele foi apagado), volta para o recorte padrão.
+  const recorte = recortes.find((r) => r.chave === chave) ?? recortes[0]
+  const totais = totaisDoPeriodo(recorte.meses)
+  const comAbas = recortes.length > 1
 
   return (
     <>
       <CabecalhoDaSecao
-        sobretitulo={periodoDosMeses(resumo.meses)}
+        sobretitulo={periodoDosMeses(recorte.meses)}
         titulo="Evolução"
         descricao="Como entradas, saídas e saldo andaram mês a mês."
       />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <CartaoDeNumero rotulo="Entrou no período" icone={ArrowDownLeft} valor={formatarMoedaComSinal(totais.entradas, 'entrada')} cor="text-entrada" />
-        <CartaoDeNumero rotulo="Saiu no período" icone={ArrowUpRight} valor={formatarMoedaComSinal(totais.saidas, 'saida')} cor="text-saida" />
-        <CartaoDeNumero rotulo="Gasto médio por mês" icone={Sigma} valor={formatarMoeda(totais.mediaDeSaidas)} />
-      </div>
-      {resumo.meses.length < 2 ? (
-        <SemDados>Com um mês só não há evolução para mostrar. Exporte um período maior no app do Inter.</SemDados>
-      ) : (
-        <GraficosDoPeriodo meses={resumo.meses} />
+      {comAbas && (
+        <Abas rotulo="Período da evolução" abas={recortes} selecionada={recorte.chave} aoSelecionar={setChave} idDoPainel={idDoPainel} />
       )}
-      <TabelaDosMeses meses={resumo.meses} edicao={edicao} />
+      <div id={idDoPainel} role={comAbas ? 'tabpanel' : undefined} className="flex flex-col gap-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <CartaoDeNumero rotulo="Entrou no período" icone={ArrowDownLeft} valor={formatarMoedaComSinal(totais.entradas, 'entrada')} cor="text-entrada" />
+          <CartaoDeNumero rotulo="Saiu no período" icone={ArrowUpRight} valor={formatarMoedaComSinal(totais.saidas, 'saida')} cor="text-saida" />
+          <CartaoDeNumero rotulo="Gasto médio por mês" icone={Sigma} valor={formatarMoeda(totais.mediaDeSaidas)} />
+        </div>
+        {recorte.meses.length < 2 ? (
+          <SemDados>
+            {comAbas
+              ? 'Este período tem um mês só, então não há evolução para mostrar.'
+              : 'Com um mês só não há evolução para mostrar. Exporte um período maior no app do Inter.'}
+          </SemDados>
+        ) : (
+          <GraficosDoPeriodo meses={recorte.meses} />
+        )}
+        <TabelaDosMeses meses={recorte.meses} edicao={edicao} />
+      </div>
     </>
   )
 }
@@ -144,7 +162,7 @@ export function Transacoes() {
         titulo="Transações"
         descricao={
           edicao
-            ? 'Escolha o mês para ver cada lançamento. Trocou a categoria de um, os iguais seguem a escolha daqui pra frente. A lixeira tira o lançamento do histórico.'
+            ? 'Escolha o mês para ver cada lançamento. Troque a categoria, use o olho para tirar um lançamento das somas ou a lixeira para apagar.'
             : 'Escolha o mês para ver o fechamento, os gastos por categoria e cada lançamento.'
         }
       />

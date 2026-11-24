@@ -1,7 +1,8 @@
 namespace HdsFinance.Domain;
 
 /// <summary>
-/// Fecha assim: saldo inicial + entradas − saídas + investimentos e transferências = saldo final.
+/// Fecha assim: saldo inicial + entradas − saídas + investimentos e transferências + compras no cartão + ocultas = saldo final.
+/// Compra no cartão é saída no mês dela, mas o dinheiro só sai no pagamento: o campo ComprasNoCartao devolve o valor ao saldo.
 /// Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas
 /// próprias mexem no saldo da conta, mas ficam no próprio campo.
 /// O saldo fica nulo quando o extrato não informa nenhum.
@@ -15,7 +16,13 @@ public sealed record ResumoMensal(
 {
     public decimal Resultado => Entradas - Saidas;
 
-    public decimal? SaldoFinal => SaldoInicial + Resultado + InvestimentosETransferencias;
+    public decimal? SaldoFinal => SaldoInicial + Resultado + InvestimentosETransferencias + ComprasNoCartao + Ocultas;
+
+    /// <summary>O que as transações ocultas moveram na conta: fora das somas, mas o saldo precisa fechar.</summary>
+    public decimal Ocultas { get; init; }
+
+    /// <summary>O que foi gasto no cartão no mês, já com os estornos abatidos.</summary>
+    public decimal ComprasNoCartao { get; init; }
 
     public IReadOnlyList<GastoPorCategoria> GastosPorCategoria { get; init; } = [];
 
@@ -31,20 +38,23 @@ public sealed record ResumoMensal(
         var doMes = transacoes.Where(t => mes.Contem(t.Data)).ToList();
         var fluxo = doMes.Where(t => t.ContaNoFluxoDeCaixa).ToList();
 
-        var entradas = fluxo.Where(t => t.Valor > 0).Sum(t => t.Valor);
-        var saidas = -fluxo.Where(t => t.Valor < 0).Sum(t => t.Valor);
-        var internas = doMes.Where(t => !t.ContaNoFluxoDeCaixa).Sum(t => t.Valor);
+        var entradas = fluxo.Where(t => !t.EhGasto).Sum(t => t.Valor);
+        var saidas = -fluxo.Where(t => t.EhGasto).Sum(t => t.Valor);
+        var internas = doMes.Where(t => !t.Oculta && !t.ContaNoFluxoDeCaixa).Sum(t => t.Valor);
 
-        var gastos = fluxo.Where(t => t.Valor < 0)
+        var gastos = fluxo.Where(t => t.EhGasto)
             .GroupBy((categorizador ?? Categorizador.Padrao).Categorizar)
             .Select(g => new GastoPorCategoria(g.Key, -g.Sum(t => t.Valor)))
+            .Where(g => g.Valor > 0)
             .OrderByDescending(g => g.Valor)
             .ToList();
 
         return new ResumoMensal(mes, saldoInicial, entradas, saidas, internas)
         {
             GastosPorCategoria = gastos,
-            Investimentos = PosicaoDeInvestimento.Do(doMes, investidoAntes),
+            ComprasNoCartao = -doMes.Where(t => !t.Oculta && t.Tipo == TipoDeTransacao.CompraNoCartao).Sum(t => t.Valor),
+            Ocultas = doMes.Where(t => t.Oculta && t.MexeNoSaldo).Sum(t => t.Valor),
+            Investimentos = PosicaoDeInvestimento.Do(doMes.Where(t => !t.Oculta), investidoAntes),
         };
     }
 
@@ -56,7 +66,7 @@ public sealed record ResumoMensal(
         IEnumerable<Transacao> transacoes, decimal? saldoFinalDoExtrato = null, Categorizador? categorizador = null)
     {
         var lista = transacoes.ToList();
-        var saldo = saldoFinalDoExtrato - lista.Sum(t => t.Valor);
+        var saldo = saldoFinalDoExtrato - lista.Where(t => t.MexeNoSaldo).Sum(t => t.Valor);
 
         var resumos = new List<ResumoMensal>();
         foreach (var mes in lista

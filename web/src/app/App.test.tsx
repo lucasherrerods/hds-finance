@@ -61,6 +61,7 @@ describe('área admin', () => {
     if (url.endsWith('/admin/extratos')) {
       return new Response(JSON.stringify({ transacoesNovas: 3, duplicadas: 0, fechamento: 'Nenhum mês completo para fechar.' }))
     }
+    if (url.endsWith('/admin/transacoes/categoria') || url.endsWith('/admin/transacoes/oculta')) return new Response(null, { status: 204 })
     if (url.endsWith('/admin/categorias')) return new Response(null, { status: 204 })
     if (url.includes('/admin/transacoes') || url.includes('/admin/meses/')) return new Response(JSON.stringify({ apagadas: 1 }))
     return new Response(JSON.stringify(dados))
@@ -128,7 +129,7 @@ describe('área admin', () => {
     await vi.waitFor(() => expect(chamadas(fetchFalso, '/admin/historico')).toHaveLength(2))
   })
 
-  it('trocar a categoria de uma transação guarda a escolha e recarrega', async () => {
+  it('trocar a categoria vale só para a transação, com a opção de aplicar às iguais', async () => {
     const fetchFalso = apiDoAdmin()
     abrir('/admin/transacoes')
 
@@ -136,8 +137,23 @@ describe('área admin', () => {
     fireEvent.change(seletor, { target: { value: 'Lazer' } })
 
     expect(await screen.findByRole('status')).toHaveTextContent('agora é Lazer')
-    expect(chamadas(fetchFalso, '/admin/categorias')[0][1]).toMatchObject({ method: 'PUT' })
-    await vi.waitFor(() => expect(chamadas(fetchFalso, '/admin/historico')).toHaveLength(2))
+    expect(chamadas(fetchFalso, '/admin/transacoes/categoria')).toHaveLength(1)
+    expect(chamadas(fetchFalso, '/admin/categorias')).toHaveLength(0)
+
+    fireEvent.click(screen.getByRole('button', { name: /aplicar a todas as iguais/i }))
+    await vi.waitFor(() => expect(chamadas(fetchFalso, '/admin/categorias')).toHaveLength(1))
+    await vi.waitFor(() => expect(chamadas(fetchFalso, '/admin/historico')).toHaveLength(3))
+  })
+
+  it('ocultar tira a transação da soma e recarrega', async () => {
+    const fetchFalso = apiDoAdmin()
+    abrir('/admin/transacoes')
+
+    const [olho] = await screen.findAllByRole('button', { name: /^ocultar /i }, { timeout: 5000 })
+    fireEvent.click(olho)
+
+    expect(await screen.findByRole('status')).toHaveTextContent('não entra mais nas somas')
+    expect(chamadas(fetchFalso, '/admin/transacoes/oculta')[0][1]).toMatchObject({ method: 'PUT' })
   })
 
   it('apaga uma transação depois de confirmar', async () => {
@@ -171,6 +187,19 @@ describe('área admin', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent('saiu do histórico')
     expect(chamadas(fetchFalso, '/admin/meses/')[0][1]).toMatchObject({ method: 'DELETE' })
+  })
+
+  it('na evolução, escolher um ano muda a tabela', async () => {
+    const base = mesesDeExemplo[0]
+    const meses = [2024, 2025, 2026].map((ano) => ({ ...base, ano, mes: 5 }))
+    apiDoAdmin({ dados: { ...historico, meses } })
+    abrir('/admin/evolucao')
+
+    fireEvent.click(await screen.findByRole('tab', { name: '2024' }, { timeout: 5000 }))
+
+    const tabela = within(screen.getByRole('region', { name: 'Resumo por mês' }))
+    expect(tabela.getAllByRole('button', { name: /^apagar /i })).toHaveLength(1)
+    expect(tabela.getByRole('button', { name: /2024|\/24/ })).toBeInTheDocument()
   })
 
   it('com o histórico vazio, convida a incluir o primeiro extrato', async () => {

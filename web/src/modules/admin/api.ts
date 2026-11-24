@@ -52,14 +52,34 @@ export async function buscarHistorico(): Promise<ResultadoDoHistorico> {
 export type ResultadoDaImportacao = { ok: true; transacoesNovas: number; duplicadas: number; fechamento: string } | Falha
 
 /** Guarda as transações novas, anota até onde o extrato vai e fecha o mês se ele ficou completo. */
-export async function adicionarExtrato(arquivo: File): Promise<ResultadoDaImportacao> {
+export async function adicionarExtrato(arquivo: File, fechar = true): Promise<ResultadoDaImportacao> {
   const corpo = new FormData()
   corpo.append('arquivo', arquivo)
 
-  const resposta = await chamarAdmin('/extratos', { method: 'POST', body: corpo })
+  const resposta = await chamarAdmin(`/extratos${fechar ? '' : '?fechar=false'}`, { method: 'POST', body: corpo })
   if (!resposta) return falhaSemServidor
   if (resposta.ok) return { ok: true, ...((await resposta.json()) as Omit<Extract<ResultadoDaImportacao, { ok: true }>, 'ok'>) }
   return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível importar o extrato.') }
+}
+
+export type ResultadoDaFatura =
+  | { ok: true; transacoesNovas: number; duplicadas: number }
+  | { ok: false; mensagem: string; pedeSenha: boolean }
+
+/** A senha vai no corpo e só abre o PDF: a api não guarda. */
+export async function adicionarFatura(arquivo: File, senha: string): Promise<ResultadoDaFatura> {
+  const corpo = new FormData()
+  corpo.append('arquivo', arquivo)
+  if (senha) corpo.append('senha', senha)
+
+  const resposta = await chamarAdmin('/faturas', { method: 'POST', body: corpo })
+  if (!resposta) return { ...falhaSemServidor, pedeSenha: false }
+  if (resposta.ok) return { ok: true, ...((await resposta.json()) as { transacoesNovas: number; duplicadas: number }) }
+  return {
+    ok: false,
+    mensagem: await mensagemDoProblema(resposta, 'Não foi possível importar a fatura.'),
+    pedeSenha: resposta.status === 423,
+  }
 }
 
 export type ResultadoDaRemocao = { ok: true; apagadas: number } | Falha
@@ -99,10 +119,22 @@ export async function enviarFechamento(mes: MesDoFechamento, forcar = false): Pr
   }
 }
 
+/** Só para esta transação; nulo volta à categoria automática. */
+export async function mudarCategoria(chave: string, categoria: string | null): Promise<{ ok: true } | Falha> {
+  return ajustar('/transacoes/categoria', { chave, categoria }, 'Não foi possível trocar a categoria.')
+}
+
+export async function ocultarTransacao(chave: string, oculta: boolean): Promise<{ ok: true } | Falha> {
+  return ajustar('/transacoes/oculta', { chave, oculta }, 'Não foi possível mudar a transação.')
+}
+
+async function ajustar(caminho: string, corpo: unknown, padrao: string): Promise<{ ok: true } | Falha> {
+  const resposta = await chamarAdmin(caminho, { method: 'PUT', ...json(corpo) })
+  if (!resposta) return falhaSemServidor
+  return resposta.ok ? { ok: true } : { ok: false, mensagem: await mensagemDoProblema(resposta, padrao) }
+}
+
 /** Guarda a categoria escolhida para essa descrição; daqui pra frente ela vence as regras. */
 export async function corrigirCategoria(descricao: string, categoria: string): Promise<{ ok: true } | Falha> {
-  const resposta = await chamarAdmin('/categorias', { method: 'PUT', ...json({ descricao, categoria }) })
-  if (!resposta) return falhaSemServidor
-  if (resposta.ok) return { ok: true }
-  return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível trocar a categoria.') }
+  return ajustar('/categorias', { descricao, categoria }, 'Não foi possível trocar a categoria.')
 }

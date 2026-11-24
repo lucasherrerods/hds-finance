@@ -83,6 +83,9 @@ namespace HdsFinance.Infrastructure.Repositorios.Migracoes
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Categoria")
+                        .HasColumnType("text");
+
                     b.Property<string>("Chave")
                         .IsRequired()
                         .HasColumnType("text");
@@ -96,6 +99,9 @@ namespace HdsFinance.Infrastructure.Repositorios.Migracoes
 
                     b.Property<string>("IdExterno")
                         .HasColumnType("text");
+
+                    b.Property<bool>("Oculta")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Tipo")
                         .IsRequired()

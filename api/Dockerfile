@@ -1,5 +1,4 @@
-# Imagem da api para a demonstração (Render ou qualquer host com Docker).
-# O modo pessoal não roda aqui: ele fica na máquina do dono, com o SQLite local.
+# Imagem da api: demonstração e área admin (Render ou qualquer host com Docker).
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src

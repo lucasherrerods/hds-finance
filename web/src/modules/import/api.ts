@@ -61,7 +61,7 @@ export type CategoriaComparada = {
   variacaoPercentual: number | null
 }
 
-export type TransacaoCategorizada = { data: string; descricao: string; categoria: string; valor: number }
+export type TransacaoCategorizada = { data: string; descricao: string; categoria: string; valor: number; noCartao?: boolean; chave?: string; oculta?: boolean }
 
 export type Painel = {
   ano: number

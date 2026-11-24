@@ -57,7 +57,7 @@ public sealed record PainelDoMes(
                 dia,
                 new DateOnly(mes.Ano, mes.Mes, dia).DayOfWeek,
                 (dia - 1 + (int)primeiroDia.DayOfWeek) / 7,
-                gastos.Where(t => t.Data.Day == dia).Sum(t => -t.Valor)))
+                Math.Max(0m, gastos.Where(t => t.Data.Day == dia).Sum(t => -t.Valor))))
             .ToList();
 
         return new PainelDoMes(
@@ -70,11 +70,11 @@ public sealed record PainelDoMes(
             CalcularRitmo(gastos, gastosAnteriores, temAnterior, diasNoMes, ultimoDiaComMovimento),
             mapa,
             CompararCategorias(gastos, gastosAnteriores, temAnterior, categorizador),
-            TransacaoCategorizada.Listar(doMes, categorizador).Take(LimiteDeTransacoes).ToList());
+            TransacaoCategorizada.Listar(doMes.Where(t => !t.Oculta), categorizador).Take(LimiteDeTransacoes).ToList());
     }
 
     private static List<Transacao> Gastos(IEnumerable<Transacao> transacoes) =>
-        transacoes.Where(t => t.ContaNoFluxoDeCaixa && t.Valor < 0).ToList();
+        transacoes.Where(t => t.EhGasto).ToList();
 
     private static decimal? Variacao(decimal atual, decimal? anterior) =>
         anterior is > 0 ? Math.Round((atual - anterior.Value) / anterior.Value * 100, 1) : null;
@@ -107,6 +107,7 @@ public sealed record PainelDoMes(
                 decimal? anterior = temAnterior ? anteriores.GetValueOrDefault(g.Key) : null;
                 return new CategoriaComparada(g.Key, atual, anterior, Variacao(atual, anterior));
             })
+            .Where(c => c.Atual > 0)
             .OrderByDescending(c => c.Atual)
             .Take(LimiteDeCategorias)
             .ToList();

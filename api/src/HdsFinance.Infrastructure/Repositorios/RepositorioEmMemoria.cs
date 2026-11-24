@@ -34,6 +34,23 @@ public sealed class RepositorioEmMemoria : IRepositorioDeTransacoes
         return Task.FromResult(indice >= 0);
     }
 
+    public Task<bool> DefinirCategoriaAsync(string chave, string? categoria, CancellationToken cancelamento = default) =>
+        Task.FromResult(Alterar(chave, t => t with { Categoria = categoria }));
+
+    public Task<bool> DefinirOcultaAsync(string chave, bool oculta, CancellationToken cancelamento = default) =>
+        Task.FromResult(Alterar(chave, t => t with { Oculta = oculta }));
+
+    private bool Alterar(string chave, Func<Transacao, Transacao> alterar)
+    {
+        var indice = _transacoes.FindIndex(t => t.ChaveDeDeduplicacao == chave);
+        if (indice >= 0)
+        {
+            _transacoes[indice] = alterar(_transacoes[indice]);
+        }
+
+        return indice >= 0;
+    }
+
     public Task<int> RemoverMesAsync(MesDeReferencia mes, CancellationToken cancelamento = default) =>
         Task.FromResult(_transacoes.RemoveAll(t => mes.Contem(t.Data)));
 }

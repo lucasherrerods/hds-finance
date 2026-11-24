@@ -56,6 +56,8 @@ public static class RotasDoAdmin
         protegidas.MapGet("/historico", HistoricoAsync);
         protegidas.MapPost("/extratos", AdicionarExtratoAsync)
             .WithMetadata(new RequestSizeLimitAttribute(RotasDaDemonstracao.TamanhoMaximoDoArquivo + 64 * 1024));
+        protegidas.MapPost("/faturas", AdicionarFaturaAsync)
+            .WithMetadata(new RequestSizeLimitAttribute(RotasDaDemonstracao.TamanhoMaximoDoArquivo + 64 * 1024));
         // POST com corpo: descrição e valor na URL iriam parar nos logs de acesso.
         protegidas.MapPost("/transacoes/apagar", ApagarTransacaoAsync);
         protegidas.MapDelete("/meses/{mes}", ApagarMesAsync);
@@ -164,7 +166,7 @@ public static class RotasDoAdmin
 
     /// <summary>Importa, anota a cobertura e fecha o mês, se ele ficou completo.</summary>
     private static async Task<IResult> AdicionarExtratoAsync(
-        HttpRequest requisicao, ProcessarExtratoRecebido processar, CancellationToken cancelamento)
+        HttpRequest requisicao, ProcessarExtratoRecebido processar, bool? fechar, CancellationToken cancelamento)
     {
         var (arquivo, erro) = await RotasDaDemonstracao.LerArquivoAsync(requisicao, cancelamento);
         if (arquivo is null)
@@ -173,10 +175,25 @@ public static class RotasDoAdmin
         }
 
         await using var conteudo = arquivo.Value.Conteudo.OpenReadStream();
-        var resultado = await processar.ExecutarAsync(conteudo, arquivo.Value.Formato, cancelamento);
+        var resultado = await processar.ExecutarAsync(conteudo, arquivo.Value.Formato, cancelamento, fechar ?? true);
         return resultado.Importacao is ResultadoDaImportacao.Importado importado
             ? Results.Ok(new ImportacaoJson(importado.Novas, importado.Duplicadas, TextoDoFechamento.De(resultado.Fechamento)))
             : RespostasHttp.De(new ResultadoDoResumo.NaoImportado(resultado.Importacao));
+    }
+
+    /// <summary>A senha vem no formulário, abre o PDF em memória e some com a requisição.</summary>
+    private static async Task<IResult> AdicionarFaturaAsync(HttpRequest requisicao, ImportarFatura importar, CancellationToken cancelamento)
+    {
+        var (arquivo, erro) = await RotasDaDemonstracao.LerUploadAsync(requisicao, cancelamento);
+        if (arquivo is null)
+        {
+            return erro!;
+        }
+
+        using var conteudo = new MemoryStream();
+        await arquivo.CopyToAsync(conteudo, cancelamento);
+        var senha = (await requisicao.ReadFormAsync(cancelamento))["senha"].ToString();
+        return RespostasHttp.De(await importar.ExecutarAsync(conteudo.ToArray(), senha, cancelamento));
     }
 
     private static async Task<IResult> ApagarTransacaoAsync(

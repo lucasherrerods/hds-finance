@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Equal, Hash, Search, Trash2, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, CreditCard, Equal, Hash, Search, Trash2, type LucideIcon } from 'lucide-react'
 import { useId, useState, type ReactNode } from 'react'
 import { formatarData, formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
@@ -132,6 +132,12 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
                         </span>
                         <span className="flex min-w-0 flex-col">
                           <span className="line-clamp-2 sm:line-clamp-none sm:truncate">{t.descricao}</span>
+                          {t.noCartao && (
+                            <span className="flex items-center gap-1 text-sm text-texto-suave">
+                              <CreditCard aria-hidden className="size-3.5 opacity-70" />
+                              Cartão
+                            </span>
+                          )}
                           <span className="truncate text-sm text-texto-suave sm:hidden">
                             {t.categoria} · {formatarData(t.data)}
                           </span>

@@ -84,31 +84,29 @@ public static class RotasDaDemonstracao
     internal static async Task<((IFormFile Conteudo, FormatoDeExtrato Formato)? Arquivo, IResult? Erro)> LerArquivoAsync(
         HttpRequest requisicao, CancellationToken cancelamento)
     {
-        IFormFile? arquivo;
+        var (arquivo, erro) = await LerUploadAsync(requisicao, cancelamento);
+        if (arquivo is null)
+        {
+            return (null, erro);
+        }
+
+        return FormatosDeExtrato.PeloNomeDoArquivo(arquivo.FileName) is { } formato
+            ? ((arquivo, formato), null)
+            : (null, RespostasHttp.FormatoNaoSuportado());
+    }
+
+    internal static async Task<(IFormFile? Arquivo, IResult? Erro)> LerUploadAsync(HttpRequest requisicao, CancellationToken cancelamento)
+    {
         try
         {
-            arquivo = (await requisicao.ReadFormAsync(cancelamento)).Files.GetFile("arquivo");
+            var arquivo = (await requisicao.ReadFormAsync(cancelamento)).Files.GetFile("arquivo");
+            return arquivo is null ? (null, RespostasHttp.ArquivoAusente())
+                : arquivo.Length > TamanhoMaximoDoArquivo ? (null, RespostasHttp.ArquivoGrandeDemais())
+                : (arquivo, null);
         }
         catch (InvalidDataException)
         {
             return (null, RespostasHttp.ArquivoGrandeDemais());
         }
-
-        if (arquivo is null)
-        {
-            return (null, RespostasHttp.ArquivoAusente());
-        }
-
-        if (arquivo.Length > TamanhoMaximoDoArquivo)
-        {
-            return (null, RespostasHttp.ArquivoGrandeDemais());
-        }
-
-        if (FormatosDeExtrato.PeloNomeDoArquivo(arquivo.FileName) is not { } formato)
-        {
-            return (null, RespostasHttp.FormatoNaoSuportado());
-        }
-
-        return ((arquivo, formato), null);
     }
 }

@@ -31,7 +31,7 @@ public sealed class FecharMes(
 {
     public async Task<IReadOnlyList<ResumoMensal>> MesesAsync(CancellationToken cancelamento = default)
     {
-        var todas = await transacoes.ListarAsync(cancelamento);
+        var todas = ConciliacaoDaFatura.Aplicar(await transacoes.ListarAsync(cancelamento));
         if (todas.Count == 0)
         {
             return [];
@@ -39,7 +39,7 @@ public sealed class FecharMes(
 
         // O saldo guardado só vale para reconstruir os meses se o extrato dele chega até a última transação.
         var cobertura = await registro.CoberturaAsync(cancelamento);
-        var saldo = cobertura.CobertoAte >= todas.Max(t => t.Data) ? cobertura.SaldoFinal : null;
+        var saldo = cobertura.CobertoAte >= todas.Where(t => t.MexeNoSaldo).Select(t => t.Data).DefaultIfEmpty().Max() ? cobertura.SaldoFinal : null;
         return ResumoMensal.PorMes(todas, saldo, categorizador);
     }
 

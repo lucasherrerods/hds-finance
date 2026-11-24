@@ -36,6 +36,12 @@ describe('ListaDeTransacoes', () => {
     expect(screen.queryByRole('button', { name: /apagar/i })).not.toBeInTheDocument()
   })
 
+  it('marca o que foi comprado no cartão', () => {
+    render(<ListaDeTransacoes transacoes={[{ ...transacoes[0], noCartao: true }, transacoes[1]]} mes={mes} />)
+
+    expect(screen.getAllByText('Cartão')).toHaveLength(1)
+  })
+
   it('com edição, apaga uma transação do histórico', () => {
     const aoApagar = vi.fn()
     render(<ListaDeTransacoes transacoes={transacoes} mes={mes} edicao={edicao({ aoApagar })} />)

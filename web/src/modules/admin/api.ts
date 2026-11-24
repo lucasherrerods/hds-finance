@@ -52,14 +52,34 @@ export async function buscarHistorico(): Promise<ResultadoDoHistorico> {
 export type ResultadoDaImportacao = { ok: true; transacoesNovas: number; duplicadas: number; fechamento: string } | Falha
 
 /** Guarda as transações novas, anota até onde o extrato vai e fecha o mês se ele ficou completo. */
-export async function adicionarExtrato(arquivo: File): Promise<ResultadoDaImportacao> {
+export async function adicionarExtrato(arquivo: File, fechar = true): Promise<ResultadoDaImportacao> {
   const corpo = new FormData()
   corpo.append('arquivo', arquivo)
 
-  const resposta = await chamarAdmin('/extratos', { method: 'POST', body: corpo })
+  const resposta = await chamarAdmin(`/extratos${fechar ? '' : '?fechar=false'}`, { method: 'POST', body: corpo })
   if (!resposta) return falhaSemServidor
   if (resposta.ok) return { ok: true, ...((await resposta.json()) as Omit<Extract<ResultadoDaImportacao, { ok: true }>, 'ok'>) }
   return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível importar o extrato.') }
+}
+
+export type ResultadoDaFatura =
+  | { ok: true; transacoesNovas: number; duplicadas: number }
+  | { ok: false; mensagem: string; pedeSenha: boolean }
+
+/** A senha vai no corpo e só abre o PDF: a api não guarda. */
+export async function adicionarFatura(arquivo: File, senha: string): Promise<ResultadoDaFatura> {
+  const corpo = new FormData()
+  corpo.append('arquivo', arquivo)
+  if (senha) corpo.append('senha', senha)
+
+  const resposta = await chamarAdmin('/faturas', { method: 'POST', body: corpo })
+  if (!resposta) return { ...falhaSemServidor, pedeSenha: false }
+  if (resposta.ok) return { ok: true, ...((await resposta.json()) as { transacoesNovas: number; duplicadas: number }) }
+  return {
+    ok: false,
+    mensagem: await mensagemDoProblema(resposta, 'Não foi possível importar a fatura.'),
+    pedeSenha: resposta.status === 423,
+  }
 }
 
 export type ResultadoDaRemocao = { ok: true; apagadas: number } | Falha

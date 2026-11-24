@@ -324,4 +324,23 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
             (await cliente.PostAsJsonAsync("/admin/acesso/codigo", new { email = EmailDoAdmin })).StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
     }
+
+    [Fact]
+    public async Task Num_lote_o_extrato_pode_entrar_sem_mandar_o_fechamento()
+    {
+        var cliente = await ClienteLogadoAsync();
+
+        (await cliente.PostAsync("/admin/extratos?fechar=false", Amostra())).EnsureSuccessStatusCode();
+
+        _notificador.Enviados.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Fatura_exige_sessao_e_recusa_arquivo_que_nao_e_fatura()
+    {
+        MultipartFormDataContent Arquivo() => new() { { new ByteArrayContent([1, 2, 3]), "arquivo", "fatura.pdf" } };
+
+        (await Cliente().PostAsync("/admin/faturas", Arquivo())).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        (await (await ClienteLogadoAsync()).PostAsync("/admin/faturas", Arquivo())).StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+    }
 }

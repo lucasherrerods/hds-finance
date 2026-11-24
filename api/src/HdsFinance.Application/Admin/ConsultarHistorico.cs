@@ -20,7 +20,7 @@ public sealed class ConsultarHistorico(IRepositorioDeTransacoes transacoes, Fech
         }
 
         var regras = categorizador ?? Categorizador.Padrao;
-        var todas = await transacoes.ListarAsync(cancelamento);
+        var todas = ConciliacaoDaFatura.Aplicar(await transacoes.ListarAsync(cancelamento));
         return new HistoricoConsultado(
             meses,
             PainelDoMes.Montar(todas, regras),

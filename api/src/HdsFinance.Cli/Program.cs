@@ -4,6 +4,7 @@ using HdsFinance.Application.Admin;
 using HdsFinance.Application.Relatorios;
 using HdsFinance.Domain;
 using HdsFinance.Infrastructure;
+using HdsFinance.Infrastructure.Extratos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,10 +13,16 @@ using Microsoft.Extensions.Logging;
 const string Uso = """
     Uso:
       importar <extrato .ofx ou .csv>
+      conferir <fatura.pdf> [...]   (só lê e confere, sem gravar)
       relatorio [--mes AAAA-MM] [--saida arquivo.pdf] [--enviar] [--forcar]
     """;
 
 var ptBr = CultureInfo.GetCultureInfo("pt-BR");
+
+if (args is ["conferir", .. var faturas] && faturas.Length > 0)
+{
+    return Conferir(faturas);
+}
 
 var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { ContentRootPath = AppContext.BaseDirectory });
 builder.Configuration.AddUserSecrets(Composicao.IdDosSegredos);
@@ -127,6 +134,47 @@ async Task<int> RelatorioAsync(string[] opcoes)
     var envio = await fechar.EnviarAsync(gerado.Mes, forcar);
     Console.WriteLine(TextoDoFechamento.De(envio));
     return envio is ResultadoDoFechamento.Enviado ? 0 : 1;
+}
+
+// Não mostra compras nem valores, só se a leitura fecha com o total.
+int Conferir(string[] caminhos)
+{
+    Console.Write("Senha do PDF (Enter se não tiver): ");
+    var senha = LerSenha();
+    var leitor = new LeitorFaturaInterPdf();
+    var falhas = 0;
+    foreach (var caminho in caminhos)
+    {
+        var (ok, texto) = !File.Exists(caminho) ? (false, "arquivo não encontrado") : leitor.Ler(File.ReadAllBytes(caminho), senha) switch
+        {
+            ResultadoDaLeituraDeFatura.Lida { Fatura: var f } => (f.Confere(), $"{(f.Confere() ? "confere" : "NÃO confere")}, {f.Cartoes.Sum(c => c.Linhas.Count)} linhas"),
+            ResultadoDaLeituraDeFatura.Invalida i => (false, i.Motivo),
+            _ => (false, "senha errada ou ausente"),
+        };
+        falhas += ok ? 0 : 1;
+        Console.WriteLine($"{Path.GetFileName(caminho)}: {texto}");
+    }
+
+    return falhas == 0 ? 0 : 1;
+}
+
+string LerSenha()
+{
+    var senha = new System.Text.StringBuilder();
+    while (Console.ReadKey(intercept: true) is { Key: not ConsoleKey.Enter } tecla)
+    {
+        if (tecla.Key == ConsoleKey.Backspace)
+        {
+            senha.Length = Math.Max(0, senha.Length - 1);
+        }
+        else
+        {
+            senha.Append(tecla.KeyChar);
+        }
+    }
+
+    Console.WriteLine();
+    return senha.ToString();
 }
 
 int Erro(string mensagem, int codigo = 2)

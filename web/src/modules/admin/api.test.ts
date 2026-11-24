@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   adicionarExtrato,
+  adicionarFatura,
   apagarMes,
   apagarTransacao,
   buscarHistorico,
@@ -146,5 +147,24 @@ describe('apagar', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: 'Entre com o código.' }), { status: 401 })))
 
     expect(await apagarMes({ ano: 2026, mes: 3 })).toEqual({ ok: false, mensagem: 'Entre com o código.' })
+  })
+})
+
+describe('adicionarFatura', () => {
+  it('manda a senha no corpo, nunca na url', async () => {
+    vi.stubEnv('VITE_URL_DA_API', 'http://api.test')
+    const fetchFalso = vi.fn().mockResolvedValue(new Response(JSON.stringify({ transacoesNovas: 5, duplicadas: 0 }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchFalso)
+
+    expect(await adicionarFatura(new File(['x'], 'nov.pdf'), 'segredo')).toEqual({ ok: true, transacoesNovas: 5, duplicadas: 0 })
+    const [url, opcoes] = fetchFalso.mock.calls[0]
+    expect(url).toBe('http://api.test/admin/faturas')
+    expect((opcoes.body as FormData).get('senha')).toBe('segredo')
+  })
+
+  it('avisa quando o pdf pede senha', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: 'Tem senha.' }), { status: 423 })))
+
+    expect(await adicionarFatura(new File(['x'], 'nov.pdf'), '')).toEqual({ ok: false, mensagem: 'Tem senha.', pedeSenha: true })
   })
 })

@@ -51,6 +51,14 @@ public static class RespostasHttp
             title: "Código inválido", detail: "O código não confere. Confira o e-mail recebido.", statusCode: StatusCodes.Status400BadRequest),
     };
 
+    public static IResult De(ResultadoDaFatura resultado) => resultado switch
+    {
+        ResultadoDaFatura.Importada i => Results.Ok(new { transacoesNovas = i.Novas, duplicadas = i.Duplicadas }),
+        ResultadoDaFatura.Invalida i => Results.Problem(
+            title: "Fatura inválida", detail: i.Motivo, statusCode: StatusCodes.Status422UnprocessableEntity),
+        _ => Results.Problem(title: "Senha necessária", detail: "A fatura tem senha, ou a senha não confere.", statusCode: StatusCodes.Status423Locked),
+    };
+
     public static IResult De(ResultadoDaRemocao resultado) => resultado switch
     {
         ResultadoDaRemocao.Apagado a => Results.Ok(new { apagadas = a.Quantidade }),

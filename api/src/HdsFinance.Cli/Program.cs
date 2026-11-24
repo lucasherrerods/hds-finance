@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 const string Uso = """
     Uso:
       importar <extrato .ofx ou .csv>
-      conferir <fatura.pdf> [...]   (só lê e confere, sem gravar)
+      conferir <arquivo> [...]   (só lê e confere, sem gravar)
       relatorio [--mes AAAA-MM] [--saida arquivo.pdf] [--enviar] [--forcar]
     """;
 
@@ -139,23 +139,41 @@ async Task<int> RelatorioAsync(string[] opcoes)
 // Não mostra compras nem valores, só se a leitura fecha com o total.
 int Conferir(string[] caminhos)
 {
-    Console.Write("Senha do PDF (Enter se não tiver): ");
-    var senha = LerSenha();
-    var leitor = new LeitorFaturaInterPdf();
+    string? senha = null;
+    if (caminhos.Any(c => c.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)))
+    {
+        Console.Write("Senha do PDF (Enter se não tiver): ");
+        senha = LerSenha();
+    }
+
     var falhas = 0;
     foreach (var caminho in caminhos)
     {
-        var (ok, texto) = !File.Exists(caminho) ? (false, "arquivo não encontrado") : leitor.Ler(File.ReadAllBytes(caminho), senha) switch
-        {
-            ResultadoDaLeituraDeFatura.Lida { Fatura: var f } => (f.Confere(), $"{(f.Confere() ? "confere" : "NÃO confere")}, {f.Cartoes.Sum(c => c.Linhas.Count)} linhas"),
-            ResultadoDaLeituraDeFatura.Invalida i => (false, i.Motivo),
-            _ => (false, "senha errada ou ausente"),
-        };
+        var (ok, texto) = File.Exists(caminho) ? ConferirUm(caminho, senha) : (false, "arquivo não encontrado");
         falhas += ok ? 0 : 1;
         Console.WriteLine($"{Path.GetFileName(caminho)}: {texto}");
     }
 
     return falhas == 0 ? 0 : 1;
+}
+
+(bool Ok, string Texto) ConferirUm(string caminho, string? senha)
+{
+    if (FormatosDeExtrato.PeloNomeDoArquivo(caminho) == FormatoDeExtrato.Csv)
+    {
+        using var conteudo = File.OpenRead(caminho);
+        if (new LeitorCsvPorBanco().LerAsync(conteudo).GetAwaiter().GetResult() is ResultadoDaLeitura.Sucesso extrato)
+        {
+            return (true, $"extrato do {extrato.Banco}, {extrato.Transacoes.Count} linhas");
+        }
+    }
+
+    return new LeitorDeFaturas().Ler(File.ReadAllBytes(caminho), Path.GetFileName(caminho), senha) switch
+    {
+        ResultadoDaLeituraDeFatura.Lida { Fatura: var f } => (f.Confere(), $"fatura do {f.Banco}, {(f.Confere() ? "confere" : "NÃO confere")}, {f.Cartoes.Sum(c => c.Linhas.Count)} linhas"),
+        ResultadoDaLeituraDeFatura.Invalida i => (false, i.Motivo),
+        _ => (false, "senha errada ou ausente"),
+    };
 }
 
 string LerSenha()

@@ -34,9 +34,15 @@ export function categoriasDe(transacoes: TransacaoCategorizada[]): string[] {
   return [...new Set(transacoes.map((t) => t.categoria))].sort((a, b) => a.localeCompare(b, 'pt-BR'))
 }
 
+const bancoDa = (t: TransacaoCategorizada) => t.banco ?? 'Inter'
+
+export function bancosDe(transacoes: TransacaoCategorizada[]): string[] {
+  return [...new Set(transacoes.map(bancoDa))].sort()
+}
+
 export type Ordem = 'recentes' | 'antigas' | 'maior' | 'menor'
 
-export type Filtros = { busca: string; categoria: string; ordem: Ordem }
+export type Filtros = { busca: string; categoria: string; ordem: Ordem; banco?: string }
 
 const semAcento = (texto: string) =>
   texto
@@ -49,7 +55,7 @@ export function filtrarTransacoes(transacoes: TransacaoCategorizada[], filtros: 
   const busca = semAcento(filtros.busca.trim())
   const filtradas = transacoes.filter(
     (t) =>
-      (!busca || semAcento(t.descricao).includes(busca)) && (!filtros.categoria || t.categoria === filtros.categoria),
+      (!busca || semAcento(t.descricao).includes(busca)) && (!filtros.categoria || t.categoria === filtros.categoria) && (!filtros.banco || bancoDa(t) === filtros.banco),
   )
 
   const porData = (a: TransacaoCategorizada, b: TransacaoCategorizada) => a.data.localeCompare(b.data)

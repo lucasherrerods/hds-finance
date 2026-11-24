@@ -29,6 +29,7 @@ public sealed class RepositorioPostgres(BancoDoAdmin banco) : IRepositorioDeTran
             IdExterno = t.IdExterno,
             Categoria = t.Categoria,
             Oculta = t.Oculta,
+            Banco = t.Banco,
         }));
         await banco.SaveChangesAsync(cancelamento);
     }
@@ -40,6 +41,7 @@ public sealed class RepositorioPostgres(BancoDoAdmin banco) : IRepositorioDeTran
         {
             Categoria = t.Categoria,
             Oculta = t.Oculta,
+            Banco = t.Banco,
         }).ToList();
     }
 

@@ -83,6 +83,22 @@ describe('AdicionarExtrato em lote', () => {
     expect(screen.queryByLabelText(/senha/i)).not.toBeInTheDocument()
   })
 
+  it('reconhece a fatura do Nubank pelo cabeçalho e deixa o extrato dele antes do Inter', async () => {
+    vi.mocked(api.adicionarExtrato).mockResolvedValue(extrato)
+    vi.mocked(api.adicionarFatura).mockResolvedValue(fatura)
+    const aoImportar = vi.fn()
+    render(<AdicionarExtrato aoImportar={aoImportar} />)
+    const inter = new File(['x'], 'inter.ofx')
+    const conta = new File(['Data,Valor,Identificador,Descrição'], 'NU_1_AGO.csv')
+    const cartao = new File(['date,title,amount'], 'Nubank_2024-06-22.csv')
+
+    escolher([inter, conta, cartao])
+
+    await vi.waitFor(() => expect(aoImportar).toHaveBeenCalled())
+    expect(api.adicionarFatura).toHaveBeenCalledWith(cartao, '')
+    expect(vi.mocked(api.adicionarExtrato).mock.calls).toEqual([[conta, false], [inter, true]])
+  })
+
   it('um arquivo com erro não impede os outros', async () => {
     vi.mocked(api.adicionarFatura).mockResolvedValue({ ok: false, mensagem: 'Não fecha.', pedeSenha: false })
     vi.mocked(api.adicionarExtrato).mockResolvedValue(extrato)

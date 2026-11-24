@@ -31,7 +31,7 @@ public sealed class FecharMes(
 {
     public async Task<IReadOnlyList<ResumoMensal>> MesesAsync(CancellationToken cancelamento = default)
     {
-        var todas = ConciliacaoDaFatura.Aplicar(await transacoes.ListarAsync(cancelamento));
+        var todas = TransferenciasEntreBancos.Aplicar(ConciliacaoDaFatura.Aplicar(await transacoes.ListarAsync(cancelamento)));
         if (todas.Count == 0)
         {
             return [];

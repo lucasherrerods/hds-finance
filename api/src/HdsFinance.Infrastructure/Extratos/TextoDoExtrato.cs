@@ -11,8 +11,11 @@ internal static class TextoDoExtrato
     {
         using var memoria = new MemoryStream();
         await conteudo.CopyToAsync(memoria, cancelamento);
-        var bytes = memoria.ToArray();
+        return Ler(memoria.ToArray());
+    }
 
+    public static string Ler(byte[] bytes)
+    {
         try
         {
             return Utf8Estrito.GetString(bytes).TrimStart('﻿');

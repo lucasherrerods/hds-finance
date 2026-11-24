@@ -47,7 +47,7 @@ public sealed record GastoDoDiaJson(int Dia, int DiaDaSemana, int Semana, decima
 
 public sealed record CategoriaComparadaJson(string Categoria, decimal Atual, decimal? Anterior, decimal? VariacaoPercentual);
 
-public sealed record TransacaoJson(DateOnly Data, string Descricao, string Categoria, decimal Valor, bool NoCartao, string Chave, bool Oculta);
+public sealed record TransacaoJson(DateOnly Data, string Descricao, string Categoria, decimal Valor, bool NoCartao, string Chave, bool Oculta, string Banco);
 
 public static class JsonDoResumo
 {
@@ -77,7 +77,7 @@ public static class JsonDoResumo
         p.PrincipaisCategorias.Select(c => new CategoriaComparadaJson(c.Categoria, c.Atual, c.Anterior, c.VariacaoPercentual)).ToList(),
         p.TransacoesRecentes.Select(De).ToList());
 
-    internal static TransacaoJson De(TransacaoCategorizada t) => new(t.Data, t.Descricao, t.Categoria, t.Valor, t.NoCartao, t.Chave, t.Oculta);
+    internal static TransacaoJson De(TransacaoCategorizada t) => new(t.Data, t.Descricao, t.Categoria, t.Valor, t.NoCartao, t.Chave, t.Oculta, t.Banco.ToString());
 
     private static GastoDoDiaJson De(GastoDoDia d) => new(d.Dia, (int)d.DiaDaSemana, d.Semana, d.Valor);
 }

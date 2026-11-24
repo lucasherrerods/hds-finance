@@ -25,6 +25,13 @@ describe('FaturasDoCartao', () => {
     expect(within(screen.getByRole('button', { name: /setembro/i })).queryByText(/paga/i)).not.toBeInTheDocument()
   })
 
+  it('faturas de bancos diferentes no mesmo dia ficam separadas', () => {
+    render(<FaturasDoCartao faturas={[{ ...fatura('2026-11-02'), banco: 'Nubank' }, { ...fatura('2026-11-02'), banco: 'Inter' }]} />)
+
+    expect(screen.getByRole('button', { name: /nubank/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /inter/i })).toBeInTheDocument()
+  })
+
   it('separa por ano quando há mais de um', () => {
     render(<FaturasDoCartao faturas={[fatura('2026-01-02'), fatura('2025-12-02')]} />)
 

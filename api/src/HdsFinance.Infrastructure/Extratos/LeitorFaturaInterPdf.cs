@@ -13,7 +13,7 @@ namespace HdsFinance.Infrastructure.Extratos;
 /// Lê o PDF da fatura do cartão Inter. O documento desalinha a coluna de valores das descrições, então as duas
 /// são lidas em ordem e casadas uma a uma; a conferência com os totais pega qualquer desencontro.
 /// </summary>
-public sealed partial class LeitorFaturaInterPdf : ILeitorDeFatura
+public sealed partial class LeitorFaturaInterPdf
 {
     private const string NaoEhFatura = "O arquivo não parece uma fatura do cartão Inter.";
     private const double FolgaDaLinha = 3;

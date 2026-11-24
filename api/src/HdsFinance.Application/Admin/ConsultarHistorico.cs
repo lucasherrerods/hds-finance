@@ -26,7 +26,7 @@ public sealed class ConsultarHistorico(IRepositorioDeTransacoes transacoes, Fech
 
         var regras = categorizador ?? Categorizador.Padrao;
         var guardadas = await transacoes.ListarAsync(cancelamento);
-        var todas = ConciliacaoDaFatura.Aplicar(guardadas);
+        var todas = TransferenciasEntreBancos.Aplicar(ConciliacaoDaFatura.Aplicar(guardadas));
         var cobertura = await registro.CoberturaAsync(cancelamento);
         return new HistoricoConsultado(
             meses,

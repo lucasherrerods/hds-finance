@@ -365,4 +365,31 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
         using var json = JsonDocument.Parse(await cliente.GetStringAsync("/admin/historico"));
         json.RootElement.GetProperty("meses")[0].GetProperty("saidas").GetDecimal().Should().Be(0m);
     }
+
+    [Fact]
+    public async Task Extrato_e_fatura_do_nubank_entram_separados_sem_mandar_fechamento()
+    {
+        var cliente = await ClienteLogadoAsync();
+        MultipartFormDataContent Arquivo(byte[] conteudo, string nome) => new() { { new ByteArrayContent(conteudo), "arquivo", nome } };
+        var conta = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "samples", "nubank-conta.csv"));
+
+        (await cliente.PostAsync("/admin/extratos", Arquivo(conta, "conta.csv"))).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await cliente.PostAsync("/admin/faturas", Arquivo("date,title,amount\n2024-05-31,Uber,\"12,99\"\n"u8.ToArray(), "Nubank_2024-06-22.csv")))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        _notificador.Enviados.Should().BeEmpty();
+        using var json = JsonDocument.Parse(await cliente.GetStringAsync("/admin/historico"));
+        json.RootElement.GetProperty("transacoes").EnumerateArray().Should().OnlyContain(t => t.GetProperty("banco").GetString() == "Nubank");
+        json.RootElement.GetProperty("faturas")[0].GetProperty("banco").GetString().Should().Be("Nubank");
+        json.RootElement.GetProperty("saldo").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task A_demonstracao_nao_le_nubank()
+    {
+        var conta = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "samples", "nubank-conta.csv"));
+        var resposta = await Cliente().PostAsync("/demonstracao/resumo", new MultipartFormDataContent { { new ByteArrayContent(conta), "arquivo", "conta.csv" } });
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+    }
 }

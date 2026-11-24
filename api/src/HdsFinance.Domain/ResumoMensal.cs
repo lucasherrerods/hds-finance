@@ -1,7 +1,7 @@
 namespace HdsFinance.Domain;
 
 /// <summary>
-/// Fecha assim: saldo inicial + entradas − saídas + investimentos e transferências + compras no cartão + ocultas = saldo final.
+/// Fecha assim: saldo inicial + entradas − saídas + investimentos e transferências + compras no cartão + ocultas + outros bancos = saldo final.
 /// Compra no cartão é saída no mês dela, mas o dinheiro só sai no pagamento: o campo ComprasNoCartao devolve o valor ao saldo.
 /// Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas
 /// próprias mexem no saldo da conta, mas ficam no próprio campo.
@@ -16,7 +16,10 @@ public sealed record ResumoMensal(
 {
     public decimal Resultado => Entradas - Saidas;
 
-    public decimal? SaldoFinal => SaldoInicial + Resultado + InvestimentosETransferencias + ComprasNoCartao + Ocultas;
+    public decimal? SaldoFinal => SaldoInicial + Resultado + InvestimentosETransferencias + ComprasNoCartao + Ocultas + OutrosBancos;
+
+    /// <summary>Tira do saldo, que é do Inter, o que as somas contam dos outros bancos.</summary>
+    public decimal OutrosBancos { get; init; }
 
     /// <summary>O que as transações ocultas moveram na conta: fora das somas, mas o saldo precisa fechar.</summary>
     public decimal Ocultas { get; init; }
@@ -53,6 +56,7 @@ public sealed record ResumoMensal(
         {
             GastosPorCategoria = gastos,
             ComprasNoCartao = -doMes.Where(t => !t.Oculta && t.Tipo == TipoDeTransacao.CompraNoCartao).Sum(t => t.Valor),
+            OutrosBancos = -doMes.Where(t => !t.Oculta && t.Banco != Banco.Inter && t.Tipo != TipoDeTransacao.CompraNoCartao).Sum(t => t.Valor),
             Ocultas = doMes.Where(t => t.Oculta && t.MexeNoSaldo).Sum(t => t.Valor),
             Investimentos = PosicaoDeInvestimento.Do(doMes.Where(t => !t.Oculta), investidoAntes),
         };

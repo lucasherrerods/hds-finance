@@ -15,9 +15,9 @@ public class ImportarFaturaTestes
     private Task<ResultadoDaFatura> Importar(ResultadoDaLeituraDeFatura leitura, IReadOnlySet<string>? existentes = null)
     {
         var leitor = Substitute.For<ILeitorDeFatura>();
-        leitor.Ler(Arg.Any<byte[]>(), "senha").Returns(leitura);
+        leitor.Ler(Arg.Any<byte[]>(), "fatura.pdf", "senha").Returns(leitura);
         _repositorio.ChavesExistentesAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>()).Returns(existentes ?? new HashSet<string>());
-        return new ImportarFatura(leitor, _repositorio).ExecutarAsync([1], "senha");
+        return new ImportarFatura(leitor, _repositorio).ExecutarAsync([1], "fatura.pdf", "senha");
     }
 
     [Fact]

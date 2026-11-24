@@ -2,6 +2,12 @@ using System.Globalization;
 
 namespace HdsFinance.Domain;
 
+public enum Banco
+{
+    Inter,
+    Nubank,
+}
+
 public enum TipoDeTransacao
 {
     Comum,
@@ -31,7 +37,10 @@ public sealed record Transacao(
 
     public bool ContaNoFluxoDeCaixa => !Oculta && Tipo is (TipoDeTransacao.Comum or TipoDeTransacao.CompraNoCartao);
 
-    public bool MexeNoSaldo => Tipo != TipoDeTransacao.CompraNoCartao;
+    public Banco Banco { get; init; } = Banco.Inter;
+
+    /// <summary>O saldo acompanhado é o da conta do Inter; os outros bancos entram só nas somas.</summary>
+    public bool MexeNoSaldo => Banco == Banco.Inter && Tipo != TipoDeTransacao.CompraNoCartao;
 
     /// <summary>Estorno no cartão também entra aqui: é valor positivo que abate o gasto, não receita.</summary>
     public bool EhGasto => !Oculta && (Tipo == TipoDeTransacao.CompraNoCartao || (Tipo == TipoDeTransacao.Comum && Valor < 0));

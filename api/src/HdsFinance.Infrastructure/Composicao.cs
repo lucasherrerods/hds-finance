@@ -67,12 +67,16 @@ public static class Composicao
     {
         services.AddDbContext<BancoDoAdmin>(o => o.UseNpgsql(configuracao.GetConnectionString(ConexaoDoBanco)));
         services.AddScoped<IRepositorioDeTransacoes, RepositorioPostgres>();
-        services.AddScoped<ImportarExtrato>();
+        // Só o admin lê o Nubank; a demonstração continua com os leitores do Inter.
+        services.AddScoped(provedor => new ImportarExtrato(
+            [new LeitorOfx(), new LeitorCsvPorBanco()],
+            provedor.GetRequiredService<IRepositorioDeTransacoes>(),
+            provedor.GetRequiredService<ClassificadorDeTipo>()));
         services.AddScoped<IRegistroDoAdmin, RegistroPostgres>();
         services.AddScoped<INotificador, NotificadorEmail>();
         services.AddScoped<FecharMes>();
         services.AddScoped<ProcessarExtratoRecebido>();
-        services.AddSingleton<ILeitorDeFatura, LeitorFaturaInterPdf>();
+        services.AddSingleton<ILeitorDeFatura, LeitorDeFaturas>();
         services.AddScoped<ImportarFatura>();
         services.AddScoped<ConsultarHistorico>();
         services.AddScoped<ApagarDados>();

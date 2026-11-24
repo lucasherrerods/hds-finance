@@ -12,6 +12,7 @@ export type Fatura = {
   /** Nulo quando não dá para saber. */
   paga: boolean | null
   compras: TransacaoCategorizada[]
+  banco?: 'Inter' | 'Nubank'
 }
 
 const anoDa = (f: Fatura) => f.vencimento.slice(0, 4)
@@ -39,7 +40,7 @@ export function FaturasDoCartao({ faturas }: { faturas: Fatura[] }) {
         {faturas
           .filter((f) => anoDa(f) === ano)
           .map((f, i) => (
-            <CartaoDaFatura key={f.vencimento} fatura={f} abertaNoInicio={i === 0} />
+            <CartaoDaFatura key={`${f.banco ?? 'Inter'}-${f.vencimento}`} fatura={f} abertaNoInicio={i === 0} />
           ))}
       </div>
     </div>
@@ -62,7 +63,7 @@ function CartaoDaFatura({ fatura, abertaNoInicio }: { fatura: Fatura; abertaNoIn
       >
         <span className="flex min-w-0 flex-col gap-1">
           <span className="text-lg font-semibold tracking-tight first-letter:uppercase">{formatarMes(ano, mes)}</span>
-          <span className="text-sm text-texto-suave">Vence em {formatarData(fatura.vencimento)}</span>
+          <span className="text-sm text-texto-suave">{fatura.banco ?? 'Inter'} · Vence em {formatarData(fatura.vencimento)}</span>
           {fatura.paga !== null && <Situacao paga={fatura.paga} />}
         </span>
         <span className="flex shrink-0 items-center gap-4">

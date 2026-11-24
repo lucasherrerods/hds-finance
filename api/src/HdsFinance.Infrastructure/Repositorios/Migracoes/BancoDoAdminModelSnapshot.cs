@@ -83,6 +83,12 @@ namespace HdsFinance.Infrastructure.Repositorios.Migracoes
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Banco")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Inter");
+
                     b.Property<string>("Categoria")
                         .HasColumnType("text");
 

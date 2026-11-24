@@ -24,6 +24,8 @@ public abstract record ResultadoDaLeitura
     public sealed record Sucesso(IReadOnlyList<Transacao> Transacoes, decimal? SaldoFinal = null, DateOnly? CobertoAte = null)
         : ResultadoDaLeitura
     {
+        public Banco Banco { get; init; } = Banco.Inter;
+
         public DateOnly? CobertoAte { get; init; } = CobertoAte ?? (Transacoes.Count > 0 ? Transacoes.Max(t => t.Data) : null);
     }
 

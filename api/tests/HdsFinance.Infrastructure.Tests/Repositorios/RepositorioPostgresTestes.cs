@@ -140,4 +140,17 @@ public sealed class RepositorioPostgresTestes : IDisposable
         await using var outro = NovoBanco();
         (await new RepositorioPostgres(outro).ListarAsync()).Should().Equal(Salario with { Categoria = "Moradia", Oculta = true }, Aplicacao);
     }
+
+    [Fact]
+    public async Task Guarda_o_banco_da_transacao()
+    {
+        var nubank = Aplicacao with { Banco = Banco.Nubank };
+        await using (var banco = NovoBanco())
+        {
+            await new RepositorioPostgres(banco).AdicionarAsync([Salario, nubank]);
+        }
+
+        await using var outro = NovoBanco();
+        (await new RepositorioPostgres(outro).ListarAsync()).Should().Equal(Salario, nubank);
+    }
 }

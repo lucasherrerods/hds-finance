@@ -24,7 +24,7 @@ O plano gratuito do Render desliga a api depois de 15 minutos parada. A primeira
 | `Email__Remetente` | `hds finance <nao-responda@seu-dominio.com>`, de um domínio verificado no Resend |
 | `Email__Destinatario` | o seu e-mail, para o fechamento do mês |
 
-A `Admin__ChaveDeAssinatura` é gerada pelo próprio Render; trocar o valor derruba as sessões abertas. `Admin__CookieEntreSites=true` já vem no blueprint: front e api ficam em domínios diferentes, então o cookie de sessão precisa de `SameSite=None; Secure`. A imagem já vem com `Proxy__ConfiarNoEncaminhamento=true`, para o limite por IP usar o IP de quem chamou e não o do proxy do Render.
+A `Admin__ChaveDeAssinatura` é gerada pelo próprio Render; trocar o valor derruba as sessões abertas. O front chama a área admin por `/api/admin`, que o `web/vercel.json` repassa para o Render: no mesmo domínio, o navegador não bloqueia o cookie de sessão. Se o endereço da api mudar, atualize esse arquivo. A imagem já vem com `Proxy__ConfiarNoEncaminhamento=true`, para o limite por IP usar o IP de quem chamou e não o do proxy do Render.
 
 Sem `Admin__Email` ou `ConnectionStrings__Banco`, a api sobe só com a demonstração. As migrações rodam sozinhas quando a api sobe com a área admin ligada.
 

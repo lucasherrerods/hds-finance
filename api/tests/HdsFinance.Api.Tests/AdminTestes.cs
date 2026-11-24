@@ -48,15 +48,11 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
         }
     }
 
-    private sealed class EnvioFalso : IEnvioDeEmail
+    private sealed class EnvioFalso : IEnvioEmSegundoPlano
     {
         public List<EmailParaEnviar> Enviados { get; } = [];
 
-        public Task<ResultadoDoEnvio> EnviarAsync(EmailParaEnviar email, CancellationToken cancelamento = default)
-        {
-            Enviados.Add(email);
-            return Task.FromResult<ResultadoDoEnvio>(new ResultadoDoEnvio.Enviado());
-        }
+        public void Enviar(EmailParaEnviar email) => Enviados.Add(email);
     }
 
     private sealed class CodigoFixo : IGeradorDeCodigo
@@ -68,9 +64,9 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
 
     private sealed record MensagemJson(string Mensagem);
 
-    private WebApplicationFactory<Program> Fabrica(bool comAdmin = true) => fabrica.WithWebHostBuilder(b =>
+    private WebApplicationFactory<Program> Fabrica(bool comAdmin, int limite) => fabrica.WithWebHostBuilder(b =>
     {
-        b.UseSetting("Demonstracao:LimiteDeRequisicoesPorMinuto", "1000");
+        b.UseSetting("Demonstracao:LimiteDeRequisicoesPorMinuto", limite.ToString(System.Globalization.CultureInfo.InvariantCulture));
         if (!comAdmin)
         {
             return;
@@ -84,22 +80,22 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
             s.RemoveAll<IDbContextOptionsConfiguration<BancoDoAdmin>>();
             s.AddDbContext<BancoDoAdmin>(o => o.UseSqlite(_conexao));
             s.AddSingleton<INotificador>(_notificador);
-            s.AddSingleton<IEnvioDeEmail>(_envio);
+            s.AddSingleton<IEnvioEmSegundoPlano>(_envio);
             s.AddSingleton<IGeradorDeCodigo, CodigoFixo>();
         });
     });
 
     /// <summary>Cliente do front: manda o cabeçalho do admin e guarda os cookies.</summary>
-    private HttpClient Cliente(bool comAdmin = true)
+    private HttpClient Cliente(bool comAdmin = true, int limite = 1000)
     {
-        var cliente = Fabrica(comAdmin).CreateClient();
+        var cliente = Fabrica(comAdmin, limite).CreateClient();
         cliente.DefaultRequestHeaders.Add(RotasDoAdmin.CabecalhoDoAdmin, "1");
         return cliente;
     }
 
-    private async Task<HttpClient> ClienteLogadoAsync()
+    private async Task<HttpClient> ClienteLogadoAsync(int limite = 1000)
     {
-        var cliente = Cliente();
+        var cliente = Cliente(limite: limite);
         (await cliente.PostAsJsonAsync("/admin/acesso/codigo", new { email = EmailDoAdmin })).EnsureSuccessStatusCode();
         (await cliente.PostAsJsonAsync("/admin/acesso/confirmar", new { codigo = Codigo })).EnsureSuccessStatusCode();
         return cliente;
@@ -130,7 +126,9 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
 
         resposta.StatusCode.Should().Be(HttpStatusCode.NoContent);
         resposta.Headers.GetValues("Set-Cookie").Should().Contain(c =>
-            c.StartsWith(RotasDoAdmin.CookieDaSessao + "=", StringComparison.Ordinal) && c.Contains("httponly", StringComparison.OrdinalIgnoreCase));
+            c.StartsWith(RotasDoAdmin.CookieDaSessao + "=", StringComparison.Ordinal) && c.Contains("httponly", StringComparison.OrdinalIgnoreCase)
+            && c.Contains("samesite=strict", StringComparison.OrdinalIgnoreCase)
+            && c.Contains("path=/;", StringComparison.OrdinalIgnoreCase));
         (await resposta.Content.ReadAsStringAsync()).Should().BeEmpty();
         (await cliente.GetAsync("/admin/acesso/sessao")).StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -200,13 +198,14 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
     }
 
     [Fact]
-    public async Task Apaga_uma_transacao_do_historico()
+    public async Task Apaga_uma_transacao_com_os_dados_no_corpo_e_nunca_na_url()
     {
         var cliente = await ClienteLogadoAsync();
         await cliente.PostAsync("/admin/extratos", Amostra());
+        var transacao = new { data = "2026-10-05", valor = -123.45m, descricao = "Compra no debito Mercado Exemplo" };
 
-        var resposta = await cliente.DeleteAsync("/admin/transacoes?data=2026-10-05&valor=-123.45&descricao=Compra%20no%20debito%20Mercado%20Exemplo");
-        var denovo = await cliente.DeleteAsync("/admin/transacoes?data=2026-10-05&valor=-123.45&descricao=Compra%20no%20debito%20Mercado%20Exemplo");
+        var resposta = await cliente.PostAsJsonAsync("/admin/transacoes/apagar", transacao);
+        var denovo = await cliente.PostAsJsonAsync("/admin/transacoes/apagar", transacao);
 
         resposta.StatusCode.Should().Be(HttpStatusCode.OK);
         denovo.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -296,5 +295,33 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
         var resposta = await Cliente(comAdmin: false).PostAsync("/demonstracao/email/codigo", new StringContent("{}"));
 
         resposta.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task O_limite_por_ip_vale_no_login_mas_nao_derruba_o_painel()
+    {
+        var cliente = await ClienteLogadoAsync(limite: 2);
+
+        for (var i = 0; i < 5; i++)
+        {
+            (await cliente.GetAsync("/admin/historico")).StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+
+        var anonimo = Cliente(limite: 1);
+        await anonimo.PostAsJsonAsync("/admin/acesso/codigo", new { email = "a@exemplo.com" });
+        (await anonimo.PostAsJsonAsync("/admin/acesso/codigo", new { email = "a@exemplo.com" }))
+            .StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task Navegador_que_ja_entrou_nao_e_barrado_pelo_limite_por_ip()
+    {
+        var cliente = await ClienteLogadoAsync(limite: 2);
+        await cliente.PostAsync("/admin/acesso/sair", null);
+
+        for (var i = 0; i < 3; i++)
+        {
+            (await cliente.PostAsJsonAsync("/admin/acesso/codigo", new { email = EmailDoAdmin })).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
     }
 }

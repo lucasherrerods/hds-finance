@@ -67,16 +67,16 @@ export type ResultadoDaRemocao = { ok: true; apagadas: number } | Falha
 type TransacaoParaApagar = Pick<TransacaoCategorizada, 'data' | 'valor' | 'descricao'>
 
 export async function apagarTransacao({ data, valor, descricao }: TransacaoParaApagar): Promise<ResultadoDaRemocao> {
-  const consulta = new URLSearchParams({ data, valor: String(valor), descricao })
-  return remover(`/transacoes?${consulta}`, 'Não foi possível apagar a transação.')
+  // No corpo, nunca na URL: ela vai parar nos logs de acesso.
+  return remover('/transacoes/apagar', { method: 'POST', ...json({ data, valor, descricao }) }, 'Não foi possível apagar a transação.')
 }
 
 export async function apagarMes({ ano, mes }: MesDoFechamento): Promise<ResultadoDaRemocao> {
-  return remover(`/meses/${ano}-${String(mes).padStart(2, '0')}`, 'Não foi possível apagar o mês.')
+  return remover(`/meses/${ano}-${String(mes).padStart(2, '0')}`, { method: 'DELETE' }, 'Não foi possível apagar o mês.')
 }
 
-async function remover(caminho: string, padrao: string): Promise<ResultadoDaRemocao> {
-  const resposta = await chamarAdmin(caminho, { method: 'DELETE' })
+async function remover(caminho: string, opcoes: RequestInit, padrao: string): Promise<ResultadoDaRemocao> {
+  const resposta = await chamarAdmin(caminho, opcoes)
   if (!resposta) return falhaSemServidor
   if (resposta.ok) return { ok: true, apagadas: ((await resposta.json()) as { apagadas: number }).apagadas }
   return { ok: false, mensagem: await mensagemDoProblema(resposta, padrao) }

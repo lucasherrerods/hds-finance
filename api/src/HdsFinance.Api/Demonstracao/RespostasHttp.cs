@@ -37,7 +37,6 @@ public static class RespostasHttp
         ResultadoDoPedidoDeCodigo.CodigoEnviado => Results.NoContent(),
         ResultadoDoPedidoDeCodigo.LimiteAtingido => Results.Problem(
             title: "Limite de códigos", detail: "Muitos pedidos de código. Tente mais tarde.", statusCode: StatusCodes.Status429TooManyRequests),
-        ResultadoDoPedidoDeCodigo.FalhaNoEnvio => FalhaNoEmail(),
         _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
     };
 
@@ -70,10 +69,6 @@ public static class RespostasHttp
 
     private static IResult Fechamento(ResultadoDoFechamento resultado, string titulo, int status) =>
         Results.Problem(title: titulo, detail: TextoDoFechamento.De(resultado), statusCode: status);
-
-    // O motivo real fica de fora: pode citar a configuração do servidor.
-    private static IResult FalhaNoEmail() => Results.Problem(
-        title: "Falha no envio", detail: "Não foi possível enviar o e-mail agora.", statusCode: StatusCodes.Status502BadGateway);
 
     public static IResult MesInvalido() => Results.Problem(
         title: "Mês inválido",

@@ -127,8 +127,10 @@ describe('apagar', () => {
     vi.stubGlobal('fetch', fetchFalso)
 
     expect(await apagarTransacao({ data: '2026-10-05', valor: -123.45, descricao: 'Mercado & Cia' })).toEqual({ ok: true, apagadas: 1 })
-    expect(fetchFalso.mock.calls[0][0]).toBe('http://api.test/admin/transacoes?data=2026-10-05&valor=-123.45&descricao=Mercado+%26+Cia')
-    expect(fetchFalso.mock.calls[0][1].method).toBe('DELETE')
+    const [url, opcoes] = fetchFalso.mock.calls[0]
+    expect(url).toBe('http://api.test/admin/transacoes/apagar')
+    expect(opcoes.method).toBe('POST')
+    expect(JSON.parse(opcoes.body)).toEqual({ data: '2026-10-05', valor: -123.45, descricao: 'Mercado & Cia' })
   })
 
   it('apaga um mês inteiro', async () => {

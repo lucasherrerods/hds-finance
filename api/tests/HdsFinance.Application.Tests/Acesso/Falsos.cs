@@ -27,6 +27,13 @@ internal sealed class EnvioFalso : IEnvioDeEmail
     }
 }
 
+internal sealed class EnvioEmSegundoPlanoFalso : IEnvioEmSegundoPlano
+{
+    public List<EmailParaEnviar> Enviados { get; } = [];
+
+    public void Enviar(EmailParaEnviar email) => Enviados.Add(email);
+}
+
 internal sealed class CodigoFixo(string codigo) : IGeradorDeCodigo
 {
     public string NovoCodigo() => codigo;
@@ -38,9 +45,11 @@ internal sealed class LimiteFalso : ILimiteDeEnvios
 
     public List<string> Chaves { get; } = [];
 
+    public HashSet<string> Esgotadas { get; } = [];
+
     public bool Permitir(string chave, int maximo, TimeSpan janela)
     {
         Chaves.Add(chave);
-        return Liberado;
+        return Liberado && !Esgotadas.Contains(chave);
     }
 }

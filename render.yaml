@@ -19,9 +19,6 @@ services:
         sync: false
       - key: Admin__ChaveDeAssinatura
         generateValue: true
-      # Front na Vercel e api no Render são sites diferentes: o cookie de sessão precisa de SameSite=None.
-      - key: Admin__CookieEntreSites
-        value: "true"
       - key: Email__Destinatario
         sync: false
       - key: Email__ChaveDaApi

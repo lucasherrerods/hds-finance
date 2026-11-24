@@ -154,7 +154,7 @@ Regras:
 - Valores em `pt-BR` (`R$ 1.234,56`), datas `dd/MM/yyyy`.
 - E-mail por serviço transacional (Resend, Brevo ou SES), nunca pelo SMTP de uma conta pessoal, para não deixar cópia na caixa de enviados.
 - E-mail só existe na área admin: o código de acesso e o fechamento vão para o e-mail do admin. A demonstração não envia e-mail.
-- Login do admin: código de 6 dígitos válido por 10 minutos, até 5 tentativas por código e 5 pedidos por hora; sessão de 7 dias em cookie `HttpOnly` (`SameSite=None; Secure` com `Admin:CookieEntreSites`, porque front e api ficam em domínios diferentes).
+- Login do admin: código de 6 dígitos válido por 10 minutos, até 5 tentativas por código e 5 pedidos por hora por origem (o navegador que já entrou tem limite próprio, por um cookie que não abre sessão). O envio sai em segundo plano, para a resposta não revelar o e-mail. Sessão de 7 dias em cookie `HttpOnly` e `SameSite=Strict`: em produção a Vercel repassa `/api/admin` para a api, no mesmo domínio do front.
 
 ## Web (`web/`)
 

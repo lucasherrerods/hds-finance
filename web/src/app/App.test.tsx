@@ -148,7 +148,7 @@ describe('área admin', () => {
     fireEvent.click(lixeira)
 
     expect(await screen.findByRole('status')).toHaveTextContent('saiu do histórico')
-    expect(chamadas(fetchFalso, '/admin/transacoes')[0][1]).toMatchObject({ method: 'DELETE' })
+    expect(chamadas(fetchFalso, '/admin/transacoes/apagar')[0][1]).toMatchObject({ method: 'POST' })
   })
 
   it('não apaga nada se o admin desistir na confirmação', async () => {

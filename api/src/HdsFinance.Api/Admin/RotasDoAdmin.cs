@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using HdsFinance.Api.Demonstracao;
 using HdsFinance.Application.Acesso;
 using HdsFinance.Application.Admin;
@@ -22,11 +23,15 @@ public sealed record ConfirmacaoJson(string Codigo);
 
 public sealed record RemocaoJson(int Apagadas);
 
+public sealed record TransacaoParaApagarJson(DateOnly Data, decimal Valor, string Descricao);
+
 /// <summary>Rotas da área admin: só o e-mail do admin entra, e os dados ficam no Postgres.</summary>
 public static class RotasDoAdmin
 {
     public const string CookieDaSessao = "hds_admin_sessao";
     public const string CookieDoDesafio = "hds_admin_desafio";
+    public const string CookieDoDispositivo = "hds_admin_dispositivo";
+    public const string PoliticaDoLogin = "login";
 
     /// <summary>
     /// Toda rota do admin exige este cabeçalho. Um site de fora não consegue mandá-lo sem passar pelo CORS,
@@ -38,12 +43,11 @@ public static class RotasDoAdmin
     {
         var admin = app.MapGroup("/admin")
             .DisableAntiforgery()
-            .RequireRateLimiting(RotasDaDemonstracao.PoliticaDeLimite)
             .AddEndpointFilter(ExigirCabecalhoAsync);
 
         var acesso = admin.MapGroup("/acesso");
-        acesso.MapPost("/codigo", PedirCodigoAsync);
-        acesso.MapPost("/confirmar", Confirmar);
+        acesso.MapPost("/codigo", PedirCodigo).RequireRateLimiting(PoliticaDoLogin);
+        acesso.MapPost("/confirmar", Confirmar).RequireRateLimiting(PoliticaDoLogin);
         acesso.MapPost("/sair", Sair);
         acesso.MapGet("/sessao", (HttpContext contexto, AcessoDoAdmin acessoDoAdmin) =>
             SessaoAberta(contexto, acessoDoAdmin) ? Results.NoContent() : NaoAutenticado());
@@ -52,7 +56,8 @@ public static class RotasDoAdmin
         protegidas.MapGet("/historico", HistoricoAsync);
         protegidas.MapPost("/extratos", AdicionarExtratoAsync)
             .WithMetadata(new RequestSizeLimitAttribute(RotasDaDemonstracao.TamanhoMaximoDoArquivo + 64 * 1024));
-        protegidas.MapDelete("/transacoes", ApagarTransacaoAsync);
+        // POST com corpo: descrição e valor na URL iriam parar nos logs de acesso.
+        protegidas.MapPost("/transacoes/apagar", ApagarTransacaoAsync);
         protegidas.MapDelete("/meses/{mes}", ApagarMesAsync);
         protegidas.MapGet("/relatorio", RelatorioAsync);
         protegidas.MapPost("/fechamento", EnviarFechamentoAsync);
@@ -75,10 +80,9 @@ public static class RotasDoAdmin
     private static IResult NaoAutenticado() =>
         Results.Problem(title: "Não autenticado", detail: "Entre com o código enviado ao seu e-mail.", statusCode: StatusCodes.Status401Unauthorized);
 
-    private static async Task<IResult> PedirCodigoAsync(
-        PedidoDeCodigoJson pedido, AcessoDoAdmin acesso, HttpContext contexto, CancellationToken cancelamento)
+    private static IResult PedirCodigo(PedidoDeCodigoJson pedido, AcessoDoAdmin acesso, HttpContext contexto)
     {
-        var resultado = await acesso.PedirCodigoAsync(pedido.Email ?? string.Empty, cancelamento);
+        var resultado = acesso.PedirCodigo(pedido.Email ?? string.Empty, Origem(contexto), contexto.Request.Cookies[CookieDoDispositivo]);
         if (resultado is ResultadoDoPedidoDeCodigo.CodigoEnviado enviado)
         {
             Gravar(contexto, CookieDoDesafio, enviado.Desafio, AcessoDoAdmin.ValidadeDoCodigo);
@@ -87,6 +91,18 @@ public static class RotasDoAdmin
         return RespostasHttp.De(resultado);
     }
 
+    private static string Origem(HttpContext contexto) => contexto.Connection.RemoteIpAddress?.ToString() ?? "desconhecido";
+
+    /// <summary>Por IP, menos para o navegador que já entrou: ele tem o limite próprio do caso de uso.</summary>
+    public static RateLimitPartition<string> LimiteDoLogin(HttpContext contexto, int porMinuto) =>
+        contexto.RequestServices.GetService<AcessoDoAdmin>()?.DispositivoConhecido(contexto.Request.Cookies[CookieDoDispositivo]) == true
+            ? RateLimitPartition.GetNoLimiter("dispositivo")
+            : RateLimitPartition.GetFixedWindowLimiter(Origem(contexto), _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = porMinuto,
+                Window = TimeSpan.FromMinutes(1),
+            });
+
     private static IResult Confirmar(ConfirmacaoJson confirmacao, AcessoDoAdmin acesso, HttpContext contexto)
     {
         var desafio = contexto.Request.Cookies[CookieDoDesafio] ?? string.Empty;
@@ -94,6 +110,7 @@ public static class RotasDoAdmin
         if (resultado is ResultadoDaConfirmacao.Confirmado confirmado)
         {
             Apagar(contexto, CookieDoDesafio);
+            Gravar(contexto, CookieDoDispositivo, confirmado.Dispositivo, AcessoDoAdmin.ValidadeDoDispositivo);
             Gravar(contexto, CookieDaSessao, confirmado.Sessao, AcessoDoAdmin.ValidadeDaSessao);
         }
 
@@ -113,22 +130,18 @@ public static class RotasDoAdmin
         contexto.Response.Cookies.Delete(nome, OpcoesDoCookie(contexto, TimeSpan.Zero));
 
     /// <summary>
-    /// HttpOnly: o JavaScript da página nunca lê o token. Com front e api em domínios diferentes
-    /// (Vercel e Render), o cookie precisa de SameSite=None, e aí ele só viaja por HTTPS.
+    /// HttpOnly: o JavaScript da página nunca lê o token. Em produção a Vercel repassa /api para cá,
+    /// então o cookie é do próprio site e pode ser Strict. Path "/" porque o navegador vê /api/admin.
     /// </summary>
-    private static CookieOptions OpcoesDoCookie(HttpContext contexto, TimeSpan validade)
+    private static CookieOptions OpcoesDoCookie(HttpContext contexto, TimeSpan validade) => new()
     {
-        var entreSites = contexto.RequestServices.GetRequiredService<IConfiguration>().GetValue("Admin:CookieEntreSites", false);
-        return new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = entreSites || contexto.Request.IsHttps,
-            SameSite = entreSites ? SameSiteMode.None : SameSiteMode.Lax,
-            Path = "/admin",
-            MaxAge = validade,
-            IsEssential = true,
-        };
-    }
+        HttpOnly = true,
+        Secure = contexto.Request.IsHttps,
+        SameSite = SameSiteMode.Strict,
+        Path = "/",
+        MaxAge = validade,
+        IsEssential = true,
+    };
 
     private static async Task<IResult> HistoricoAsync(ConsultarHistorico consultar, Categorizador categorizador, CancellationToken cancelamento)
     {
@@ -167,8 +180,8 @@ public static class RotasDoAdmin
     }
 
     private static async Task<IResult> ApagarTransacaoAsync(
-        DateOnly data, decimal valor, string descricao, ApagarDados apagar, CancellationToken cancelamento) =>
-        RespostasHttp.De(await apagar.TransacaoAsync(data, valor, descricao, cancelamento));
+        TransacaoParaApagarJson transacao, ApagarDados apagar, CancellationToken cancelamento) =>
+        RespostasHttp.De(await apagar.TransacaoAsync(transacao.Data, transacao.Valor, transacao.Descricao ?? string.Empty, cancelamento));
 
     private static async Task<IResult> ApagarMesAsync(string mes, ApagarDados apagar, CancellationToken cancelamento) =>
         MesDeReferencia.TentarLer(mes) is { } pedido

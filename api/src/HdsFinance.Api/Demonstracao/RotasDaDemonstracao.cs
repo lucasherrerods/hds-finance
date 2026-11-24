@@ -10,7 +10,7 @@ namespace HdsFinance.Api.Demonstracao;
 public static class RotasDaDemonstracao
 {
     public const long TamanhoMaximoDoArquivo = 2 * 1024 * 1024;
-    public const string PoliticaDeLimite = "demonstracao";
+    private const string PoliticaDeLimite = "demonstracao";
 
     public static IServiceCollection AdicionarLimitesDaDemonstracao(this IServiceCollection services, IConfiguration configuracao)
     {
@@ -28,6 +28,7 @@ public static class RotasDaDemonstracao
             o.AddPolicy(PoliticaDeLimite, contexto => RateLimitPartition.GetFixedWindowLimiter(
                 contexto.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = limitePorMinuto, Window = TimeSpan.FromMinutes(1) }));
+            o.AddPolicy(Admin.RotasDoAdmin.PoliticaDoLogin, contexto => Admin.RotasDoAdmin.LimiteDoLogin(contexto, limitePorMinuto));
         });
 
         return services;

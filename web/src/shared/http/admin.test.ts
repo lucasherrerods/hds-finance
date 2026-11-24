@@ -21,6 +21,16 @@ describe('chamarAdmin', () => {
     })
   })
 
+  it('em produção, passa pelo mesmo domínio do front para o cookie não ser de terceiros', async () => {
+    vi.stubEnv('PROD', true)
+    const fetchFalso = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchFalso)
+
+    await chamarAdmin('/historico')
+
+    expect(fetchFalso.mock.calls[0][0]).toBe('/api/admin/historico')
+  })
+
   it('sem servidor, devolve nulo em vez de lançar erro', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')))
 

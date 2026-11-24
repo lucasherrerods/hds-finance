@@ -12,6 +12,12 @@ public interface IEnvioDeEmail
     Task<ResultadoDoEnvio> EnviarAsync(EmailParaEnviar email, CancellationToken cancelamento = default);
 }
 
+/// <summary>Porta: envia sem fazer ninguém esperar, para o tempo e o erro do envio não aparecerem na resposta.</summary>
+public interface IEnvioEmSegundoPlano
+{
+    void Enviar(EmailParaEnviar email);
+}
+
 /// <summary>Porta: assina um texto para o navegador guardar, e confere a assinatura quando ele volta.</summary>
 public interface IAssinador
 {

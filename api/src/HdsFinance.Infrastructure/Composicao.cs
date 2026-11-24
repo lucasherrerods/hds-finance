@@ -91,6 +91,7 @@ public static class Composicao
         services.AddSingleton<IGeradorDeCodigo, GeradorDeCodigoAleatorio>();
         services.AddSingleton<ILimiteDeEnvios, LimiteDeEnviosEmMemoria>();
         services.AddSingleton(new ConfiguracaoDoAdmin(configuracao["Admin:Email"]!));
+        services.AddSingleton<IEnvioEmSegundoPlano, EnvioEmSegundoPlano>();
         services.AddSingleton<AcessoDoAdmin>();
         return services;
     }

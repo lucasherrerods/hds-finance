@@ -1,5 +1,4 @@
 using System.Globalization;
-using HdsFinance.Application.Admin;
 
 namespace HdsFinance.Application.Acesso;
 
@@ -12,13 +11,11 @@ public abstract record ResultadoDoPedidoDeCodigo
     public sealed record CodigoEnviado(string Desafio) : ResultadoDoPedidoDeCodigo;
 
     public sealed record LimiteAtingido : ResultadoDoPedidoDeCodigo;
-
-    public sealed record FalhaNoEnvio(string Motivo) : ResultadoDoPedidoDeCodigo;
 }
 
 public abstract record ResultadoDaConfirmacao
 {
-    public sealed record Confirmado(string Sessao) : ResultadoDaConfirmacao;
+    public sealed record Confirmado(string Sessao, string Dispositivo) : ResultadoDaConfirmacao;
 
     public sealed record CodigoInvalido : ResultadoDaConfirmacao;
 
@@ -32,53 +29,58 @@ public abstract record ResultadoDaConfirmacao
 /// que ficam no navegador; o servidor não guarda sessão nem código.
 /// </summary>
 public sealed class AcessoDoAdmin(
-    ConfiguracaoDoAdmin configuracao, IEnvioDeEmail envio, IAssinador assinador, IGeradorDeCodigo gerador, ILimiteDeEnvios limite, TimeProvider tempo)
+    ConfiguracaoDoAdmin configuracao, IEnvioEmSegundoPlano envio, IAssinador assinador, IGeradorDeCodigo gerador, ILimiteDeEnvios limite, TimeProvider tempo)
 {
     public static readonly TimeSpan ValidadeDoCodigo = TimeSpan.FromMinutes(10);
     public static readonly TimeSpan ValidadeDaSessao = TimeSpan.FromDays(7);
+    public static readonly TimeSpan ValidadeDoDispositivo = TimeSpan.FromDays(180);
     private const int CodigosPorHora = 5;
+    private const int EnviosPorHora = 20;
     private const int TentativasPorDesafio = 5;
 
     private string EmailDoAdmin => Normalizar(configuracao.Email);
 
     /// <summary>
-    /// Qualquer e-mail recebe a mesma resposta, para a tela não revelar qual é o do admin.
-    /// Só o do admin recebe o código de verdade.
+    /// Qualquer e-mail recebe a mesma resposta, no mesmo tempo: o envio sai em segundo plano e só para o admin.
+    /// O limite é por origem, e o navegador que já entrou tem o próprio: um curioso não bloqueia o admin.
     /// </summary>
-    public async Task<ResultadoDoPedidoDeCodigo> PedirCodigoAsync(string email, CancellationToken cancelamento = default)
+    public ResultadoDoPedidoDeCodigo PedirCodigo(string email, string origem, string? dispositivo)
     {
-        var endereco = Normalizar(email);
-        if (!limite.Permitir($"codigo:{assinador.Resumir(endereco)}", CodigosPorHora, TimeSpan.FromHours(1)))
+        var conhecido = DispositivoConhecido(dispositivo);
+        if (!limite.Permitir(conhecido ? $"dispositivo:{assinador.Resumir(dispositivo!)}" : $"codigo:{origem}", CodigosPorHora, TimeSpan.FromHours(1)))
         {
             return new ResultadoDoPedidoDeCodigo.LimiteAtingido();
         }
 
+        var endereco = Normalizar(email);
         var codigo = gerador.NovoCodigo();
-        if (endereco == EmailDoAdmin)
+
+        // O teto protege a cota do serviço de e-mail; o navegador conhecido já tem o limite dele.
+        if (endereco == EmailDoAdmin && (conhecido || limite.Permitir("envios", EnviosPorHora, TimeSpan.FromHours(1))))
         {
-            var enviado = await envio.EnviarAsync(
-                new EmailParaEnviar(endereco, $"Seu código de acesso ao hds finance: {codigo}",
-                    $"<p>Use o código <strong>{codigo}</strong> para entrar na área admin do hds finance. Ele vale por 10 minutos.</p>"),
-                cancelamento);
-            if (enviado is ResultadoDoEnvio.Falha falha)
-            {
-                return new ResultadoDoPedidoDeCodigo.FalhaNoEnvio(falha.Motivo);
-            }
+            envio.Enviar(new EmailParaEnviar(endereco, $"Seu código de acesso ao hds finance: {codigo}",
+                $"<p>Use o código <strong>{codigo}</strong> para entrar na área admin do hds finance. Ele vale por 10 minutos.</p>"));
         }
 
         var expira = tempo.GetUtcNow().Add(ValidadeDoCodigo).ToUnixTimeSeconds();
         return new ResultadoDoPedidoDeCodigo.CodigoEnviado(
-            assinador.Assinar(string.Join('|', "desafio", assinador.Resumir($"{endereco}|{codigo}"), expira)));
+            assinador.Assinar(string.Join('|', "desafio", assinador.Resumir($"{endereco}|{codigo}"), expira, Guid.NewGuid().ToString("N"))));
     }
 
     public ResultadoDaConfirmacao Confirmar(string codigo, string desafio)
     {
+        // A assinatura vem antes do limite: desafio inventado não ocupa memória.
+        if (Ler(desafio, "desafio") is not { } partes)
+        {
+            return new ResultadoDaConfirmacao.CodigoInvalido();
+        }
+
         if (!limite.Permitir($"tentativa:{assinador.Resumir(desafio)}", TentativasPorDesafio, ValidadeDoCodigo))
         {
             return new ResultadoDaConfirmacao.TentativasEsgotadas();
         }
 
-        if (Ler(desafio, "desafio") is not { } partes || partes.Valor != assinador.Resumir($"{EmailDoAdmin}|{codigo.Trim()}"))
+        if (partes.Valor != assinador.Resumir($"{EmailDoAdmin}|{codigo.Trim()}"))
         {
             return new ResultadoDaConfirmacao.CodigoInvalido();
         }
@@ -88,13 +90,20 @@ public sealed class AcessoDoAdmin(
             return new ResultadoDaConfirmacao.Expirado();
         }
 
-        var expira = tempo.GetUtcNow().Add(ValidadeDaSessao).ToUnixTimeSeconds();
-        return new ResultadoDaConfirmacao.Confirmado(assinador.Assinar(string.Join('|', "sessao", assinador.Resumir(EmailDoAdmin), expira)));
+        return new ResultadoDaConfirmacao.Confirmado(Token("sessao", ValidadeDaSessao), Token("dispositivo", ValidadeDoDispositivo));
     }
 
     /// <summary>Trocar o e-mail do admin na configuração invalida as sessões abertas.</summary>
-    public bool SessaoValida(string sessao) =>
-        Ler(sessao, "sessao") is { } partes
+    public bool SessaoValida(string sessao) => TokenValido(sessao, "sessao");
+
+    /// <summary>Só dá um limite de pedidos próprio: não abre sessão nem dispensa o código.</summary>
+    public bool DispositivoConhecido(string? dispositivo) => dispositivo is not null && TokenValido(dispositivo, "dispositivo");
+
+    private string Token(string tipo, TimeSpan validade) => assinador.Assinar(string.Join(
+        '|', tipo, assinador.Resumir(EmailDoAdmin), tempo.GetUtcNow().Add(validade).ToUnixTimeSeconds(), Guid.NewGuid().ToString("N")));
+
+    private bool TokenValido(string token, string tipo) =>
+        Ler(token, tipo) is { } partes
         && partes.Valor == assinador.Resumir(EmailDoAdmin)
         && partes.Expira >= tempo.GetUtcNow();
 
@@ -103,7 +112,7 @@ public sealed class AcessoDoAdmin(
     private (string Valor, DateTimeOffset Expira)? Ler(string token, string tipo)
     {
         var partes = assinador.Abrir(token)?.Split('|');
-        return partes is [var t, var valor, var expira] && t == tipo
+        return partes is [var t, var valor, var expira, _] && t == tipo
             && long.TryParse(expira, NumberStyles.None, CultureInfo.InvariantCulture, out var segundos)
                 ? (valor, DateTimeOffset.FromUnixTimeSeconds(segundos))
                 : null;

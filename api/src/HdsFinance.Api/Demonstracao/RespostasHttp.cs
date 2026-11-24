@@ -1,6 +1,6 @@
-using HdsFinance.Application.EmailDaDemo;
+using HdsFinance.Application.Acesso;
 using HdsFinance.Application.Extratos;
-using HdsFinance.Application.ModoPessoal;
+using HdsFinance.Application.Admin;
 using HdsFinance.Application.Relatorios;
 
 namespace HdsFinance.Api.Demonstracao;
@@ -31,38 +31,33 @@ public static class RespostasHttp
         _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
     };
 
+    /// <summary>A mesma resposta para qualquer e-mail: a tela não revela qual é o do admin.</summary>
     public static IResult De(ResultadoDoPedidoDeCodigo resultado) => resultado switch
     {
-        ResultadoDoPedidoDeCodigo.CodigoEnviado c => Results.Ok(new { desafio = c.Desafio }),
-        ResultadoDoPedidoDeCodigo.EmailInvalido => Results.Problem(
-            title: "E-mail inválido", detail: "Confira o endereço digitado.", statusCode: StatusCodes.Status400BadRequest),
-        ResultadoDoPedidoDeCodigo.LimiteAtingido => LimiteDeEmails(),
-        ResultadoDoPedidoDeCodigo.FalhaNoEnvio => FalhaNoEmail(),
+        ResultadoDoPedidoDeCodigo.CodigoEnviado => Results.NoContent(),
+        ResultadoDoPedidoDeCodigo.LimiteAtingido => Results.Problem(
+            title: "Limite de códigos", detail: "Muitos pedidos de código. Tente mais tarde.", statusCode: StatusCodes.Status429TooManyRequests),
         _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
     };
 
     public static IResult De(ResultadoDaConfirmacao resultado) => resultado switch
     {
-        ResultadoDaConfirmacao.Confirmado c => Results.Ok(new { token = c.Token }),
+        ResultadoDaConfirmacao.Confirmado => Results.NoContent(),
         ResultadoDaConfirmacao.Expirado => Results.Problem(
             title: "Código vencido", detail: "O código vale por 10 minutos. Peça um novo.", statusCode: StatusCodes.Status400BadRequest),
+        ResultadoDaConfirmacao.TentativasEsgotadas => Results.Problem(
+            title: "Tentativas esgotadas", detail: "Peça um código novo.", statusCode: StatusCodes.Status429TooManyRequests),
         _ => Results.Problem(
             title: "Código inválido", detail: "O código não confere. Confira o e-mail recebido.", statusCode: StatusCodes.Status400BadRequest),
     };
 
-    public static IResult De(ResultadoDoEnvioDaDemo resultado) => resultado switch
+    public static IResult De(ResultadoDaRemocao resultado) => resultado switch
     {
-        ResultadoDoEnvioDaDemo.Enviado e => Results.Ok(new { mes = e.Mes.ToString() }),
-        ResultadoDoEnvioDaDemo.NaoConfirmado => Results.Problem(
-            title: "E-mail não confirmado", detail: "Confirme o e-mail antes de enviar o relatório.", statusCode: StatusCodes.Status401Unauthorized),
-        ResultadoDoEnvioDaDemo.LimiteAtingido => LimiteDeEmails(),
-        ResultadoDoEnvioDaDemo.NaoImportado n => De(new ResultadoDoResumo.NaoImportado(n.Motivo)),
-        ResultadoDoEnvioDaDemo.MesSemDados => De(new ResultadoDoRelatorio.MesSemDados(null)),
-        ResultadoDoEnvioDaDemo.FalhaNoEnvio => FalhaNoEmail(),
-        _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
+        ResultadoDaRemocao.Apagado a => Results.Ok(new { apagadas = a.Quantidade }),
+        _ => Results.Problem(title: "Nada para apagar", detail: "Não há transações com esses dados.", statusCode: StatusCodes.Status404NotFound),
     };
 
-    /// <summary>No modo pessoal o motivo vai inteiro: quem lê é o próprio dono, na máquina dele.</summary>
+    /// <summary>Na área admin o motivo vai inteiro: quem lê é o próprio admin.</summary>
     public static IResult De(ResultadoDoFechamento resultado) => resultado switch
     {
         ResultadoDoFechamento.Enviado => Results.Ok(new { mensagem = TextoDoFechamento.De(resultado) }),
@@ -74,13 +69,6 @@ public static class RespostasHttp
 
     private static IResult Fechamento(ResultadoDoFechamento resultado, string titulo, int status) =>
         Results.Problem(title: titulo, detail: TextoDoFechamento.De(resultado), statusCode: status);
-
-    private static IResult LimiteDeEmails() => Results.Problem(
-        title: "Limite de e-mails", detail: "Muitos envios para este endereço. Tente mais tarde.", statusCode: StatusCodes.Status429TooManyRequests);
-
-    // O motivo real fica de fora: pode citar a configuração do servidor.
-    private static IResult FalhaNoEmail() => Results.Problem(
-        title: "Falha no envio", detail: "Não foi possível enviar o e-mail agora.", statusCode: StatusCodes.Status502BadGateway);
 
     public static IResult MesInvalido() => Results.Problem(
         title: "Mês inválido",

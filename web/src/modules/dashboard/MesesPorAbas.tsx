@@ -3,11 +3,11 @@ import { useId, useState } from 'react'
 import { formatarMesCurto } from '../../shared'
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
 import { Abas } from './Abas'
-import { ListaDeTransacoes, type EdicaoDeCategoria } from './ListaDeTransacoes'
+import { ListaDeTransacoes, type EdicaoDoHistorico } from './ListaDeTransacoes'
 import { agruparMesesPorAno, transacoesDoMes } from './periodos'
 import { ResumoDoMes } from './ResumoDoMes'
 
-type Props = { meses: ResumoMensal[]; transacoes: TransacaoCategorizada[]; edicao?: EdicaoDeCategoria }
+type Props = { meses: ResumoMensal[]; transacoes: TransacaoCategorizada[]; edicao?: EdicaoDoHistorico }
 
 const chaveDo = (mes: ResumoMensal) => `${mes.ano}-${mes.mes}`
 

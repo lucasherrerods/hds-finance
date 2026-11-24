@@ -22,4 +22,18 @@ public sealed class RepositorioEmMemoria : IRepositorioDeTransacoes
 
     public Task<IReadOnlyList<Transacao>> ListarAsync(CancellationToken cancelamento = default) =>
         Task.FromResult<IReadOnlyList<Transacao>>(_transacoes.ToList());
+
+    public Task<bool> RemoverAsync(DateOnly data, decimal valor, string descricao, CancellationToken cancelamento = default)
+    {
+        var indice = _transacoes.FindIndex(t => t.Data == data && t.Valor == valor && t.Descricao == descricao);
+        if (indice >= 0)
+        {
+            _transacoes.RemoveAt(indice);
+        }
+
+        return Task.FromResult(indice >= 0);
+    }
+
+    public Task<int> RemoverMesAsync(MesDeReferencia mes, CancellationToken cancelamento = default) =>
+        Task.FromResult(_transacoes.RemoveAll(t => mes.Contem(t.Data)));
 }

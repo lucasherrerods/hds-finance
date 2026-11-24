@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using FluentAssertions;
-using HdsFinance.Application.EmailDaDemo;
-using HdsFinance.Application.ModoPessoal;
+using HdsFinance.Application.Acesso;
+using HdsFinance.Application.Admin;
 using HdsFinance.Domain;
 using HdsFinance.Infrastructure.Notificacoes;
 using Microsoft.Extensions.Options;

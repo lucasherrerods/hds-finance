@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import { Cabecalho, Rodape } from '../modules/landing'
-import { emModoPessoal } from '../shared'
 import { LayoutDoDashboard } from './dashboard/LayoutDoDashboard'
 import { Evolucao, Investimentos, Relatorio, Transacoes, VisaoGeral } from './dashboard/Secoes'
+import { PaginaDeEntrada } from './PaginaDeEntrada'
 import { PaginaDeTeste } from './PaginaDeTeste'
 import { PaginaInicial } from './PaginaInicial'
 import { ProvedorDoResultado } from './resultado'
@@ -15,21 +15,31 @@ export function App() {
       <Routes>
         <Route element={<LayoutDoSite />}>
           <Route path="/" element={<PaginaInicial />} />
-          {/* No modo pessoal o histórico já está guardado: o caminho de envio é o "Adicionar extrato" do dashboard. */}
-          <Route path="/testar" element={emModoPessoal() ? <Navigate to="/dashboard" replace /> : <PaginaDeTeste />} />
+          <Route path="/testar" element={<PaginaDeTeste />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
-        <Route path="/dashboard" element={<LayoutDoDashboard />}>
-          <Route index element={<VisaoGeral />} />
-          <Route path="evolucao" element={<Evolucao />} />
-          <Route path="transacoes" element={<Transacoes />} />
-          <Route path="investimentos" element={<Investimentos />} />
-          <Route path="relatorio" element={<Relatorio />} />
+        <Route path="/dashboard" element={<LayoutDoDashboard modo="demonstracao" />}>
+          {secoes}
+        </Route>
+        {/* Sem link no site: a área admin só abre para o e-mail do admin. */}
+        <Route path="/admin/entrar" element={<PaginaDeEntrada />} />
+        <Route path="/admin" element={<LayoutDoDashboard modo="admin" />}>
+          {secoes}
         </Route>
       </Routes>
     </ProvedorDoResultado>
   )
 }
+
+const secoes = (
+  <>
+    <Route index element={<VisaoGeral />} />
+    <Route path="evolucao" element={<Evolucao />} />
+    <Route path="transacoes" element={<Transacoes />} />
+    <Route path="investimentos" element={<Investimentos />} />
+    <Route path="relatorio" element={<Relatorio />} />
+  </>
+)
 
 function LayoutDoSite() {
   return (

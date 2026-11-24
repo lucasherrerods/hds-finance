@@ -89,6 +89,12 @@ public class ImportarExtratoTestes
 
         public Task<IReadOnlyList<Transacao>> ListarAsync(CancellationToken cancelamento = default) =>
             Task.FromResult<IReadOnlyList<Transacao>>(Gravadas);
+
+        public Task<bool> RemoverAsync(DateOnly data, decimal valor, string descricao, CancellationToken cancelamento = default) =>
+            throw new NotSupportedException();
+
+        public Task<int> RemoverMesAsync(MesDeReferencia mes, CancellationToken cancelamento = default) =>
+            throw new NotSupportedException();
     }
 }
 

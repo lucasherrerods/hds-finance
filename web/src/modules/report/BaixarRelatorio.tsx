@@ -2,7 +2,7 @@ import { FileDown } from 'lucide-react'
 import { useState } from 'react'
 import { baixarRelatorio, baixarRelatorioDoHistorico, type MesDoRelatorio } from './api'
 
-/** Com arquivo, reenvia o extrato (demonstração); sem arquivo, usa o histórico local (modo pessoal). */
+/** Com arquivo, reenvia o extrato (demonstração); sem arquivo, usa o histórico guardado (área admin). */
 type Props = { arquivo?: File; mes: MesDoRelatorio }
 
 const nomeDoArquivo = ({ ano, mes }: MesDoRelatorio) => `fechamento-${ano}-${String(mes).padStart(2, '0')}.pdf`

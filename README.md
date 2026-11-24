@@ -9,24 +9,24 @@ O Inter mostra o extrato e o saldo dos investimentos, mas não oferece uma visã
 ## Como funciona
 
 1. Exporte o extrato no app ou no site do Inter.
-2. Envie o arquivo pelo painel web, ou salve na pasta vigiada (modo pessoal).
+2. Envie o arquivo pelo painel web.
 3. O hds-finance lê as transações, categoriza e calcula o fechamento do mês.
-4. O resultado aparece num painel com gráficos e num PDF, que pode ser baixado ou enviado por e-mail.
+4. O resultado aparece num painel com gráficos e num PDF para baixar.
 
 ## Modos
 
-| | Pessoal | Demonstração |
+| | Admin | Demonstração |
 |---|---|---|
-| Para quem | o dono, na própria máquina | quem quiser testar |
-| Armazenamento | SQLite local, com histórico de 12 meses | nenhum: tudo em memória |
-| Entrada | pasta vigiada ou upload | upload |
-| Saída | painel, PDF e e-mail | painel, PDF para baixar e e-mail opcional |
+| Para quem | só o dono, com login por código no e-mail | quem quiser testar |
+| Armazenamento | Postgres, só os dados do dono | nenhum: tudo em memória |
+| Entrada | incluir extrato no painel | upload |
+| Saída | painel, PDF e fechamento por e-mail | painel e PDF para baixar |
 
-No modo demonstração o servidor não guarda nada: o extrato é processado durante a requisição e descartado.
+Na demonstração o servidor não guarda nada: o extrato é processado durante a requisição e descartado. A área admin guarda só os dados do próprio dono.
 
 ## Stack
 
-- **API:** .NET 9, ASP.NET Core, EF Core + SQLite, QuestPDF
+- **API:** .NET 9, ASP.NET Core, EF Core + Postgres, QuestPDF
 - **Web:** React 19, TypeScript, Vite, Tailwind CSS, shadcn/ui, Recharts
 - **Testes:** xUnit, FluentAssertions, NSubstitute, Vitest, Testing Library
 - **Arquitetura:** hexagonal (portas e adaptadores), com TDD
@@ -34,7 +34,7 @@ No modo demonstração o servidor não guarda nada: o extrato é processado dura
 ## Estrutura
 
 ```
-api/    backend .NET (domínio, casos de uso, adaptadores, API, Worker, CLI)
+api/    backend .NET (domínio, casos de uso, adaptadores, API, CLI)
 web/    front React
 docs/   arquitetura e imagens (images/)
 ```

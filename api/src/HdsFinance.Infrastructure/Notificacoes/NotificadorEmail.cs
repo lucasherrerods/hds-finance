@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
-using HdsFinance.Application.EmailDaDemo;
-using HdsFinance.Application.ModoPessoal;
+using HdsFinance.Application.Acesso;
+using HdsFinance.Application.Admin;
 using HdsFinance.Domain;
 using HdsFinance.Infrastructure.Relatorios;
 using Microsoft.Extensions.Options;
@@ -19,7 +19,7 @@ public sealed class OpcoesDeEmail
 
     public string? Remetente { get; set; }
 
-    /// <summary>Só no modo pessoal: o dono, que recebe o fechamento.</summary>
+    /// <summary>Só na área admin: o e-mail que recebe o fechamento.</summary>
     public string? Destinatario { get; set; }
 
     public string Endereco { get; set; } = EnderecoPadrao;
@@ -74,7 +74,7 @@ public sealed class EnvioDeEmailResend(HttpClient cliente, IOptions<OpcoesDeEmai
     }
 }
 
-/// <summary>Modo pessoal: manda o fechamento para o dono. O corpo não traz valores, tudo fica no PDF anexo.</summary>
+/// <summary>Área admin: manda o fechamento para o admin. O corpo não traz valores, tudo fica no PDF anexo.</summary>
 public sealed class NotificadorEmail(IEnvioDeEmail envio, IOptions<OpcoesDeEmail> opcoes) : INotificador
 {
     public Task<ResultadoDoEnvio> EnviarAsync(MesDeReferencia mes, byte[] pdf, CancellationToken cancelamento = default)

@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Equal, Hash, Search, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Equal, Hash, Search, Trash2, type LucideIcon } from 'lucide-react'
 import { useId, useState, type ReactNode } from 'react'
 import { formatarData, formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
@@ -6,10 +6,15 @@ import { Cartao } from './Cartao'
 import { IconeDaCategoria } from './IconeDaCategoria'
 import { categoriasDe, filtrarTransacoes, type Filtros, type Ordem } from './periodos'
 
-/** Só no modo pessoal: as categorias que dá para escolher e o que fazer quando a pessoa troca uma. */
-export type EdicaoDeCategoria = { categorias: string[]; aoMudar: (descricao: string, categoria: string) => void }
+/** Só na área admin: trocar a categoria de uma transação e apagar transações ou meses do histórico. */
+export type EdicaoDoHistorico = {
+  categorias: string[]
+  aoMudar: (descricao: string, categoria: string) => void
+  aoApagar: (transacao: TransacaoCategorizada) => void
+  aoApagarMes: (mes: { ano: number; mes: number }) => void
+}
 
-type Props = { transacoes: TransacaoCategorizada[]; mes: ResumoMensal; edicao?: EdicaoDeCategoria }
+type Props = { transacoes: TransacaoCategorizada[]; mes: ResumoMensal; edicao?: EdicaoDoHistorico }
 
 // Aplicações, resgates e transferências entre contas próprias não são gasto, então não têm categoria para trocar.
 const MOVIMENTACAO_INTERNA = 'Investimentos e transferências'
@@ -108,6 +113,11 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
                 <th scope="col" className="py-3 pl-3 text-right font-normal sm:pl-6">
                   Valor
                 </th>
+                {edicao && (
+                  <th scope="col" className="py-3 pl-3 font-normal">
+                    <span className="sr-only">Ações</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -159,6 +169,18 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
                     >
                       {formatarMoedaComSinal(t.valor, entrada ? 'entrada' : 'saida')}
                     </td>
+                    {edicao && (
+                      <td className="py-3 pl-3">
+                        <button
+                          type="button"
+                          aria-label={`Apagar ${t.descricao}`}
+                          onClick={() => edicao.aoApagar(t)}
+                          className="grid size-8 place-items-center rounded-full text-texto-suave transition-colors hover:bg-fundo hover:text-saida"
+                        >
+                          <Trash2 aria-hidden className="size-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 )
               })}

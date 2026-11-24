@@ -4,6 +4,7 @@ import { formatarData, formatarMoeda, formatarMoedaComSinal } from '../../shared
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
 import { Cartao } from './Cartao'
 import { IconeDaCategoria } from './IconeDaCategoria'
+import { Seletor } from './Seletor'
 import { categoriasDe, filtrarTransacoes, type Filtros, type Ordem } from './periodos'
 
 /** Só na área admin: trocar a categoria, ocultar e apagar transações ou meses do histórico. */
@@ -55,22 +56,21 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
       <div className="flex flex-col gap-3 md:flex-row">
         <label htmlFor={idDaBusca} className="relative flex-1">
           <span className="sr-only">Buscar transações</span>
-          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 opacity-60" />
+          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 opacity-60" />
           <input
             id={idDaBusca}
             type="search"
             placeholder="Buscar transações…"
             value={filtros.busca}
             onChange={(e) => setFiltros({ ...filtros, busca: e.target.value })}
-            className="w-full rounded-lg bg-fundo py-2 pr-4 pl-10 outline-none placeholder:text-texto-suave focus-visible:ring-2 focus-visible:ring-primaria"
+            className="h-10 w-full rounded-full border border-borda bg-fundo pr-4 pl-10 outline-none placeholder:text-texto-suave focus-visible:border-primaria focus-visible:ring-2 focus-visible:ring-primaria/30"
           />
         </label>
-        <Seletor id={idDaCategoria} rotulo="Categoria">
-          <select
+        <Campo id={idDaCategoria} rotulo="Categoria">
+          <Seletor
             id={idDaCategoria}
             value={filtros.categoria}
             onChange={(e) => setFiltros({ ...filtros, categoria: e.target.value })}
-            className={estiloDoSeletor}
           >
             <option value="">Todas as categorias</option>
             {categoriasDe(transacoes).map((c) => (
@@ -78,22 +78,21 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
                 {c}
               </option>
             ))}
-          </select>
-        </Seletor>
-        <Seletor id={idDaOrdem} rotulo="Ordenar por">
-          <select
+          </Seletor>
+        </Campo>
+        <Campo id={idDaOrdem} rotulo="Ordenar por">
+          <Seletor
             id={idDaOrdem}
             value={filtros.ordem}
             onChange={(e) => setFiltros({ ...filtros, ordem: e.target.value as Ordem })}
-            className={estiloDoSeletor}
           >
             {ordens.map((o) => (
               <option key={o.valor} value={o.valor}>
                 {o.rotulo}
               </option>
             ))}
-          </select>
-        </Seletor>
+          </Seletor>
+        </Campo>
       </div>
 
       {visiveis.length === 0 ? (
@@ -212,25 +211,24 @@ function Categoria({ transacao: t, edicao }: { transacao: TransacaoCategorizada;
   const ehEntrada = t.valor > 0 && !t.noCartao
   const opcoes = new Set([...(ehEntrada ? [ENTRADA] : []), ...edicao.categorias, t.categoria])
   return (
-    <select
+    <Seletor
+      compacto
+      icone={<IconeDaCategoria categoria={t.categoria} className="size-3.5" />}
       aria-label={`Categoria de ${t.descricao}`}
       value={t.categoria}
       onChange={(e) => edicao.aoMudar(t, e.target.value)}
-      className="mt-1 max-w-full self-start rounded-md border border-borda bg-fundo px-2 py-1 text-sm text-texto-suave focus:border-primaria focus:outline-none"
+      className="mt-1 self-start"
     >
       {[...opcoes].map((c) => (
         <option key={c} value={c}>
           {c}
         </option>
       ))}
-    </select>
+    </Seletor>
   )
 }
 
-const estiloDoSeletor =
-  'w-full rounded-lg bg-fundo px-4 py-2 outline-none focus-visible:ring-2 focus-visible:ring-primaria md:w-auto'
-
-function Seletor({ id, rotulo, children }: { id: string; rotulo: string; children: ReactNode }) {
+function Campo({ id, rotulo, children }: { id: string; rotulo: string; children: ReactNode }) {
   return (
     <div className="flex flex-col">
       <label htmlFor={id} className="sr-only">

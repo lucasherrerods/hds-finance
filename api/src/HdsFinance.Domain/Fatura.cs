@@ -95,6 +95,6 @@ public sealed partial record Fatura(
             ? linha.Data.AddMonths(int.Parse(parcela.Groups[1].Value, CultureInfo.InvariantCulture) - 1)
             : linha.Data;
 
-    [GeneratedRegex(@"\(Parcela (\d{1,3}) de \d{1,3}\)", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"\(Parcela (\d{1,3})\s*(?:de|/)\s*\d{1,3}\)", RegexOptions.IgnoreCase)]
     private static partial Regex FormatoDaParcela();
 }

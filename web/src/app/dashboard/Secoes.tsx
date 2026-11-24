@@ -3,6 +3,7 @@ import { useId, useState } from 'react'
 import { EnviarFechamento } from '../../modules/admin'
 import {
   Abas,
+  FaturasDoCartao,
   GraficosDoPeriodo,
   indicadoresDoMes,
   MesesPorAbas,
@@ -217,6 +218,26 @@ export function Investimentos() {
             </table>
           </section>
         </>
+      )}
+    </>
+  )
+}
+
+/** Só na área admin: a demonstração não lê fatura. */
+export function CartaoDeCredito() {
+  const { faturas = [] } = useResumo()
+
+  return (
+    <>
+      <CabecalhoDaSecao
+        sobretitulo={faturas.length === 1 ? '1 fatura' : `${faturas.length} faturas`}
+        titulo="Cartão"
+        descricao="As faturas incluídas. O pagamento é procurado no extrato da conta pelo valor e pela data."
+      />
+      {faturas.length === 0 ? (
+        <SemDados>Nenhuma fatura incluída. Use "Incluir extrato" e escolha o PDF da fatura do Inter.</SemDados>
+      ) : (
+        <FaturasDoCartao faturas={faturas} />
       )}
     </>
   )

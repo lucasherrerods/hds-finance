@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { EdicaoDoHistorico, Saldo } from '../../modules/dashboard'
+import type { EdicaoDoHistorico, Fatura, Saldo } from '../../modules/dashboard'
 import type { Painel, ResumoMensal, TransacaoCategorizada } from '../../modules/import'
 
 /** O que as seções mostram, venha do extrato recém-enviado (demonstração) ou do histórico guardado (área admin). */
@@ -10,6 +10,7 @@ export type DadosDoDashboard = {
   quantidade: number
   /** Só na área admin. */
   saldo?: Saldo | null
+  faturas?: Fatura[]
 }
 
 export type ValorDoDashboard = {

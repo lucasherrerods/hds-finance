@@ -37,7 +37,7 @@ describe('BaixarRelatorio', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Sem transações.')
   })
 
-  it('sem arquivo, gera o pdf a partir do histórico local', async () => {
+  it('sem arquivo, gera o pdf a partir do histórico do admin', async () => {
     vi.mocked(baixarRelatorioDoHistorico).mockResolvedValue({ ok: true, pdf: new Blob(['%PDF-']) })
     const clicar = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     render(<BaixarRelatorio mes={mes} />)

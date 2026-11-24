@@ -1,6 +1,6 @@
 using System.Globalization;
 using HdsFinance.Application.Extratos;
-using HdsFinance.Application.ModoPessoal;
+using HdsFinance.Application.Admin;
 using HdsFinance.Application.Relatorios;
 using HdsFinance.Domain;
 using HdsFinance.Infrastructure;
@@ -21,7 +21,7 @@ var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings {
 builder.Configuration.AddUserSecrets(Composicao.IdDosSegredos);
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
 builder.Services.AdicionarNucleo(builder.Configuration);
-builder.Services.AdicionarModoPessoal(builder.Configuration);
+builder.Services.AdicionarAdmin(builder.Configuration);
 using var host = builder.Build();
 await host.Services.PrepararBancoAsync();
 await using var escopo = host.Services.CreateAsyncScope();

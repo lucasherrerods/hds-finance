@@ -43,7 +43,7 @@ describe('baixarRelatorio', () => {
 })
 
 describe('baixarRelatorioDoHistorico', () => {
-  it('pede o pdf de um mês do histórico local', async () => {
+  it('pede o pdf de um mês do histórico do admin', async () => {
     vi.stubEnv('VITE_URL_DA_API', 'http://api.test')
     const fetchFalso = vi.fn().mockResolvedValue(new Response('%PDF-', { status: 200, headers: { 'Content-Type': 'application/pdf' } }))
     vi.stubGlobal('fetch', fetchFalso)
@@ -51,6 +51,6 @@ describe('baixarRelatorioDoHistorico', () => {
     const resultado = await baixarRelatorioDoHistorico({ ano: 2026, mes: 10 })
 
     expect(resultado.ok).toBe(true)
-    expect(fetchFalso.mock.calls[0][0]).toBe('http://api.test/pessoal/relatorio?mes=2026-10')
+    expect(fetchFalso.mock.calls[0][0]).toBe('http://api.test/admin/relatorio?mes=2026-10')
   })
 })

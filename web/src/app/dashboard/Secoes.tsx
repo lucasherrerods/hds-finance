@@ -1,4 +1,5 @@
-import { ArrowDownLeft, ArrowUpRight, Equal, PiggyBank, Sigma, Undo2, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Equal, PiggyBank, Sigma, Trash2, Undo2, Wallet, type LucideIcon } from 'lucide-react'
+import { EnviarFechamento } from '../../modules/admin'
 import {
   GraficosDoPeriodo,
   indicadoresDoMes,
@@ -6,13 +7,12 @@ import {
   PainelDoMes,
   periodoDosMeses,
   totaisDoPeriodo,
+  type EdicaoDoHistorico,
   type Indicador,
 } from '../../modules/dashboard'
-import { EnviarPorEmail } from '../../modules/email'
-import { EnviarFechamento } from '../../modules/history'
 import type { ResumoMensal } from '../../modules/import'
 import { BaixarRelatorio } from '../../modules/report'
-import { emModoPessoal, formatarMes, formatarMesCurto, formatarMoeda, formatarMoedaComSinal } from '../../shared'
+import { formatarMes, formatarMesCurto, formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import { useDashboard } from './contextoDoDashboard'
 import { CabecalhoDaSecao, CartaoDeNumero, SemDados } from './partes'
 
@@ -63,7 +63,7 @@ export function VisaoGeral() {
 }
 
 export function Evolucao() {
-  const resumo = useResumo()
+  const { dados: resumo, edicao } = useDashboard()
   const totais = totaisDoPeriodo(resumo.meses)
 
   return (
@@ -83,12 +83,12 @@ export function Evolucao() {
       ) : (
         <GraficosDoPeriodo meses={resumo.meses} />
       )}
-      <TabelaDosMeses meses={resumo.meses} />
+      <TabelaDosMeses meses={resumo.meses} edicao={edicao} />
     </>
   )
 }
 
-function TabelaDosMeses({ meses }: { meses: ResumoMensal[] }) {
+function TabelaDosMeses({ meses, edicao }: { meses: ResumoMensal[]; edicao?: EdicaoDoHistorico }) {
   return (
     <section aria-label="Resumo por mês" className="overflow-x-auto rounded-2xl border border-borda bg-superficie p-6">
       <table className="w-full min-w-[32rem] text-left tabular-nums">
@@ -99,6 +99,11 @@ function TabelaDosMeses({ meses }: { meses: ResumoMensal[] }) {
             <th className="pb-3 text-right font-medium">Saiu</th>
             <th className="pb-3 text-right font-medium">Sobrou</th>
             <th className="pb-3 text-right font-medium">Saldo final</th>
+            {edicao && (
+              <th className="pb-3">
+                <span className="sr-only">Ações</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -109,6 +114,18 @@ function TabelaDosMeses({ meses }: { meses: ResumoMensal[] }) {
               <td className="py-3 text-right text-saida">{formatarMoedaComSinal(m.saidas, 'saida')}</td>
               <td className="py-3 text-right">{formatarMoeda(m.resultado)}</td>
               <td className="py-3 text-right">{m.saldoFinal === null ? '—' : formatarMoeda(m.saldoFinal)}</td>
+              {edicao && (
+                <td className="py-3 pl-3 text-right">
+                  <button
+                    type="button"
+                    aria-label={`Apagar ${formatarMesCurto(m.ano, m.mes)}`}
+                    onClick={() => edicao.aoApagarMes({ ano: m.ano, mes: m.mes })}
+                    className="inline-grid size-8 place-items-center rounded-full text-texto-suave transition-colors hover:bg-fundo hover:text-saida"
+                  >
+                    <Trash2 aria-hidden className="size-4" />
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -127,7 +144,7 @@ export function Transacoes() {
         titulo="Transações"
         descricao={
           edicao
-            ? 'Escolha o mês para ver cada lançamento. Trocou a categoria de um, os iguais seguem a escolha daqui pra frente.'
+            ? 'Escolha o mês para ver cada lançamento. Trocou a categoria de um, os iguais seguem a escolha daqui pra frente. A lixeira tira o lançamento do histórico.'
             : 'Escolha o mês para ver o fechamento, os gastos por categoria e cada lançamento.'
         }
       />
@@ -200,24 +217,16 @@ export function Relatorio() {
         <section aria-label="PDF do fechamento" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
           <h2 className="text-xl font-semibold tracking-tight">Baixar o PDF</h2>
           <p className="text-texto-suave">
-            {arquivo ? 'O arquivo é montado na hora e não fica salvo no servidor.' : 'Montado a partir do histórico guardado nesta máquina.'}
+            {arquivo ? 'O arquivo é montado na hora e não fica salvo no servidor.' : 'Montado a partir do seu histórico guardado.'}
           </p>
           <BaixarRelatorio arquivo={arquivo ?? undefined} mes={ultimo} />
         </section>
-        {emModoPessoal() ? (
+        {!arquivo && (
           <section aria-label="Enviar o fechamento" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
             <h2 className="text-xl font-semibold tracking-tight">Enviar por e-mail</h2>
-            <p className="text-texto-suave">Vai para o e-mail configurado na api. Um mês já enviado só sai de novo se você pedir.</p>
+            <p className="text-texto-suave">Vai para o seu e-mail. Um mês já enviado só sai de novo se você pedir.</p>
             <EnviarFechamento mes={ultimo} />
           </section>
-        ) : (
-          arquivo && (
-            <section aria-label="Receber por e-mail" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
-              <h2 className="text-xl font-semibold tracking-tight">Receber por e-mail</h2>
-              <p className="text-texto-suave">Na primeira vez você confirma o e-mail com um código. O endereço fica só neste navegador.</p>
-              <EnviarPorEmail arquivo={arquivo} mes={ultimo} />
-            </section>
-          )
         )}
       </div>
     </>

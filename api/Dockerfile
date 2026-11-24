@@ -12,7 +12,6 @@ WORKDIR /app
 COPY --from=build /app .
 # A imagem já roda como usuário sem privilégios e escuta na 8080.
 ENV ASPNETCORE_HTTP_PORTS=8080 \
-    Modo=Demonstracao \
     Proxy__ConfiarNoEncaminhamento=true
 EXPOSE 8080
 USER $APP_UID

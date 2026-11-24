@@ -1,5 +1,5 @@
+using HdsFinance.Api.Admin;
 using HdsFinance.Api.Demonstracao;
-using HdsFinance.Api.Pessoal;
 using HdsFinance.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 
@@ -7,10 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+// Credenciais liberadas só para as origens da lista: o cookie de sessão do admin precisa atravessar o CORS.
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins(builder.Configuration.GetSection("Cors:OrigensPermitidas").Get<string[]>() ?? [])
     .AllowAnyHeader()
-    .WithMethods("GET", "POST", "PUT")));
+    .AllowCredentials()
+    .WithMethods("GET", "POST", "PUT", "DELETE")));
 
 // Na hospedagem, toda requisição chega pelo proxy dela. Sem isto, o limite por IP valeria para todo mundo junto.
 // Fica desligado por padrão: sem proxy na frente, qualquer um poderia inventar o próprio IP no cabeçalho.
@@ -23,21 +25,18 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 });
 
 builder.Services.AdicionarNucleo(builder.Configuration);
-var modoPessoal = builder.Configuration["Modo"] == Composicao.ModoPessoal;
-if (modoPessoal)
+builder.Services.AdicionarDemonstracao(builder.Configuration);
+var comAdmin = Composicao.AdminConfigurado(builder.Configuration);
+if (comAdmin)
 {
-    builder.Services.AdicionarModoPessoal(builder.Configuration);
-}
-else
-{
-    builder.Services.AdicionarDemonstracao(builder.Configuration);
+    builder.Services.AdicionarAdmin(builder.Configuration);
 }
 
 builder.Services.AdicionarLimitesDaDemonstracao(builder.Configuration);
 
 var app = builder.Build();
 
-if (modoPessoal)
+if (comAdmin)
 {
     await app.Services.PrepararBancoAsync();
 }
@@ -53,10 +52,10 @@ app.UseRateLimiter();
 app.MapOpenApi();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
-app.MapearDemonstracao(comEmail: !modoPessoal);
-if (modoPessoal)
+app.MapearDemonstracao();
+if (comAdmin)
 {
-    app.MapearModoPessoal();
+    app.MapearAdmin();
 }
 
 app.Run();

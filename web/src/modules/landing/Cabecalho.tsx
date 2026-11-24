@@ -1,6 +1,6 @@
 import { Wallet } from 'lucide-react'
 import { Link } from 'react-router'
-import { BotaoDeTema, emModoPessoal } from '../../shared'
+import { BotaoDeTema } from '../../shared'
 
 const secoes = [
   { href: '/#como-usar', rotulo: 'Como funciona' },
@@ -28,10 +28,10 @@ export function Cabecalho() {
         <div className="flex items-center gap-2">
           <BotaoDeTema />
           <Link
-            to={emModoPessoal() ? '/dashboard' : '/testar'}
+            to="/testar"
             className="rounded-full bg-primaria px-4 py-2 font-semibold text-primaria-texto shadow-[0_0_20px_var(--color-brilho)] transition-transform hover:-translate-y-0.5"
           >
-            {emModoPessoal() ? 'Ver dashboard' : 'Testar agora'}
+            Testar agora
           </Link>
         </div>
       </div>

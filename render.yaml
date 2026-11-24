@@ -1,4 +1,4 @@
-# Blueprint do Render: a api da demonstração em Docker, no plano gratuito.
+# Blueprint do Render: a api (demonstração e área admin) em Docker, no plano gratuito.
 # Os valores marcados com sync: false são preenchidos no painel, nunca aqui.
 services:
   - type: web
@@ -12,8 +12,18 @@ services:
     envVars:
       - key: Cors__OrigensPermitidas__0
         sync: false
-      - key: Demonstracao__ChaveDeAssinatura
+      # A área admin só liga com o e-mail do admin e a conexão do Neon preenchidos.
+      - key: Admin__Email
+        sync: false
+      - key: ConnectionStrings__Banco
+        sync: false
+      - key: Admin__ChaveDeAssinatura
         generateValue: true
+      # Front na Vercel e api no Render são sites diferentes: o cookie de sessão precisa de SameSite=None.
+      - key: Admin__CookieEntreSites
+        value: "true"
+      - key: Email__Destinatario
+        sync: false
       - key: Email__ChaveDaApi
         sync: false
       - key: Email__Remetente

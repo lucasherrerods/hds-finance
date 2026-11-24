@@ -6,17 +6,18 @@ O banco não oferece API de leitura de extrato para pessoa física, então a ent
 
 ## Modos
 
-O mesmo código roda de dois jeitos. A diferença é só qual adaptador entra em cada porta.
+A mesma api serve os dois, lado a lado. A diferença é só qual adaptador entra em cada porta.
 
-| | Pessoal | Demonstração |
+| | Admin | Demonstração |
 |---|---|---|
-| Quem usa | só o dono, na própria máquina | amigos e recrutadores, online |
-| Armazenamento | SQLite local (histórico de 12 meses) | nada: tudo em memória, durante a requisição |
-| Entrada | pasta vigiada ou upload | upload |
-| Saída | painel, PDF e e-mail | painel, PDF para baixar e e-mail opcional |
+| Quem usa | só o admin (o dono), com login | amigos e recrutadores, online |
+| Rota no front | `/admin` (sem link no site; entrada em `/admin/entrar`) | `/testar` e `/dashboard` |
+| Armazenamento | Postgres (Neon), só os dados do admin | nada: tudo em memória, durante a requisição |
+| Entrada | "Incluir extrato" no painel, ou a CLI | upload |
+| Saída | painel, PDF e e-mail para o admin | painel e PDF para baixar |
 
-- **Pessoal:** o Worker vigia uma pasta (`FileSystemWatcher`). Quando chega um extrato, ele importa, e se o mês ficou completo gera o fechamento e envia por e-mail. Não há agendamento por data, porque sem extrato importado não há o que consolidar.
-- **Demonstração:** o extrato é lido do stream, consolidado em memória e descartado no fim da requisição. O servidor não guarda nada de quem usa.
+- **Admin:** liga só quando `Admin:Email` e `ConnectionStrings:Banco` estão configurados. O login é por código enviado ao e-mail do admin; qualquer outro e-mail recebe a mesma resposta e nenhum código. Desafio e sessão são tokens assinados em cookies `HttpOnly`, e o servidor não guarda sessão. Cada extrato incluído soma ao histórico; se o mês ficou completo, o fechamento sai por e-mail. O admin também apaga transações ou meses inteiros.
+- **Demonstração:** o extrato é lido do stream, consolidado em memória e descartado no fim da requisição. O servidor não guarda nada de quem usa, mesmo com a área admin ligada: o resumo da demo monta o próprio repositório em memória e nunca toca o banco.
 
 ## Repositório
 
@@ -25,10 +26,9 @@ api/                          backend .NET
   src/
     HdsFinance.Domain/          entidades e regras puras
     HdsFinance.Application/        casos de uso e portas (interfaces)
-    HdsFinance.Infrastructure/   adaptadores: OFX/CSV, SQLite, repositório em memória, PDF, e-mail
-    HdsFinance.Api/              ASP.NET Core: rotas usadas pelo front
-    HdsFinance.Worker/           modo pessoal: vigia a pasta de extratos
-    HdsFinance.Cli/              importar e gerar relatório pelo terminal
+    HdsFinance.Infrastructure/   adaptadores: OFX/CSV, Postgres, repositório em memória, PDF, e-mail
+    HdsFinance.Api/              ASP.NET Core: rotas da demonstração e da área admin
+    HdsFinance.Cli/              importar e gerar relatório pelo terminal, no banco do admin
   tests/
     HdsFinance.Domain.Tests/
     HdsFinance.Application.Tests/
@@ -54,7 +54,7 @@ Valem para a api e para o web.
 ### TDD
 - Escreva o teste antes da funcionalidade. O teste falha, o código o faz passar, depois refatore.
 - Todo bug corrigido ganha um teste que reproduz o problema, para ele não voltar.
-- Lógica (parsers, cálculos, categorização, agrupamento por mês, detecção de mês completo) fica em código puro testável, fora de rotas, componentes, Worker e acesso a banco.
+- Lógica (parsers, cálculos, categorização, agrupamento por mês, detecção de mês completo) fica em código puro testável, fora de rotas, componentes, CLI e acesso a banco.
 - No .NET, cada projeto tem o seu projeto de testes espelhando as pastas: `Domain/FluxoDeCaixa.cs` → `Domain.Tests/FluxoDeCaixaTestes.cs`. No web, `arquivo.ts` → `arquivo.test.ts`.
 - Parser de extrato se testa com arquivo de exemplo em `api/tests/samples/`, sempre com dados fictícios.
 
@@ -65,8 +65,10 @@ Valem para a api e para o web.
 - Segredos só por variável de ambiente ou `dotnet user-secrets`. Toda configuração nova entra no `appsettings.example.json` ou no `.env.example` do lado dela, com valor fictício.
 
 ### Privacidade
-Regra central do projeto: **o servidor nunca guarda dados financeiros de terceiros.**
-- No modo demonstração não existe banco, arquivo temporário nem cache. Upload é lido direto do stream e o PDF é gerado em `byte[]`.
+Regra central do projeto: **o servidor nunca guarda dados financeiros de terceiros.** O único dado guardado é o do próprio admin, no Postgres.
+- Na demonstração não existe banco, arquivo temporário nem cache. Upload é lido direto do stream e o PDF é gerado em `byte[]`.
+- A demonstração não envia e-mail nem guarda endereço de ninguém.
+- A área admin não tem link no site, só aceita o e-mail configurado em `Admin:Email` e não revela qual e-mail é esse. Toda rota do admin exige a sessão (cookie `HttpOnly`) e o cabeçalho `X-Hds-Admin`, que um site de fora não consegue mandar sem passar pelo CORS.
 - Logs nunca contêm valores, descrições de transações, nomes, e-mails, telefones ou trechos do arquivo. Erro de parser diz a linha, não o conteúdo.
 - Nada de gravar corpo de requisição em middleware, APM ou ferramenta de observabilidade.
 - A tela da demo avisa claramente que nada é armazenado.
@@ -96,7 +98,7 @@ Regra central do projeto: **o servidor nunca guarda dados financeiros de terceir
 
 ### Stack
 - .NET 9, C# 13, ASP.NET Core (minimal APIs) com OpenAPI
-- EF Core + SQLite (só no modo pessoal)
+- EF Core + Postgres (Npgsql, banco no Neon), só na área admin. Nos testes, SQLite em memória com o mesmo modelo
 - QuestPDF, cliente HTTP do serviço de e-mail transacional
 - xUnit, FluentAssertions, NSubstitute
 
@@ -106,11 +108,10 @@ Regra central do projeto: **o servidor nunca guarda dados financeiros de terceir
 cd api
 dotnet build                                   # compila a solução
 dotnet test --nologo -v q                      # todos os testes
-dotnet run --project src/HdsFinance.Api        # sobe a API
-dotnet run --project src/HdsFinance.Worker     # modo pessoal: vigia a pasta de extratos
+dotnet run --project src/HdsFinance.Api        # sobe a API (área admin só com Admin:Email e ConnectionStrings:Banco)
 dotnet run --project src/HdsFinance.Cli -- importar caminho/extrato.ofx
 dotnet run --project src/HdsFinance.Cli -- relatorio --mes 2026-10
-dotnet ef migrations add <Nome> -p src/HdsFinance.Infrastructure -s src/HdsFinance.Api
+dotnet ef migrations add <Nome> -p src/HdsFinance.Infrastructure -s src/HdsFinance.Api -o Repositorios/Migracoes
 dotnet format                                  # o CI falha se houver diferença
 ```
 
@@ -120,19 +121,19 @@ O domínio fica no centro e não conhece arquivo, banco, HTTP, PDF nem e-mail. O
 
 ```
 Domain          Transacao, Categoria, PosicaoDeInvestimento, ResumoMensal, regras de cálculo
-Application        casos de uso (ImportarExtrato, ConsolidarMes, GerarRelatorio, EnviarRelatorio) e portas:
-                 ILeitorDeExtrato, IRepositorioDeTransacoes, IGeradorDeRelatorio, INotificador, TimeProvider
-Infrastructure   LeitorOfx, LeitorCsvInter, RepositorioSqlite, RepositorioEmMemoria,
-                 RelatorioQuestPdf, NotificadorEmail
-Api/Worker/Cli   só montam tudo e traduzem entrada e saída
+Application        casos de uso (ImportarExtrato, ResumirExtrato, FecharMes, GerarRelatorio, ApagarDados, AcessoDoAdmin) e portas:
+                 ILeitorDeExtrato, IRepositorioDeTransacoes, IGeradorDeRelatorio, INotificador, IEnvioDeEmail, IAssinador, TimeProvider
+Infrastructure   LeitorOfx, LeitorCsvInter, RepositorioPostgres, RepositorioEmMemoria,
+                 RelatorioQuestPdf, NotificadorEmail, AssinadorHmac
+Api/Cli          só montam tudo e traduzem entrada e saída
 ```
 
 Regras:
 - As dependências apontam para dentro. `Domain` não referencia pacote externo, e `Domain` e `Application` não usam EF Core, ASP.NET, QuestPDF nem `HttpClient`.
 - Toda dependência externa (banco, arquivo, e-mail, relógio) entra por uma porta, para os testes trocarem por um fake. Nunca use `DateTime.Now` direto: use `TimeProvider`.
 - Casos de uso são testados com fakes das portas, sem banco, sem disco e sem rede.
-- O modo é escolhido na composição (`Program.cs`): pessoal liga `RepositorioSqlite`, demonstração liga `RepositorioEmMemoria` com tempo de vida da requisição.
-- Rotas, Worker e CLI só traduzem: leem a entrada, chamam o caso de uso, devolvem o resultado. Sem regra de negócio neles.
+- A composição fica em `Composicao.cs`: a demonstração monta `ResumirExtrato` com um `RepositorioEmMemoria` próprio, da requisição; a área admin liga `RepositorioPostgres` para os casos de uso dela.
+- Rotas e CLI só traduzem: leem a entrada, chamam o caso de uso, devolvem o resultado. Sem regra de negócio neles.
 - Entidades do EF Core, DTOs de JSON e formatos de arquivo ficam nos adaptadores. O domínio usa os próprios tipos.
 - Erros esperados (arquivo inválido, mês sem dados, falha de envio) são resultados tipados, convertidos em resposta HTTP (`ProblemDetails`) num lugar só.
 - Uma fonte nova (outro banco, outro formato) é um adaptador novo de `ILeitorDeExtrato`, sem mexer no domínio.
@@ -146,16 +147,14 @@ Regras:
 - O resumo do mês fecha: saldo inicial + entradas − saídas + investimentos e transferências = saldo final. Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas próprias mexem no saldo, mas ficam num campo próprio. Existe teste para isso.
 - O saldo vem do próprio extrato (saldo final informado no arquivo). Sem ele, o saldo do mês fica como não informado.
 - Categorização por regras configuráveis (palavras na descrição → categoria), com "Sem categoria" como padrão.
-- O fechamento automático do modo pessoal só sai quando o mês está completo, e o mesmo mês não é enviado duas vezes, a menos que forçado pela CLI.
+- O fechamento automático da área admin só sai quando o mês está completo, e o mesmo mês não é enviado duas vezes, a menos que forçado (pelo painel ou pela CLI).
 
 ### Relatório e e-mail
 - PDF com QuestPDF: resumo do mês, entradas x saídas dos últimos 12 meses (quando houver histórico), evolução do saldo, gastos por categoria e posição dos investimentos.
 - Valores em `pt-BR` (`R$ 1.234,56`), datas `dd/MM/yyyy`.
 - E-mail por serviço transacional (Resend, Brevo ou SES), nunca pelo SMTP de uma conta pessoal, para não deixar cópia na caixa de enviados.
-- E-mail na demonstração:
-  - o endereço fica no `localStorage` do navegador e só vai ao servidor na hora do envio;
-  - na primeira vez a pessoa confirma o e-mail com um código; o navegador guarda um token assinado de e-mail confirmado, e o servidor não guarda nada;
-  - limite de envios por e-mail e por IP; o conteúdo é só o relatório, sem texto livre.
+- E-mail só existe na área admin: o código de acesso e o fechamento vão para o e-mail do admin. A demonstração não envia e-mail.
+- Login do admin: código de 6 dígitos válido por 10 minutos, até 5 tentativas por código e 5 pedidos por hora; sessão de 7 dias em cookie `HttpOnly` (`SameSite=None; Secure` com `Admin:CookieEntreSites`, porque front e api ficam em domínios diferentes).
 
 ## Web (`web/`)
 
@@ -181,14 +180,15 @@ npm run build       # typecheck + build
 web/src/
   app/              composição das telas e navegação
   shared/           ui (shadcn), utilitários (formatar moeda e data) e estilos
-  modules/<nome>/   uma pasta por funcionalidade (landing, import, dashboard, report, email)
+  modules/<nome>/   uma pasta por funcionalidade (landing, import, dashboard, report, admin)
 ```
 
 ### Regras do web
 - Cada módulo expõe uma API pública (`index.ts`). Outros módulos importam só dela.
 - Toda chamada à API fica no `api.ts` do módulo dono, nunca dentro de componentes. O endereço vem de `VITE_URL_DA_API`.
 - O front não calcula o fechamento: ele mostra o que a API devolve.
-- `localStorage` guarda só preferências do navegador (e-mail, token de confirmação, tema), com leitura e escrita protegidas por `try/catch`. Nunca guarda extrato nem transações.
+- `localStorage` guarda só preferências do navegador (tema), com leitura e escrita protegidas por `try/catch`. Nunca guarda extrato, transações nem tokens: a sessão do admin vive num cookie `HttpOnly`.
+- Toda chamada à área admin passa por `chamarAdmin` (`shared/http/admin.ts`), que manda o cookie e o cabeçalho `X-Hds-Admin`.
 
 ### Design
 - Toda mudança de interface segue `web/docs/design.md`.

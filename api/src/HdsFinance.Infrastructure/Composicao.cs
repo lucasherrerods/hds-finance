@@ -1,11 +1,11 @@
 using System.Security.Cryptography;
 using HdsFinance.Application.Categorias;
-using HdsFinance.Application.EmailDaDemo;
+using HdsFinance.Application.Acesso;
 using HdsFinance.Application.Extratos;
-using HdsFinance.Application.ModoPessoal;
+using HdsFinance.Application.Admin;
 using HdsFinance.Application.Relatorios;
 using HdsFinance.Domain;
-using HdsFinance.Infrastructure.EmailDaDemo;
+using HdsFinance.Infrastructure.Acesso;
 using HdsFinance.Infrastructure.Extratos;
 using HdsFinance.Infrastructure.Notificacoes;
 using HdsFinance.Infrastructure.Relatorios;
@@ -16,12 +16,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HdsFinance.Infrastructure;
 
-/// <summary>Onde se escolhe qual adaptador entra em cada porta. Api, Worker e Cli montam tudo por aqui.</summary>
+/// <summary>Onde se escolhe qual adaptador entra em cada porta. Api e Cli montam tudo por aqui.</summary>
 public static class Composicao
 {
-    public const string ModoPessoal = "Pessoal";
+    public const string ConexaoDoBanco = "Banco";
 
-    /// <summary>O mesmo dos UserSecretsId do Worker e da Cli: a chave do e-mail é configurada uma vez só.</summary>
+    /// <summary>O UserSecretsId da Cli, para ela ler a conexão do banco e a chave do e-mail sem arquivo no repositório.</summary>
     public const string IdDosSegredos = "hds-finance-modo-pessoal";
 
     /// <summary>O que vale nos dois modos: leitores, regras de categoria e relatório.</summary>
@@ -34,8 +34,6 @@ public static class Composicao
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IGeradorDeRelatorio, RelatorioQuestPdf>();
         services.AddSingleton<GerarRelatorio>();
-        services.AddScoped<ImportarExtrato>();
-        services.AddScoped<ResumirExtrato>();
 
         services.Configure<OpcoesDeEmail>(configuracao.GetSection(OpcoesDeEmail.Secao));
         services.AddHttpClient<IEnvioDeEmail, EnvioDeEmailResend>(cliente =>
@@ -43,44 +41,57 @@ public static class Composicao
         return services;
     }
 
-    /// <summary>Demonstração: o repositório vive só durante a requisição.</summary>
+    /// <summary>
+    /// Demonstração: o resumo monta o próprio repositório em memória, que some no fim da requisição,
+    /// e usa só as regras da configuração. Mesmo com a área admin ligada, nada da demo chega ao banco.
+    /// </summary>
     public static IServiceCollection AdicionarDemonstracao(this IServiceCollection services, IConfiguration configuracao)
     {
-        services.AddScoped<IRepositorioDeTransacoes, RepositorioEmMemoria>();
+        var regras = RegrasDaConfiguracao(configuracao);
+        services.AddScoped(provedor =>
+        {
+            var memoria = new RepositorioEmMemoria();
+            var importar = new ImportarExtrato(
+                provedor.GetServices<ILeitorDeExtrato>(), memoria, provedor.GetRequiredService<ClassificadorDeTipo>());
+            return new ResumirExtrato(importar, memoria, regras);
+        });
+        return services;
+    }
 
-        // Sem chave configurada, uma aleatória vale até a api reiniciar: os e-mails confirmados antes precisam confirmar de novo.
-        var chave = configuracao["Demonstracao:ChaveDeAssinatura"] is { Length: > 0 } definida
+    /// <summary>A área admin só liga com o e-mail do admin e a conexão do banco configurados.</summary>
+    public static bool AdminConfigurado(IConfiguration configuracao) =>
+        !string.IsNullOrWhiteSpace(configuracao["Admin:Email"]) && !string.IsNullOrWhiteSpace(configuracao.GetConnectionString(ConexaoDoBanco));
+
+    /// <summary>Admin: histórico no Postgres, login por código no e-mail do admin e fechamento enviado para ele.</summary>
+    public static IServiceCollection AdicionarAdmin(this IServiceCollection services, IConfiguration configuracao)
+    {
+        services.AddDbContext<BancoDoAdmin>(o => o.UseNpgsql(configuracao.GetConnectionString(ConexaoDoBanco)));
+        services.AddScoped<IRepositorioDeTransacoes, RepositorioPostgres>();
+        services.AddScoped<ImportarExtrato>();
+        services.AddScoped<IRegistroDoAdmin, RegistroPostgres>();
+        services.AddScoped<INotificador, NotificadorEmail>();
+        services.AddScoped<FecharMes>();
+        services.AddScoped<ProcessarExtratoRecebido>();
+        services.AddScoped<ConsultarHistorico>();
+        services.AddScoped<ApagarDados>();
+
+        // As correções do admin entram na frente das regras; por isso o categorizador nasce a cada requisição.
+        services.AddScoped<ICategoriasAprendidas, CategoriasAprendidasPostgres>();
+        services.AddScoped(provedor => RegrasDaConfiguracao(configuracao).ComAprendidas(
+            provedor.GetRequiredService<BancoDoAdmin>().CategoriasAprendidas.AsNoTracking()
+                .Select(c => new CategoriaAprendida(c.Descricao, c.Categoria))
+                .ToList()));
+        services.AddScoped<CorrigirCategoria>();
+
+        // Sem chave configurada, uma aleatória vale até a api reiniciar: o admin entra de novo depois disso.
+        var chave = configuracao["Admin:ChaveDeAssinatura"] is { Length: > 0 } definida
             ? definida
             : Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
         services.AddSingleton<IAssinador>(new AssinadorHmac(chave));
         services.AddSingleton<IGeradorDeCodigo, GeradorDeCodigoAleatorio>();
         services.AddSingleton<ILimiteDeEnvios, LimiteDeEnviosEmMemoria>();
-        services.AddScoped<ConfirmacaoDeEmail>();
-        services.AddScoped<EnviarRelatorioDaDemo>();
-        return services;
-    }
-
-    /// <summary>Pessoal: histórico no SQLite local e fechamento enviado por e-mail.</summary>
-    public static IServiceCollection AdicionarModoPessoal(this IServiceCollection services, IConfiguration configuracao)
-    {
-        var caminho = configuracao["ModoPessoal:CaminhoDoBanco"] is { Length: > 0 } definido ? definido : CaminhoPadraoDoBanco();
-        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(caminho))!);
-
-        services.AddDbContext<BancoDoModoPessoal>(o => o.UseSqlite($"Data Source={caminho}"));
-        services.AddScoped<IRepositorioDeTransacoes, RepositorioSqlite>();
-        services.AddScoped<IRegistroDoModoPessoal, RegistroSqlite>();
-        services.AddScoped<INotificador, NotificadorEmail>();
-        services.AddScoped<FecharMes>();
-        services.AddScoped<ProcessarExtratoRecebido>();
-        services.AddScoped<ConsultarHistorico>();
-
-        // As correções da pessoa entram na frente das regras; por isso o categorizador nasce a cada requisição.
-        services.AddScoped<ICategoriasAprendidas, CategoriasAprendidasSqlite>();
-        services.AddScoped(provedor => RegrasDaConfiguracao(configuracao).ComAprendidas(
-            provedor.GetRequiredService<BancoDoModoPessoal>().CategoriasAprendidas.AsNoTracking()
-                .Select(c => new CategoriaAprendida(c.Descricao, c.Categoria))
-                .ToList()));
-        services.AddScoped<CorrigirCategoria>();
+        services.AddSingleton(new ConfiguracaoDoAdmin(configuracao["Admin:Email"]!));
+        services.AddSingleton<AcessoDoAdmin>();
         return services;
     }
 
@@ -90,14 +101,18 @@ public static class Composicao
             ? new Categorizador(regras)
             : Categorizador.Padrao;
 
-    /// <summary>Cria ou atualiza o banco do modo pessoal com as migrações pendentes.</summary>
+    /// <summary>Aplica as migrações pendentes no Postgres. Nos testes, com SQLite em memória, cria o esquema direto.</summary>
     public static async Task PrepararBancoAsync(this IServiceProvider provedor, CancellationToken cancelamento = default)
     {
         await using var escopo = provedor.CreateAsyncScope();
-        await escopo.ServiceProvider.GetRequiredService<BancoDoModoPessoal>().Database.MigrateAsync(cancelamento);
+        var banco = escopo.ServiceProvider.GetRequiredService<BancoDoAdmin>().Database;
+        if (banco.IsNpgsql())
+        {
+            await banco.MigrateAsync(cancelamento);
+        }
+        else
+        {
+            await banco.EnsureCreatedAsync(cancelamento);
+        }
     }
-
-    // Fora do repositório de propósito: o banco tem dados financeiros e nunca pode ir para o git.
-    private static string CaminhoPadraoDoBanco() => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "hds-finance", "hds-finance.db");
 }

@@ -2,7 +2,7 @@ using HdsFinance.Domain;
 
 namespace HdsFinance.Application.Categorias;
 
-/// <summary>Porta: as correções de categoria feitas pela pessoa, guardadas no modo pessoal.</summary>
+/// <summary>Porta: as correções de categoria feitas pelo admin, guardadas no banco.</summary>
 public interface ICategoriasAprendidas
 {
     Task<IReadOnlyList<CategoriaAprendida>> ListarAsync(CancellationToken cancelamento = default);

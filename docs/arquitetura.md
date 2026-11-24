@@ -3,9 +3,9 @@
 O backend segue a arquitetura hexagonal (portas e adaptadores). O domínio fica no centro e não conhece arquivo, banco, HTTP, PDF nem e-mail.
 
 ```
-Api / Worker / Cli   montam tudo e traduzem entrada e saída
+Api / Cli            montam tudo e traduzem entrada e saída
         │
-Infrastructure       adaptadores: OFX/CSV, SQLite, memória, PDF, e-mail
+Infrastructure       adaptadores: OFX/CSV, Postgres, memória, PDF, e-mail
         │
 Application            casos de uso e portas (interfaces)
         │
@@ -16,10 +16,10 @@ As dependências apontam para dentro: `Domain` não referencia nenhum pacote ext
 
 ## Modos
 
-O mesmo código roda em dois modos, e a diferença é só qual adaptador entra em cada porta na composição (`Program.cs`):
+A mesma api serve os dois modos lado a lado, e a diferença é só qual adaptador entra em cada porta na composição (`Composicao.cs`):
 
-- **Pessoal:** `RepositorioSqlite`, pasta vigiada pelo Worker, envio por e-mail quando o mês fica completo.
-- **Demonstração:** `RepositorioEmMemoria` com tempo de vida da requisição. Nada é gravado.
+- **Admin:** `RepositorioPostgres`, login por código no e-mail do admin com sessão em cookie `HttpOnly`, fechamento por e-mail quando o mês fica completo. Só liga com `Admin:Email` e `ConnectionStrings:Banco` configurados.
+- **Demonstração:** `ResumirExtrato` com um `RepositorioEmMemoria` próprio, da requisição. Nada é gravado, mesmo com a área admin ligada.
 
 ## Front
 

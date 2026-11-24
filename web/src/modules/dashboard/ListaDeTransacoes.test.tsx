@@ -37,6 +37,21 @@ describe('ListaDeTransacoes', () => {
     expect(screen.queryByRole('button', { name: /apagar/i })).not.toBeInTheDocument()
   })
 
+  it('com mais de um banco, mostra e filtra por ele', () => {
+    render(<ListaDeTransacoes transacoes={[transacoes[0], { ...transacoes[1], banco: 'Nubank' }]} mes={mes} />)
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Banco' }), { target: { value: 'Nubank' } })
+
+    expect(screen.getByText('Aplicação CDB')).toBeInTheDocument()
+    expect(screen.queryByText('Pix enviado Joao')).not.toBeInTheDocument()
+  })
+
+  it('com um banco só, não há filtro de banco', () => {
+    render(<ListaDeTransacoes transacoes={transacoes} mes={mes} />)
+
+    expect(screen.queryByRole('combobox', { name: 'Banco' })).not.toBeInTheDocument()
+  })
+
   it('oculta e mostra de novo, e avisa o que está fora da soma', () => {
     const aoOcultar = vi.fn()
     const oculta = { ...transacoes[1], oculta: true }

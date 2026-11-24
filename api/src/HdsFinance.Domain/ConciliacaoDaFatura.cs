@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace HdsFinance.Domain;
 
 /// <summary>
@@ -22,7 +20,8 @@ public static class ConciliacaoDaFatura
             return (todas, new HashSet<string>());
         }
 
-        var faturas = todas.Where(t => t.Tipo == TipoDeTransacao.CompraNoCartao).Select(VencimentoDe).OfType<DateOnly>().ToHashSet();
+        var faturas = todas.Where(t => t.Tipo == TipoDeTransacao.CompraNoCartao)
+            .Select(t => (t.Banco, Vencimento: VencimentoDe(t))).ToHashSet();
         var pagas = new HashSet<int>();
         var marcasPagas = new HashSet<string>();
         foreach (var marca in marcas.Where(m => Vale(m, faturas)).OrderBy(m => m.Data))
@@ -53,17 +52,13 @@ public static class ConciliacaoDaFatura
     }
 
     /// <summary>Só vale se as compras que o pagamento quita estão no histórico; senão, o pagamento é o único registro do gasto.</summary>
-    private static bool Vale(Transacao marca, HashSet<DateOnly> faturas) =>
+    private static bool Vale(Transacao marca, HashSet<(Banco Banco, DateOnly? Vencimento)> faturas) =>
         VencimentoDe(marca) is { } vencimento
         && (Papel(marca) == "anterior"
-            ? faturas.Any(f => f < vencimento && f >= vencimento.AddDays(-45))
-            : faturas.Contains(vencimento));
+            ? faturas.Any(f => f.Banco == marca.Banco && f.Vencimento < vencimento && f.Vencimento >= vencimento.AddDays(-45))
+            : faturas.Contains((marca.Banco, vencimento)));
 
-    internal static string? Papel(Transacao t) => t.IdExterno?.Split('|') is [Fatura.PrefixoDaChave, _, var papel, _] ? papel : null;
+    internal static string? Papel(Transacao t) => Fatura.LerChave(t.IdExterno)?.Papel;
 
-    internal static DateOnly? VencimentoDe(Transacao t) =>
-        t.IdExterno?.Split('|') is [Fatura.PrefixoDaChave, var data, _, _]
-        && DateOnly.TryParseExact(data, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var vencimento)
-            ? vencimento
-            : null;
+    internal static DateOnly? VencimentoDe(Transacao t) => Fatura.LerChave(t.IdExterno)?.Vencimento;
 }

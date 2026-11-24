@@ -6,7 +6,15 @@ export type ArquivoIncluido = { arquivo: File; resultado: Incluido }
 
 export type Lote = { incluidos: ArquivoIncluido[]; semSenha: File[] }
 
-const ehFatura = (arquivo: File) => arquivo.name.toLowerCase().endsWith('.pdf')
+// A fatura do Nubank em CSV não diz que é fatura, mas o cabeçalho é outro.
+async function ehFatura(arquivo: File) {
+  const nome = arquivo.name.toLowerCase()
+  if (nome.endsWith('.pdf')) return true
+  return nome.endsWith('.csv') && /^\uFEFF?date,/i.test(await arquivo.slice(0, 64).text())
+}
+
+// O Nubank não fecha mês, então não pode ser o último do lote.
+const ehDoNubank = (arquivo: File) => /^nu(bank)?[_-]/i.test(arquivo.name)
 
 /**
  * As faturas vão antes, para o fechamento já contar o cartão, e só o último extrato fecha o mês:
@@ -15,13 +23,17 @@ const ehFatura = (arquivo: File) => arquivo.name.toLowerCase().endsWith('.pdf')
 export async function incluirArquivos(arquivos: File[], senha: string): Promise<Lote> {
   const lote: Lote = { incluidos: [], semSenha: [] }
 
-  for (const arquivo of arquivos.filter(ehFatura)) {
+  const faturas: File[] = []
+  const extratos: File[] = []
+  for (const arquivo of arquivos) ((await ehFatura(arquivo)) ? faturas : extratos).push(arquivo)
+  extratos.sort((a, b) => Number(ehDoNubank(b)) - Number(ehDoNubank(a)))
+
+  for (const arquivo of faturas) {
     const resultado: ResultadoDaFatura = await adicionarFatura(arquivo, senha)
     if (!resultado.ok && resultado.pedeSenha) lote.semSenha.push(arquivo)
     else lote.incluidos.push({ arquivo, resultado })
   }
 
-  const extratos = arquivos.filter((a) => !ehFatura(a))
   for (const [i, arquivo] of extratos.entries()) {
     const ultimo = i === extratos.length - 1
     const resultado: ResultadoDaImportacao = await adicionarExtrato(arquivo, ultimo)

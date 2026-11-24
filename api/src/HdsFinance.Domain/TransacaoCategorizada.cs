@@ -11,6 +11,8 @@ public sealed record TransacaoCategorizada(DateOnly Data, string Descricao, stri
 
     public bool Oculta { get; init; }
 
+    public Banco Banco { get; init; } = Banco.Inter;
+
     public static TransacaoCategorizada De(Transacao transacao, Categorizador categorizador)
     {
         // Oculta só sai das somas: na lista, a categoria é a mesma de antes.
@@ -23,6 +25,7 @@ public sealed record TransacaoCategorizada(DateOnly Data, string Descricao, stri
         {
             Chave = transacao.ChaveDeDeduplicacao,
             Oculta = transacao.Oculta,
+            Banco = transacao.Banco,
         };
     }
 

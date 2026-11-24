@@ -5,7 +5,7 @@ import type { ResumoMensal, TransacaoCategorizada } from '../import'
 import { Cartao } from './Cartao'
 import { IconeDaCategoria } from './IconeDaCategoria'
 import { Seletor } from './Seletor'
-import { categoriasDe, filtrarTransacoes, type Filtros, type Ordem } from './periodos'
+import { bancosDe, categoriasDe, filtrarTransacoes, type Filtros, type Ordem } from './periodos'
 
 /** Só na área admin: trocar a categoria, ocultar e apagar transações ou meses do histórico. */
 export type EdicaoDoHistorico = {
@@ -30,11 +30,14 @@ const ordens: { valor: Ordem; rotulo: string }[] = [
 ]
 
 export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
-  const [filtros, setFiltros] = useState<Filtros>({ busca: '', categoria: '', ordem: 'recentes' })
+  const [filtros, setFiltros] = useState<Filtros>({ busca: '', categoria: '', ordem: 'recentes', banco: '' })
+  const bancos = bancosDe(transacoes)
+  const comBancos = bancos.length > 1
   const visiveis = filtrarTransacoes(transacoes, filtros)
   const idDaBusca = useId()
   const idDaCategoria = useId()
   const idDaOrdem = useId()
+  const idDoBanco = useId()
 
   return (
     <Cartao titulo="Transações">
@@ -80,6 +83,18 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
             ))}
           </Seletor>
         </Campo>
+        {comBancos && (
+          <Campo id={idDoBanco} rotulo="Banco">
+            <Seletor id={idDoBanco} value={filtros.banco} onChange={(e) => setFiltros({ ...filtros, banco: e.target.value })}>
+              <option value="">Todos os bancos</option>
+              {bancos.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </Seletor>
+          </Campo>
+        )}
         <Campo id={idDaOrdem} rotulo="Ordenar por">
           <Seletor
             id={idDaOrdem}
@@ -135,10 +150,10 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
                         </span>
                         <span className="flex min-w-0 flex-col">
                           <span className="line-clamp-2 sm:line-clamp-none sm:truncate">{t.descricao}</span>
-                          {t.noCartao && (
+                          {(t.noCartao || comBancos) && (
                             <span className="flex items-center gap-1 text-sm text-texto-suave">
-                              <CreditCard aria-hidden className="size-3.5 opacity-70" />
-                              Cartão
+                              {t.noCartao && <CreditCard aria-hidden className="size-3.5 opacity-70" />}
+                              {[t.noCartao && 'Cartão', comBancos && (t.banco ?? 'Inter')].filter(Boolean).join(' · ')}
                             </span>
                           )}
                           {t.oculta && (

@@ -23,6 +23,8 @@ public sealed class TransacaoSalva
     public string? Categoria { get; set; }
 
     public bool Oculta { get; set; }
+
+    public Banco Banco { get; set; }
 }
 
 public sealed class ExtratoImportado
@@ -70,6 +72,7 @@ public sealed class BancoDoAdmin(DbContextOptions<BancoDoAdmin> opcoes) : DbCont
         {
             t.HasIndex(x => x.Chave).IsUnique();
             t.Property(x => x.Tipo).HasConversion<string>();
+            t.Property(x => x.Banco).HasConversion<string>().HasDefaultValue(Banco.Inter).HasSentinel(Banco.Inter);
         });
         modelo.Entity<MesEnviado>().HasKey(m => new { m.Ano, m.Mes });
         modelo.Entity<CategoriaAprendidaSalva>().HasKey(c => c.Chave);

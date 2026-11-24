@@ -1,4 +1,5 @@
 using HdsFinance.Application.Extratos;
+using HdsFinance.Domain;
 
 namespace HdsFinance.Application.Admin;
 
@@ -12,6 +13,12 @@ public sealed class ProcessarExtratoRecebido(ImportarExtrato importar, IRegistro
     {
         var importacao = await importar.ExecutarAsync(conteudo, formato, cancelamento);
         if (importacao is not ResultadoDaImportacao.Importado importado)
+        {
+            return new ResultadoDoProcessamento(importacao, null);
+        }
+
+        // Cobertura, saldo e fechamento são do Inter; os outros bancos só entram no histórico.
+        if (importado.Banco != Banco.Inter)
         {
             return new ResultadoDoProcessamento(importacao, null);
         }

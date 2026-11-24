@@ -16,7 +16,7 @@ public abstract record ResultadoDaLeituraDeFatura
 /// <summary>Porta: lê a fatura em memória. A senha só abre o arquivo e não é guardada.</summary>
 public interface ILeitorDeFatura
 {
-    ResultadoDaLeituraDeFatura Ler(byte[] conteudo, string? senha);
+    ResultadoDaLeituraDeFatura Ler(byte[] conteudo, string nomeDoArquivo, string? senha);
 }
 
 public abstract record ResultadoDaFatura
@@ -33,9 +33,9 @@ public sealed class ImportarFatura(ILeitorDeFatura leitor, IRepositorioDeTransac
 {
     public const string NaoConfere = "Os valores lidos não fecham com o total da fatura, então nada foi gravado.";
 
-    public async Task<ResultadoDaFatura> ExecutarAsync(byte[] conteudo, string? senha, CancellationToken cancelamento = default)
+    public async Task<ResultadoDaFatura> ExecutarAsync(byte[] conteudo, string nomeDoArquivo, string? senha, CancellationToken cancelamento = default)
     {
-        switch (leitor.Ler(conteudo, senha))
+        switch (leitor.Ler(conteudo, nomeDoArquivo, senha))
         {
             case ResultadoDaLeituraDeFatura.Lida { Fatura: var fatura }:
                 return fatura.Confere() ? await GuardarAsync(fatura, cancelamento) : new ResultadoDaFatura.Invalida(NaoConfere);

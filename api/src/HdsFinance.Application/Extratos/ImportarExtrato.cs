@@ -4,7 +4,10 @@ namespace HdsFinance.Application.Extratos;
 
 public abstract record ResultadoDaImportacao
 {
-    public sealed record Importado(int Novas, int Duplicadas, decimal? SaldoFinal = null, DateOnly? CobertoAte = null) : ResultadoDaImportacao;
+    public sealed record Importado(int Novas, int Duplicadas, decimal? SaldoFinal = null, DateOnly? CobertoAte = null) : ResultadoDaImportacao
+    {
+        public Banco Banco { get; init; } = Banco.Inter;
+    }
 
     public sealed record ArquivoInvalido(int Linha, string Motivo) : ResultadoDaImportacao;
 
@@ -44,6 +47,6 @@ public sealed class ImportarExtrato(
         }
 
         var sucesso = (ResultadoDaLeitura.Sucesso)leitura;
-        return new ResultadoDaImportacao.Importado(novas.Count, lidas.Count - novas.Count, sucesso.SaldoFinal, sucesso.CobertoAte);
+        return new ResultadoDaImportacao.Importado(novas.Count, lidas.Count - novas.Count, sucesso.SaldoFinal, sucesso.CobertoAte) { Banco = sucesso.Banco };
     }
 }

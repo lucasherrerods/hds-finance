@@ -235,7 +235,7 @@ export function CartaoDeCredito() {
         descricao="As faturas incluídas. O pagamento é procurado no extrato da conta pelo valor e pela data."
       />
       {faturas.length === 0 ? (
-        <SemDados>Nenhuma fatura incluída. Use "Incluir extrato" e escolha o PDF da fatura do Inter.</SemDados>
+        <SemDados>Nenhuma fatura incluída. Use "Incluir extrato" e escolha o PDF da fatura do Inter ou o CSV da fatura do Nubank.</SemDados>
       ) : (
         <FaturasDoCartao faturas={faturas} />
       )}

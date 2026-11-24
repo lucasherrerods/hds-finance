@@ -18,6 +18,12 @@ public sealed partial class LeitorOfx : ILeitorDeExtrato
             return new ResultadoDaLeitura.Falha(1, "Nenhuma transação encontrada no OFX.");
         }
 
+        // Seria lido como conta do Inter e estragaria o saldo.
+        if (OutroTipoDeOfx().IsMatch(texto))
+        {
+            return new ResultadoDaLeitura.Falha(1, "Este OFX não é da conta do Inter. Do Nubank, use o CSV.");
+        }
+
         var transacoes = new List<Transacao>(blocos.Count);
         foreach (Match bloco in blocos)
         {
@@ -51,6 +57,9 @@ public sealed partial class LeitorOfx : ILeitorDeExtrato
 
         return new ResultadoDaLeitura.Sucesso(transacoes, SaldoFinal(texto), FimDoPeriodo(texto));
     }
+
+    [GeneratedRegex(@"<ORG>\s*NU PAGAMENTOS|<(?:FID|BANKID)>\s*0*260\b|<CCSTMTRS>", RegexOptions.IgnoreCase)]
+    private static partial Regex OutroTipoDeOfx();
 
     [GeneratedRegex(@"<STMTTRN>(.*?)</STMTTRN>", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
     private static partial Regex BlocoDeTransacao();

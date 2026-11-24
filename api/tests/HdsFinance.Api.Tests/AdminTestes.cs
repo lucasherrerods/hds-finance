@@ -194,6 +194,7 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
 
         json.RootElement.GetProperty("meses").GetArrayLength().Should().Be(1);
         json.RootElement.GetProperty("painel").GetProperty("mes").GetInt32().Should().Be(10);
+        json.RootElement.GetProperty("saldo").GetProperty("valor").GetDecimal().Should().Be(2376.55m);
         json.RootElement.GetProperty("transacoes").GetArrayLength().Should().Be(3);
     }
 

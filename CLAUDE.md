@@ -148,7 +148,7 @@ Regras:
 - O admin pode mudar a categoria de uma transação só (vence as regras) ou de todas as iguais, e ocultar uma transação: ela continua na lista, sai de todas as somas e só mexe no saldo da conta.
 - Compra no cartão (fatura em PDF, só na área admin) é gasto no dia da compra, e a parcela no mês em que é cobrada; estorno abate o gasto. O pagamento da fatura incluída não é gasto: a conciliação acha o pagamento na conta pelo valor e pela data. Fatura cujos números não fecham é recusada inteira. A senha do PDF nunca é guardada nem vai para log.
 - O resumo do mês fecha: saldo inicial + entradas − saídas + investimentos e transferências + compras no cartão + ocultas = saldo final. A parcela das compras no cartão devolve ao saldo o gasto que ainda não saiu da conta. Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas próprias mexem no saldo, mas ficam num campo próprio. Existe teste para isso.
-- O saldo vem do próprio extrato (saldo final informado no arquivo). Sem ele, o saldo do mês fica como não informado.
+- O saldo vem do próprio extrato (saldo final informado no arquivo). Sem ele, o saldo do mês fica como não informado. O saldo da conta na visão geral do admin também parte do informado; sem ele, é a soma do que foi importado, e a tela diz qual dos dois é.
 - Categorização por regras configuráveis (palavras na descrição → categoria), com "Sem categoria" como padrão.
 - O fechamento automático da área admin só sai quando o mês está completo, e o mesmo mês não é enviado duas vezes, a menos que forçado (pelo painel ou pela CLI).
 

@@ -10,14 +10,14 @@ namespace HdsFinance.Application.Tests.Admin;
 
 public class ConsultarHistoricoTestes
 {
-    private static ConsultarHistorico Montar(IReadOnlyList<Transacao> transacoes)
+    private static ConsultarHistorico Montar(IReadOnlyList<Transacao> transacoes, RegistroFalso? registro = null)
     {
         var repositorio = Substitute.For<IRepositorioDeTransacoes>();
         repositorio.ListarAsync(Arg.Any<CancellationToken>()).Returns(transacoes);
         var tempo = new FakeTimeProvider();
-        var fechar = new FecharMes(repositorio, new RegistroFalso(), new GerarRelatorio(Substitute.For<IGeradorDeRelatorio>(), tempo),
+        var fechar = new FecharMes(repositorio, registro ??= new RegistroFalso(), new GerarRelatorio(Substitute.For<IGeradorDeRelatorio>(), tempo),
             Substitute.For<INotificador>(), tempo);
-        return new ConsultarHistorico(repositorio, fechar);
+        return new ConsultarHistorico(repositorio, fechar, registro);
     }
 
     private static Transacao Gasto(int ano, int mes) => new(new DateOnly(ano, mes, 10), -50m, "Mercado", TipoDeTransacao.Comum);
@@ -34,6 +34,17 @@ public class ConsultarHistoricoTestes
         historico.Meses[^1].Mes.Should().Be(new MesDeReferencia(2026, 9));
         historico.Painel!.Mes.Should().Be(new MesDeReferencia(2026, 9));
         historico.Transacoes.Should().HaveCount(15);
+    }
+
+    [Fact]
+    public async Task Traz_o_saldo_da_conta_informado_pelo_banco()
+    {
+        var registro = new RegistroFalso();
+        await registro.RegistrarExtratoAsync(new DateOnly(2026, 10, 31), 250m);
+
+        var historico = await Montar([Gasto(2026, 10)], registro).ExecutarAsync();
+
+        historico.Saldo.Should().Be(new SaldoDaConta(250m, new DateOnly(2026, 10, 31), Informado: true, AntesDoHistorico: 300m));
     }
 
     [Fact]

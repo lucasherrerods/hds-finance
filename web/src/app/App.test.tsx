@@ -53,6 +53,7 @@ describe('área admin', () => {
     painel: painelDeExemplo,
     transacoes: painelDeExemplo.transacoesRecentes,
     categorias: ['Alimentação', 'Lazer', 'Sem categoria'],
+    faturas: [{ vencimento: '2026-11-02', total: 30, gasto: 30, paga: true, compras: [] }],
     saldo: { valor: 10, em: '2026-10-31', informado: true, antesDoHistorico: 0 },
   }
 
@@ -221,6 +222,24 @@ describe('área admin', () => {
     expect(screen.getByRole('button', { name: /baixar pdf/i })).toBeInTheDocument()
   })
 
+  it('a aba de cartão mostra as faturas incluídas', async () => {
+    apiDoAdmin()
+    abrir('/admin')
+    const menu = within(await screen.findByRole('navigation', { name: 'Seções do dashboard' }, { timeout: 5000 }))
+
+    fireEvent.click(menu.getByRole('link', { name: 'Cartão' }))
+
+    expect(await screen.findByRole('button', { name: /novembro de 2026/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Relatório' })).toHaveAttribute('href', '/admin/relatorio')
+  })
+
+  it('sem fatura incluída, a aba de cartão ensina a incluir', async () => {
+    apiDoAdmin({ dados: { ...historico, faturas: [] } })
+    abrir('/admin/cartao')
+
+    expect(await screen.findByText(/nenhuma fatura incluída/i, {}, { timeout: 5000 })).toBeInTheDocument()
+  })
+
   it('sair encerra a sessão e volta para a entrada', async () => {
     const fetchFalso = apiDoAdmin()
     abrir('/admin')
@@ -277,7 +296,8 @@ describe('dashboard', () => {
     fireEvent.click(menu.getByRole('link', { name: /investimentos/i }))
     expect(await screen.findByRole('heading', { level: 1, name: /investimentos/i })).toBeInTheDocument()
 
-    fireEvent.click(menu.getByRole('link', { name: /relatório/i }))
+    expect(menu.queryByRole('link', { name: /relatório|cartão/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('link', { name: 'Relatório' }))
     expect(await screen.findByRole('button', { name: /baixar pdf/i })).toBeInTheDocument()
   })
 

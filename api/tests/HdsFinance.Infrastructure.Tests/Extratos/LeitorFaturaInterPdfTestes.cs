@@ -43,6 +43,35 @@ public class LeitorFaturaInterPdfTestes
     }
 
     [Fact]
+    public void Le_o_desenho_de_2024()
+    {
+        var fatura = _leitor.Ler(FaturaFicticia.MontarAntiga(), null).Should().BeOfType<ResultadoDaLeituraDeFatura.Lida>().Subject.Fatura;
+
+        fatura.Vencimento.Should().Be(new DateOnly(2024, 7, 7));
+        fatura.Total.Should().Be(80m);
+        fatura.Cartoes.Single().Linhas.Should().Equal(new HdsFinance.Domain.LinhaDaFatura(new DateOnly(2024, 6, 21), "Hna*Exemplo", -80m));
+        fatura.Confere().Should().BeTrue();
+    }
+
+    [Fact]
+    public void No_desenho_de_2024_o_total_tambem_precisa_bater()
+    {
+        var leitura = (ResultadoDaLeituraDeFatura.Lida)_leitor.Ler(FaturaFicticia.MontarAntiga("R$ 79,00"), null);
+
+        leitura.Fatura.Confere().Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("LOJA\0EXEMPLO", "LOJA EXEMPLO")]
+    [InlineData("LOJA\u0003 EXEMPLO", "LOJA EXEMPLO")]
+    [InlineData("LOJA \uD83D", "LOJA")]
+    [InlineData("AÇAÍ ☕ 😀", "AÇAÍ ☕ 😀")]
+    public void Tira_do_texto_o_que_o_postgres_nao_aceita(string texto, string esperado)
+    {
+        LeitorFaturaInterPdf.TextoLimpo(texto).Should().Be(esperado);
+    }
+
+    [Fact]
     public void Com_senha_so_abre_com_a_senha_certa()
     {
         var protegida = Proteger(FaturaFicticia.Montar(), "segredo");

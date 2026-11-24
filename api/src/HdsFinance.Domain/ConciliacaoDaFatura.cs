@@ -10,17 +10,21 @@ public static class ConciliacaoDaFatura
 {
     private static readonly string[] TermosDeFatura = ["FATURA", "CARTAO"];
 
-    public static IReadOnlyList<Transacao> Aplicar(IEnumerable<Transacao> transacoes)
+    public static IReadOnlyList<Transacao> Aplicar(IEnumerable<Transacao> transacoes) => Conciliar(transacoes).Transacoes;
+
+    /// <summary>As transações para mostrar e somar, e as chaves das marcas que acharam o pagamento delas.</summary>
+    internal static (IReadOnlyList<Transacao> Transacoes, IReadOnlySet<string> MarcasPagas) Conciliar(IEnumerable<Transacao> transacoes)
     {
         var todas = transacoes.ToList();
         var marcas = todas.Where(t => t.Tipo == TipoDeTransacao.PagamentoDeFatura).ToList();
         if (marcas.Count == 0)
         {
-            return todas;
+            return (todas, new HashSet<string>());
         }
 
         var faturas = todas.Where(t => t.Tipo == TipoDeTransacao.CompraNoCartao).Select(VencimentoDe).OfType<DateOnly>().ToHashSet();
         var pagas = new HashSet<int>();
+        var marcasPagas = new HashSet<string>();
         foreach (var marca in marcas.Where(m => Vale(m, faturas)).OrderBy(m => m.Data))
         {
             var (antes, depois) = Papel(marca) == "total" ? (25, 10) : (5, 5);
@@ -37,13 +41,15 @@ public static class ConciliacaoDaFatura
             if (escolhida is { } indice)
             {
                 pagas.Add(indice);
+                marcasPagas.Add(marca.ChaveDeDeduplicacao);
             }
         }
 
-        return todas
+        var conciliadas = todas
             .Select((t, i) => pagas.Contains(i) ? t with { Tipo = TipoDeTransacao.PagamentoDeFatura } : t)
             .Where((_, i) => todas[i].Tipo != TipoDeTransacao.PagamentoDeFatura)
             .ToList();
+        return (conciliadas, marcasPagas);
     }
 
     /// <summary>Só vale se as compras que o pagamento quita estão no histórico; senão, o pagamento é o único registro do gasto.</summary>
@@ -53,9 +59,9 @@ public static class ConciliacaoDaFatura
             ? faturas.Any(f => f < vencimento && f >= vencimento.AddDays(-45))
             : faturas.Contains(vencimento));
 
-    private static string? Papel(Transacao t) => t.IdExterno?.Split('|') is [Fatura.PrefixoDaChave, _, var papel, _] ? papel : null;
+    internal static string? Papel(Transacao t) => t.IdExterno?.Split('|') is [Fatura.PrefixoDaChave, _, var papel, _] ? papel : null;
 
-    private static DateOnly? VencimentoDe(Transacao t) =>
+    internal static DateOnly? VencimentoDe(Transacao t) =>
         t.IdExterno?.Split('|') is [Fatura.PrefixoDaChave, var data, _, _]
         && DateOnly.TryParseExact(data, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var vencimento)
             ? vencimento

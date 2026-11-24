@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using HdsFinance.Application.Admin;
 using HdsFinance.Domain;
@@ -57,7 +58,19 @@ public sealed partial class LeitorFaturaInterPdf : ILeitorDeFatura
     }
 
     private static string Juntar(List<Word> palavras) =>
-        string.Join(' ', palavras.OrderBy(p => p.BoundingBox.Left).Select(p => p.Text));
+        TextoLimpo(string.Join(' ', palavras.OrderBy(p => p.BoundingBox.Left).Select(p => p.Text)));
+
+    /// <summary>PDF pode trazer caractere de controle ou inválido no meio do texto, e o Postgres recusa gravar.</summary>
+    internal static string TextoLimpo(string texto)
+    {
+        var limpo = new StringBuilder(texto.Length);
+        foreach (var simbolo in texto.EnumerateRunes())
+        {
+            limpo.Append(Rune.IsControl(simbolo) || simbolo == Rune.ReplacementChar ? " " : simbolo.ToString());
+        }
+
+        return string.Join(' ', limpo.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    }
 
     private static ResultadoDaLeituraDeFatura Interpretar(List<string> linhas)
     {
@@ -68,7 +81,7 @@ public sealed partial class LeitorFaturaInterPdf : ILeitorDeFatura
             .SelectMany(Valores)
             .Take(4)
             .ToList();
-        if (vencimento is null || resumo.Count < 4
+        if (vencimento is null
             || !DateOnly.TryParseExact(vencimento.Value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var data))
         {
             return new ResultadoDaLeituraDeFatura.Invalida(NaoEhFatura);
@@ -76,9 +89,27 @@ public sealed partial class LeitorFaturaInterPdf : ILeitorDeFatura
 
         var compras = linhas.SkipWhile(l => !l.Contains("Despesas da fatura", StringComparison.OrdinalIgnoreCase)).Skip(1)
             .TakeWhile(l => !FimDasCompras().IsMatch(l));
-        return LerCartoes(compras) is { } cartoes
-            ? new ResultadoDaLeituraDeFatura.Lida(new Fatura(data, resumo[0], resumo[1], resumo[2], resumo[3], cartoes))
-            : new ResultadoDaLeituraDeFatura.Invalida("O formato das compras desta fatura não foi reconhecido.");
+        if (LerCartoes(compras) is not { } cartoes)
+        {
+            return new ResultadoDaLeituraDeFatura.Invalida("O formato das compras desta fatura não foi reconhecido.");
+        }
+
+        if (resumo.Count == 4)
+        {
+            return new ResultadoDaLeituraDeFatura.Lida(new Fatura(data, resumo[0], resumo[1], resumo[2], resumo[3], cartoes));
+        }
+
+        // O desenho de 2024 não traz o resumo. O total está no cabeçalho das páginas, depois do vencimento,
+        // e o que falta para as compras chegarem nele é o antecipado.
+        var total = linhas.Select(l => VencimentoETotal().Match(l)).FirstOrDefault(m => m.Success && m.Groups["data"].Value == vencimento.Value);
+        if (total is null || cartoes.Count == 0)
+        {
+            return new ResultadoDaLeituraDeFatura.Invalida(NaoEhFatura);
+        }
+
+        var aPagar = Valores(total.Value).Single();
+        var despesas = cartoes.Sum(c => c.TotalDasCompras);
+        return new ResultadoDaLeituraDeFatura.Lida(new Fatura(data, despesas, Juros: 0m, despesas - aPagar, aPagar, cartoes));
     }
 
     private static List<CartaoDaFatura>? LerCartoes(IEnumerable<string> linhas)
@@ -152,16 +183,19 @@ public sealed partial class LeitorFaturaInterPdf : ILeitorDeFatura
     [GeneratedRegex(@"\b\d{2}/\d{2}/\d{4}\b")]
     private static partial Regex DataCurta();
 
+    [GeneratedRegex(@"(?<data>\b\d{2}/\d{2}/\d{4})\s+R\$\s*\d{1,3}(?:\.\d{3})*,\d{2}")]
+    private static partial Regex VencimentoETotal();
+
     [GeneratedRegex(@"(?<credito>\+\s*)?R\$\s*(?<numero>\d{1,3}(?:\.\d{3})*,\d{2})")]
     private static partial Regex Valor();
 
-    [GeneratedRegex(@"^(?<dia>\d{2}) de (?<mes>[a-z]{3})[a-z]*\.? (?<ano>\d{4})\s+(?<descricao>.+)$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^(?<dia>\d{2}) (?:de )?(?<mes>[a-z]{3})[a-z]*\.? (?<ano>\d{4})\s+(?<descricao>.+)$", RegexOptions.IgnoreCase)]
     private static partial Regex Movimento();
 
     [GeneratedRegex(@"Pr[óo]xima fatura|^Limite de cr[ée]dito total", RegexOptions.IgnoreCase)]
     private static partial Regex FimDasCompras();
 
-    [GeneratedRegex(@"^CART[ÃA]O\s+\S*\*")]
+    [GeneratedRegex(@"^CART[ÃA]O\s+\d{4}")]
     private static partial Regex InicioDeCartao();
 
     [GeneratedRegex(@"^(\(?Parcela\b.*|(\d{2} )?(de )?\d{2}\))$", RegexOptions.IgnoreCase)]

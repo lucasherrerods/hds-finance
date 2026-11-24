@@ -20,7 +20,7 @@ function frase({ arquivo, resultado }: ArquivoIncluido, sozinho: boolean) {
 }
 
 /** Inclui extratos (.ofx, .csv) e faturas do cartão (.pdf) no histórico do admin, vários de uma vez. */
-export function AdicionarExtrato({ aoImportar, className = '', rotulo = 'Incluir extrato' }: Props) {
+export function AdicionarExtrato({ aoImportar, className = '', rotulo }: Props) {
   const id = useId()
   const idDaSenha = useId()
   const [importando, setImportando] = useState(false)
@@ -73,12 +73,13 @@ export function AdicionarExtrato({ aoImportar, className = '', rotulo = 'Incluir
     <div className="relative flex flex-col gap-2">
       <label htmlFor={id} aria-busy={importando} className={`flex cursor-pointer items-center gap-2 transition-colors ${className}`}>
         <FilePlus2 aria-hidden className="size-4" />
-        {importando ? 'Importando…' : rotulo}
+        {/* No cabeçalho do celular só cabe o ícone; com rótulo próprio, o texto fica. */}
+        <span className={rotulo ? undefined : 'sr-only sm:not-sr-only'}>{importando ? 'Importando…' : (rotulo ?? 'Incluir extrato')}</span>
         <input id={id} type="file" multiple accept=".ofx,.csv,.pdf" onChange={escolher} disabled={importando} className="sr-only" />
       </label>
 
       {(esperandoSenha.length > 0 || erros.length > 0) && (
-        <div className="absolute top-full right-0 z-30 mt-2 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-2xl border border-borda bg-superficie p-4 text-left text-base">
+        <div className="fixed inset-x-4 top-20 z-30 flex flex-col gap-3 rounded-2xl border border-borda bg-superficie p-4 text-left text-base sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-2 sm:w-80">
           {esperandoSenha.length > 0 && (
             <form onSubmit={enviarSenha} className="flex flex-col gap-3">
               <label htmlFor={idDaSenha}>

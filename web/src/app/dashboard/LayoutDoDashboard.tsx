@@ -1,4 +1,5 @@
 import {
+  CreditCard,
   Database,
   FileDown,
   LogOut,
@@ -39,11 +40,14 @@ const secoes: { caminho: string; rotulo: string; icone: LucideIcon }[] = [
   { caminho: '/evolucao', rotulo: 'Evolução', icone: TrendingUp },
   { caminho: '/transacoes', rotulo: 'Transações', icone: ReceiptText },
   { caminho: '/investimentos', rotulo: 'Investimentos', icone: PiggyBank },
-  { caminho: '/relatorio', rotulo: 'Relatório', icone: FileDown },
 ]
 
+// A demonstração não lê fatura.
+const secoesDoAdmin = [...secoes, { caminho: '/cartao', rotulo: 'Cartão', icone: CreditCard }]
+
 const SUAVE = [0.22, 1, 0.36, 1] as const
-const acaoDoTopo = 'rounded-full border border-borda px-3 py-1 text-texto-suave hover:border-primaria hover:text-texto'
+const acaoDoTopo = 'h-10 rounded-full bg-primaria px-4 font-semibold text-primaria-texto transition-transform hover:-translate-y-0.5'
+const iconeDoTopo = 'grid size-10 place-items-center rounded-full text-texto-suave transition-colors hover:bg-superficie hover:text-texto'
 
 /** A demonstração mora em /dashboard; a área admin, em /admin. As seções são as mesmas. */
 export function LayoutDoDashboard({ modo }: { modo: 'demonstracao' | 'admin' }) {
@@ -71,7 +75,7 @@ function DashboardDaDemonstracao() {
       acao={
         <button type="button" onClick={trocarExtrato} className={`flex items-center gap-2 ${acaoDoTopo}`}>
           <Upload aria-hidden className="size-4" />
-          Trocar extrato
+          <span className="sr-only sm:not-sr-only">Trocar extrato</span>
         </button>
       }
       rodape="Nada fica guardado. Ao fechar a aba, tudo some."
@@ -194,13 +198,12 @@ function DashboardDoAdmin() {
       }}
       origem={{ icone: Database, nome: 'Seu histórico' }}
       acao={
-        <>
-          {botaoDeIncluir()}
-          <button type="button" onClick={() => void sairDaConta()} className={`flex items-center gap-2 ${acaoDoTopo}`}>
-            <LogOut aria-hidden className="size-4" />
-            Sair
-          </button>
-        </>
+        botaoDeIncluir()
+      }
+      sair={
+        <button type="button" onClick={() => void sairDaConta()} aria-label="Sair" title="Sair" className={iconeDoTopo}>
+          <LogOut aria-hidden className="size-5" />
+        </button>
       }
       rodape="Área admin: só você entra, e só os seus dados ficam guardados."
       aviso={aviso}
@@ -222,13 +225,14 @@ type MolduraProps = {
   edicao?: EdicaoDoHistorico
   origem: { icone: LucideIcon; nome: string }
   acao: ReactNode
+  sair?: ReactNode
   rodape: string
   aviso?: Aviso | null
   fecharAviso?: () => void
 }
 
 /** Cabeçalho no topo, abas centralizadas e a seção da rota abaixo. */
-function Moldura({ base, dados, arquivo, edicao, origem, acao, rodape, aviso, fecharAviso }: MolduraProps) {
+function Moldura({ base, dados, arquivo, edicao, origem, acao, sair, rodape, aviso, fecharAviso }: MolduraProps) {
   const { pathname } = useLocation()
   const IconeDaOrigem = origem.icone
 
@@ -245,24 +249,27 @@ function Moldura({ base, dados, arquivo, edicao, origem, acao, rodape, aviso, fe
               <Wallet aria-hidden className="size-5 text-primaria" />
               hds finance
             </Link>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="hidden min-w-0 items-center gap-2 rounded-full border border-borda bg-superficie px-3 py-1 text-texto-suave md:flex">
-                <IconeDaOrigem aria-hidden className="size-4 shrink-0 opacity-60" />
-                <span className="max-w-[16rem] truncate">{origem.nome}</span>
-                <span aria-hidden>·</span>
-                <span className="whitespace-nowrap">
-                  {periodoDosMeses(dados.meses)} · {dados.quantidade} transações
-                </span>
-              </span>
-              <BotaoDeTema />
+            <div className="flex items-center gap-3 text-sm">
               {acao}
+              <div className="flex items-center">
+                <NavLink
+                  to={`${base}/relatorio`}
+                  aria-label="Relatório"
+                  title="Relatório"
+                  className={({ isActive }) => `${iconeDoTopo} ${isActive ? 'bg-primaria-suave text-primaria' : ''}`}
+                >
+                  <FileDown aria-hidden className="size-5" />
+                </NavLink>
+                <BotaoDeTema className="size-10 justify-center rounded-full" />
+                {sair}
+              </div>
             </div>
           </div>
         </header>
 
-        <nav aria-label="Seções do dashboard" className="overflow-x-auto px-4 pt-8 sm:px-6">
+        <nav aria-label="Seções do dashboard" className="overflow-x-auto px-4 pt-8 pb-1 [scrollbar-width:none] sm:px-6">
           <ul className="mx-auto flex w-max gap-2">
-            {secoes.map(({ caminho, rotulo, icone: Icone }) => (
+            {(base === '/admin' ? secoesDoAdmin : secoes).map(({ caminho, rotulo, icone: Icone }) => (
               <li key={caminho}>
                 <NavLink
                   to={`${base}${caminho}`}
@@ -293,6 +300,15 @@ function Moldura({ base, dados, arquivo, edicao, origem, acao, rodape, aviso, fe
             ))}
           </ul>
         </nav>
+
+        <p className="flex items-center justify-center gap-2 px-4 pt-4 text-sm text-texto-suave">
+          <IconeDaOrigem aria-hidden className="size-4 shrink-0 opacity-60" />
+          <span className="max-w-[16rem] truncate">{origem.nome}</span>
+          <span aria-hidden>·</span>
+          <span>
+            {periodoDosMeses(dados.meses)} · {dados.quantidade} transações
+          </span>
+        </p>
 
         <main className="min-w-0 px-4 py-8 sm:px-6 lg:py-10">
           <div className="mx-auto flex max-w-6xl flex-col gap-8">

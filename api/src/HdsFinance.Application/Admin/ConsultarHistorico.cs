@@ -7,7 +7,11 @@ public sealed record HistoricoConsultado(
     IReadOnlyList<ResumoMensal> Meses,
     PainelDoMes? Painel,
     IReadOnlyList<TransacaoCategorizada> Transacoes,
-    SaldoDaConta? Saldo = null);
+    SaldoDaConta? Saldo = null,
+    IReadOnlyList<FaturaDoHistorico>? Faturas = null)
+{
+    public IReadOnlyList<FaturaDoHistorico> Faturas { get; init; } = Faturas ?? [];
+}
 
 /// <summary>O que o painel da área admin mostra: todos os meses guardados, o painel do mais recente, as transações e o saldo da conta.</summary>
 public sealed class ConsultarHistorico(IRepositorioDeTransacoes transacoes, FecharMes fechar, IRegistroDoAdmin registro, Categorizador? categorizador = null)
@@ -21,12 +25,14 @@ public sealed class ConsultarHistorico(IRepositorioDeTransacoes transacoes, Fech
         }
 
         var regras = categorizador ?? Categorizador.Padrao;
-        var todas = ConciliacaoDaFatura.Aplicar(await transacoes.ListarAsync(cancelamento));
+        var guardadas = await transacoes.ListarAsync(cancelamento);
+        var todas = ConciliacaoDaFatura.Aplicar(guardadas);
         var cobertura = await registro.CoberturaAsync(cancelamento);
         return new HistoricoConsultado(
             meses,
             PainelDoMes.Montar(todas, regras),
             TransacaoCategorizada.Listar(todas, regras),
-            SaldoDaConta.Calcular(todas, cobertura.SaldoFinal, cobertura.CobertoAte));
+            SaldoDaConta.Calcular(todas, cobertura.SaldoFinal, cobertura.CobertoAte),
+            FaturaDoHistorico.Listar(guardadas, regras));
     }
 }

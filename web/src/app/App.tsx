@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import { Cabecalho, Rodape } from '../modules/landing'
 import { LayoutDoDashboard } from './dashboard/LayoutDoDashboard'
-import { Evolucao, Investimentos, Relatorio, Transacoes, VisaoGeral } from './dashboard/Secoes'
+import { CartaoDeCredito, Evolucao, Investimentos, Relatorio, Transacoes, VisaoGeral } from './dashboard/Secoes'
 import { PaginaDeEntrada } from './PaginaDeEntrada'
 import { PaginaDeTeste } from './PaginaDeTeste'
 import { PaginaInicial } from './PaginaInicial'
@@ -25,6 +25,7 @@ export function App() {
         <Route path="/admin/entrar" element={<PaginaDeEntrada />} />
         <Route path="/admin" element={<LayoutDoDashboard modo="admin" />}>
           {secoes}
+          <Route path="cartao" element={<CartaoDeCredito />} />
         </Route>
       </Routes>
     </ProvedorDoResultado>

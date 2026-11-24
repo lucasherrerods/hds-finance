@@ -1,5 +1,5 @@
 import { chamarAdmin, MENSAGEM_SEM_SERVIDOR, mensagemDoProblema } from '../../shared'
-import type { Saldo } from '../dashboard'
+import type { Fatura, Saldo } from '../dashboard'
 import type { Painel, ResumoMensal, TransacaoCategorizada } from '../import'
 
 export type Historico = {
@@ -9,6 +9,7 @@ export type Historico = {
   /** As categorias que dá para escolher ao corrigir uma transação. */
   categorias: string[]
   saldo: Saldo | null
+  faturas: Fatura[]
 }
 
 type Falha = { ok: false; mensagem: string }

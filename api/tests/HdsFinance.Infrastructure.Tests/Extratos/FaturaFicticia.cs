@@ -49,12 +49,44 @@ internal static class FaturaFicticia
             Escrever(compras, y - desalinho, (400, "-"), (450, valor));
         }
 
-        void Escrever(PdfPageBuilder pagina, double y, params (double X, string Texto)[] partes)
+        void Escrever(PdfPageBuilder pagina, double y, params (double X, string Texto)[] partes) => EscreverEm(pagina, fonte, y, partes);
+    }
+
+    /// <summary>O desenho de 2024: sem "Descritivo detalhado", com data "21 jun 2024" e cartão sem asteriscos.</summary>
+    public static byte[] MontarAntiga(string total = "R$ 80,00")
+    {
+        var pdf = new PdfDocumentBuilder();
+        var fonte = pdf.AddStandard14Font(Standard14Font.Helvetica);
+        void Escrever(PdfPageBuilder pagina, double y, params (double X, string Texto)[] partes) => EscreverEm(pagina, fonte, y, partes);
+
+        var capa = pdf.AddPage(PageSize.A4);
+        Escrever(capa, 800, (50, "Resumo da fatura"), (400, "VENCIMENTO"));
+        Escrever(capa, 780, (400, "07/07/2024"));
+        Escrever(capa, 760, (50, "Valor antecipado anterior"), (250, "+ R$ 0,00"), (400, "TOTAL DESSA FATURA"));
+        Escrever(capa, 740, (400, total));
+        Escrever(capa, 720, (400, "PAGAMENTO MINIMO:"));
+        Escrever(capa, 700, (400, "R$ 12,00"));
+        Escrever(capa, 660, (50, "Despesas da fatura"));
+        Escrever(capa, 640, (50, "CARTAO 1234"), (150, "5678"), (450, "VALOR"));
+        Escrever(capa, 620, (50, "DATA"), (150, "MOVIMENTACAO"));
+        Escrever(capa, 600, (50, "21 jun 2024"), (150, "Hna*Exemplo"));
+        Escrever(capa, 605, (450, "R$ 80,00"));
+        Escrever(capa, 580, (50, "VALOR TOTAL CARTAO 1234"), (200, "5678"));
+        Escrever(capa, 575, (450, "R$ 80,00"));
+
+        var segunda = pdf.AddPage(PageSize.A4);
+        Escrever(segunda, 820, (50, "FULANO DE TAL"));
+        Escrever(segunda, 800, (50, "1234"), (100, "5678"), (300, "07/07/2024"), (400, total));
+        Escrever(segunda, 780, (50, "Limites"), (200, "LIMITE"), (400, "Proxima fatura"));
+        Escrever(segunda, 760, (50, "R$ 500,00"));
+        return pdf.Build();
+    }
+
+    private static void EscreverEm(PdfPageBuilder pagina, PdfDocumentBuilder.AddedFont fonte, double y, (double X, string Texto)[] partes)
+    {
+        foreach (var (x, texto) in partes)
         {
-            foreach (var (x, texto) in partes)
-            {
-                pagina.AddText(texto, 9, new PdfPoint(x, y), fonte);
-            }
+            pagina.AddText(texto, 9, new PdfPoint(x, y), fonte);
         }
     }
 }

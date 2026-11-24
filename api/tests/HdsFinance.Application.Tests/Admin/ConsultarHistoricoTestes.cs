@@ -48,6 +48,17 @@ public class ConsultarHistoricoTestes
     }
 
     [Fact]
+    public async Task Traz_as_faturas_incluidas()
+    {
+        var fatura = new Fatura(new DateOnly(2026, 11, 2), 10m, 0m, 0m, 10m,
+            [new CartaoDaFatura(10m, [new LinhaDaFatura(new DateOnly(2026, 10, 5), "LANCHE", -10m)])]);
+
+        var historico = await Montar([Gasto(2026, 10), .. fatura.ParaTransacoes()]).ExecutarAsync();
+
+        historico.Faturas.Should().ContainSingle().Which.Total.Should().Be(10m);
+    }
+
+    [Fact]
     public async Task Sem_transacoes_o_historico_fica_vazio()
     {
         var historico = await Montar([]).ExecutarAsync();

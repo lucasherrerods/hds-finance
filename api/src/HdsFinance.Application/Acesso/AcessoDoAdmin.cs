@@ -58,8 +58,7 @@ public sealed class AcessoDoAdmin(
         // O teto protege a cota do serviço de e-mail; o navegador conhecido já tem o limite dele.
         if (endereco == EmailDoAdmin && (conhecido || limite.Permitir("envios", EnviosPorHora, TimeSpan.FromHours(1))))
         {
-            envio.Enviar(new EmailParaEnviar(endereco, $"Seu código de acesso ao hds finance: {codigo}",
-                $"<p>Use o código <strong>{codigo}</strong> para entrar na área admin do hds finance. Ele vale por 10 minutos.</p>"));
+            envio.EnviarCodigo(endereco, codigo);
         }
 
         var expira = tempo.GetUtcNow().Add(ValidadeDoCodigo).ToUnixTimeSeconds();

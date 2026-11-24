@@ -1,19 +1,20 @@
 namespace HdsFinance.Infrastructure.Relatorios;
 
 /// <summary>
-/// Único lugar das cores do PDF. São as mesmas do tema claro do web (web/src/shared/styles/tokens.css),
-/// porque o papel é claro.
+/// Único lugar das cores do PDF e dos e-mails. São as mesmas do tema claro do web (web/src/shared/styles/tokens.css),
+/// porque o papel e o corpo do e-mail são claros.
 /// </summary>
 public static class CoresDoRelatorio
 {
-    public const string Fundo = "#f7f8fa";
-    public const string Superficie = "#fcfdfe";
-    public const string Borda = "#dfe3ea";
-    public const string Texto = "#161a22";
-    public const string TextoSuave = "#5a6375";
-    public const string Primaria = "#2f5bd3";
-    public const string Entrada = "#1f7a4d";
-    public const string Saida = "#b4362f";
+    public const string Fundo = "#f5f8f7";
+    public const string Superficie = "#fbfdfc";
+    public const string Borda = "#dbe3e0";
+    public const string Texto = "#121a17";
+    public const string TextoSuave = "#55635e";
+    public const string Primaria = "#0f8a5f";
+    public const string PrimariaSuave = "#dcf1e8";
+    public const string Entrada = "#0f7a52";
+    public const string Saida = "#c0392f";
 
-    public static readonly string[] Grafico = ["#2f5bd3", "#e0a42b", "#1f8f7a", "#8a5ad6", "#d0613c"];
+    public static readonly string[] Grafico = ["#0f8a5f", "#e0a42b", "#1f8f7a", "#8a5ad6", "#d0613c"];
 }

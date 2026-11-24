@@ -50,9 +50,9 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
 
     private sealed class EnvioFalso : IEnvioEmSegundoPlano
     {
-        public List<EmailParaEnviar> Enviados { get; } = [];
+        public List<string> Enviados { get; } = [];
 
-        public void Enviar(EmailParaEnviar email) => Enviados.Add(email);
+        public void EnviarCodigo(string para, string codigo) => Enviados.Add(para);
     }
 
     private sealed class CodigoFixo : IGeradorDeCodigo

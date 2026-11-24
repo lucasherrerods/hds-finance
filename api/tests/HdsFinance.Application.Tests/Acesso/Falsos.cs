@@ -29,9 +29,9 @@ internal sealed class EnvioFalso : IEnvioDeEmail
 
 internal sealed class EnvioEmSegundoPlanoFalso : IEnvioEmSegundoPlano
 {
-    public List<EmailParaEnviar> Enviados { get; } = [];
+    public List<(string Para, string Codigo)> Enviados { get; } = [];
 
-    public void Enviar(EmailParaEnviar email) => Enviados.Add(email);
+    public void EnviarCodigo(string para, string codigo) => Enviados.Add((para, codigo));
 }
 
 internal sealed class CodigoFixo(string codigo) : IGeradorDeCodigo

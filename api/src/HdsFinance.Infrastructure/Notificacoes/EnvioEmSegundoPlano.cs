@@ -8,7 +8,7 @@ namespace HdsFinance.Infrastructure.Notificacoes;
 /// <summary>Envia fora da requisição. Falha vai para o log só com o motivo técnico, sem endereço nem conteúdo.</summary>
 public sealed class EnvioEmSegundoPlano(IServiceScopeFactory escopos, ILogger<EnvioEmSegundoPlano> log) : IEnvioEmSegundoPlano
 {
-    public void Enviar(EmailParaEnviar email) => _ = Task.Run(() => EnviarAsync(email));
+    public void EnviarCodigo(string para, string codigo) => _ = Task.Run(() => EnviarAsync(EmailDoCodigo.Montar(para, codigo)));
 
     private async Task EnviarAsync(EmailParaEnviar email)
     {

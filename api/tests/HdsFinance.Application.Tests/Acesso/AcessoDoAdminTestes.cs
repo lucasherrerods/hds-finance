@@ -21,8 +21,7 @@ public class AcessoDoAdminTestes
         var resultado = Acesso().PedirCodigo(" Admin@Exemplo.com ", "ip", null);
 
         resultado.Should().BeOfType<ResultadoDoPedidoDeCodigo.CodigoEnviado>();
-        _envio.Enviados.Should().ContainSingle().Which.Para.Should().Be(EmailDoAdmin);
-        _envio.Enviados[0].Html.Should().Contain("123456");
+        _envio.Enviados.Should().Equal((EmailDoAdmin, "123456"));
     }
 
     [Fact]

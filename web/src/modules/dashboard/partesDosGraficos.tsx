@@ -8,7 +8,7 @@ export type PropsDaDica = {
 
 export function CaixaDaDica({ titulo, children }: { titulo: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg bg-superficie px-4 py-2 shadow-elevacao-alta tabular-nums">
+    <div className="flex flex-col gap-1 rounded-xl border border-borda bg-superficie/90 px-4 py-2 shadow-elevacao-alta backdrop-blur tabular-nums">
       <span className="font-semibold">{titulo}</span>
       {children}
     </div>

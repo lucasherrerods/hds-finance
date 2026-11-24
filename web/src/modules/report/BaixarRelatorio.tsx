@@ -36,7 +36,7 @@ export function BaixarRelatorio({ arquivo, mes }: Props) {
         type="button"
         onClick={baixar}
         disabled={gerando}
-        className="flex items-center gap-2 rounded-lg bg-superficie px-6 py-3 font-medium shadow-elevacao transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+        className="flex items-center gap-2 rounded-full border border-borda bg-superficie px-6 py-3 font-medium hover:border-primaria transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
       >
         <FileDown aria-hidden className="size-4 opacity-70" />
         {gerando ? 'Montando o PDF…' : 'Baixar PDF do mês'}

@@ -1,4 +1,4 @@
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { formatarMoeda } from '../../shared'
 import type { PontoDoRitmo } from '../import'
 import { eixoDosGraficos, valorCompacto } from './estiloDosGraficos'
@@ -14,15 +14,21 @@ export function RitmoDeGastos({ ritmo }: Props) {
   return (
     <>
       <ResponsiveContainer width="100%" height={240}>
-        <LineChart data={ritmo} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--color-borda)" />
+        <ComposedChart data={ritmo} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+          <defs>
+            <linearGradient id="ritmo-preenchimento" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-saida)" stopOpacity={0.28} />
+              <stop offset="100%" stopColor="var(--color-saida)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid vertical={false} stroke="var(--color-borda)" strokeDasharray="2 6" />
           <XAxis dataKey="dia" ticks={[1, 15, 25, ritmo.length]} {...eixoDosGraficos} />
           <YAxis tickFormatter={valorCompacto} width={72} {...eixoDosGraficos} />
           <Tooltip content={(props) => <Dica {...props} />} cursor={{ stroke: 'var(--color-borda)' }} />
           <Legend formatter={(nome: string) => <span className="text-texto-suave">{nome}</span>} />
           {temAnterior && (
             <Line
-              type="stepAfter"
+              type="monotone"
               dataKey="acumuladoAnterior"
               name="Mês anterior"
               stroke="var(--color-texto-suave)"
@@ -31,22 +37,24 @@ export function RitmoDeGastos({ ritmo }: Props) {
               dot={false}
             />
           )}
-          <Line
-            type="stepAfter"
+          <Area
+            type="monotone"
             dataKey="acumuladoAtual"
             name="Este mês"
             stroke="var(--color-saida)"
+            fill="url(#ritmo-preenchimento)"
             strokeWidth={2.5}
+            animationDuration={1200}
             connectNulls={false}
             dot={(props: { cx?: number; cy?: number; payload?: PontoDoRitmo }) =>
               props.payload?.dia === ultimoDia?.dia ? (
-                <circle key="ultimo" cx={props.cx} cy={props.cy} r={5} fill="var(--color-saida)" />
+                <circle key="ultimo" cx={props.cx} cy={props.cy} r={5} fill="var(--color-saida)" stroke="var(--color-superficie)" strokeWidth={3} />
               ) : (
                 <g key={props.payload?.dia} />
               )
             }
           />
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
       <TabelaAcessivel
         titulo="Gasto acumulado por dia"

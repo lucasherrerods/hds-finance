@@ -25,7 +25,7 @@ const etapaInicial = (): Etapa => {
 
 const campo = 'rounded-lg border border-borda bg-fundo px-4 py-2 text-texto focus:border-primaria focus:outline-none'
 const botao =
-  'rounded-lg bg-superficie px-6 py-3 font-medium shadow-elevacao transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50'
+  'rounded-full border border-borda bg-superficie px-6 py-3 font-medium hover:border-primaria transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50'
 const link = 'text-sm text-texto-suave underline-offset-4 hover:text-texto hover:underline'
 
 /** Na primeira vez confirma o e-mail com um código. Depois, o navegador lembra e o envio é um clique. */

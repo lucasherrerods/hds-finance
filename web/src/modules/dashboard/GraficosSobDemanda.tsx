@@ -10,7 +10,7 @@ export function GraficosSobDemanda({ meses }: Props) {
   if (meses.length < 2) return null
 
   return (
-    <Suspense fallback={<div aria-hidden className="h-[352px] rounded-2xl bg-superficie opacity-50" />}>
+    <Suspense fallback={<div aria-hidden className="h-[352px] rounded-2xl border border-borda bg-superficie opacity-50 motion-safe:animate-pulse" />}>
       <GraficosDoPeriodo meses={meses} />
     </Suspense>
   )

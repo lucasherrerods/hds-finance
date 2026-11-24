@@ -61,16 +61,20 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
         onDrop={soltar}
         animate={{ scale: arrastando ? 1.02 : 1 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={`flex cursor-pointer flex-col items-center gap-4 rounded-3xl border-2 border-dashed px-6 py-16 text-center transition-colors ${
+        className={`relative isolate flex cursor-pointer flex-col items-center gap-4 overflow-hidden rounded-3xl border-2 border-dashed px-6 py-20 text-center transition-colors ${
           arrastando ? 'border-primaria bg-primaria-suave' : 'border-borda bg-superficie hover:border-primaria'
         }`}
       >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -top-24 left-1/2 -z-10 size-72 -translate-x-1/2 rounded-full bg-brilho blur-3xl"
+        />
         <motion.span
           key={arquivo ? 'escolhido' : 'vazio'}
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-          className="grid size-14 place-items-center rounded-2xl bg-primaria-suave text-primaria"
+          className="grid size-16 place-items-center rounded-2xl border border-primaria/30 bg-primaria-suave text-primaria"
         >
           <Icone aria-hidden className="size-7" />
         </motion.span>
@@ -93,7 +97,7 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
       <button
         type="submit"
         disabled={!arquivo || enviando}
-        className="self-start rounded-lg bg-primaria px-6 py-3 font-medium text-primaria-texto transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+        className="self-start rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto shadow-[0_0_24px_var(--color-brilho)] transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
       >
         {enviando ? 'Fazendo as contas…' : 'Ver resumo'}
       </button>

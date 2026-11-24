@@ -30,7 +30,7 @@ const secoes: { caminho: string; rotulo: string; icone: LucideIcon }[] = [
 ]
 
 const SUAVE = [0.22, 1, 0.36, 1] as const
-const acaoDaSidebar = 'text-texto-suave hover:bg-fundo hover:text-texto'
+const acaoDoTopo = 'rounded-full border border-borda px-3 py-1 text-texto-suave hover:border-primaria hover:text-texto'
 
 export function LayoutDoDashboard() {
   return emModoPessoal() ? <DashboardPessoal /> : <DashboardDaDemonstracao />
@@ -54,8 +54,8 @@ function DashboardDaDemonstracao() {
       arquivo={arquivo}
       origem={{ icone: FileText, nome: arquivo.name }}
       acao={
-        <button type="button" onClick={trocarExtrato} className={`flex w-full items-center gap-3 rounded-lg p-2 ${acaoDaSidebar}`}>
-          <Upload aria-hidden className="size-5" />
+        <button type="button" onClick={trocarExtrato} className={`flex items-center gap-2 ${acaoDoTopo}`}>
+          <Upload aria-hidden className="size-4" />
           Trocar extrato
         </button>
       }
@@ -122,7 +122,7 @@ function DashboardPessoal() {
       arquivo={null}
       edicao={{ categorias: historico.categorias, aoMudar: (descricao, categoria) => void aoMudarCategoria(descricao, categoria) }}
       origem={{ icone: Database, nome: 'Histórico local' }}
-      acao={<AdicionarExtrato aoImportar={aoImportar} className={acaoDaSidebar} />}
+      acao={<AdicionarExtrato aoImportar={aoImportar} className={acaoDoTopo} />}
       rodape="Guardado só nesta máquina, no SQLite local."
       aviso={aviso}
       fecharAviso={() => setAviso(null)}
@@ -147,79 +147,74 @@ type MolduraProps = {
   fecharAviso?: () => void
 }
 
-/** Sidebar fixa no computador, barra no topo no celular, e a seção da rota ao lado. */
+/** Cabeçalho no topo, abas centralizadas e a seção da rota abaixo. */
 function Moldura({ dados, arquivo, edicao, origem, acao, rodape, aviso, fecharAviso }: MolduraProps) {
   const { pathname } = useLocation()
   const IconeDaOrigem = origem.icone
 
   return (
     <ContextoDoDashboard.Provider value={{ dados, arquivo, edicao }}>
-      <div className="min-h-svh lg:grid lg:grid-cols-[17rem_1fr]">
-        <aside className="sticky top-0 z-10 flex flex-col gap-4 bg-superficie p-4 lg:h-svh lg:gap-8 lg:p-6">
-          <div className="flex items-center justify-between gap-4">
+      <div className="relative isolate min-h-svh">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-64 -z-10 mx-auto h-[28rem] max-w-4xl rounded-full bg-brilho opacity-60 blur-[120px]"
+        />
+        <header className="sticky top-0 z-20 border-b border-borda bg-fundo/80 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
             <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
               <Wallet aria-hidden className="size-5 text-primaria" />
               hds finance
             </Link>
-            <div className="flex items-center gap-1 text-sm lg:hidden">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="hidden min-w-0 items-center gap-2 rounded-full border border-borda bg-superficie px-3 py-1 text-texto-suave md:flex">
+                <IconeDaOrigem aria-hidden className="size-4 shrink-0 opacity-60" />
+                <span className="max-w-[16rem] truncate">{origem.nome}</span>
+                <span aria-hidden>·</span>
+                <span className="whitespace-nowrap">
+                  {periodoDosMeses(dados.meses)} · {dados.quantidade} transações
+                </span>
+              </span>
               <BotaoDeTema />
               {acao}
             </div>
           </div>
+        </header>
 
-          <div className="hidden flex-col gap-1 rounded-xl bg-fundo p-4 lg:flex">
-            <span className="flex min-w-0 items-center gap-2 font-medium">
-              <IconeDaOrigem aria-hidden className="size-4 shrink-0 opacity-60" />
-              <span className="truncate">{origem.nome}</span>
-            </span>
-            <span className="text-sm text-texto-suave">
-              {periodoDosMeses(dados.meses)} · {dados.quantidade} transações
-            </span>
-          </div>
+        <nav aria-label="Seções do dashboard" className="overflow-x-auto px-4 pt-8 sm:px-6">
+          <ul className="mx-auto flex w-max gap-2">
+            {secoes.map(({ caminho, rotulo, icone: Icone }) => (
+              <li key={caminho}>
+                <NavLink
+                  to={caminho}
+                  end
+                  className={({ isActive }) =>
+                    `relative flex items-center gap-2 rounded-full border px-4 py-2 text-sm whitespace-nowrap transition-colors ${
+                      isActive
+                        ? 'border-primaria/50 font-medium text-primaria'
+                        : 'border-borda text-texto hover:border-primaria/40'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <motion.span
+                          layoutId="aba-ativa"
+                          className="absolute inset-0 rounded-full bg-primaria-suave shadow-[0_0_24px_var(--color-brilho)]"
+                          transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                        />
+                      )}
+                      <Icone aria-hidden className="relative size-4 opacity-80" />
+                      <span className="relative">{rotulo}</span>
+                    </>
+                  )}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-          <nav aria-label="Seções do dashboard" className="-mx-4 overflow-x-auto px-4 lg:mx-0 lg:overflow-visible lg:px-0">
-            <ul className="flex gap-1 lg:flex-col">
-              {secoes.map(({ caminho, rotulo, icone: Icone }) => (
-                <li key={caminho}>
-                  <NavLink
-                    to={caminho}
-                    end
-                    className={({ isActive }) =>
-                      `relative flex items-center gap-3 rounded-lg px-3 py-2 whitespace-nowrap transition-colors ${
-                        isActive ? 'font-medium text-primaria' : 'text-texto-suave hover:text-texto'
-                      }`
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        {isActive && (
-                          <motion.span
-                            layoutId="item-ativo"
-                            className="absolute inset-0 rounded-lg bg-primaria-suave"
-                            transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-                          />
-                        )}
-                        <Icone aria-hidden className="relative size-5" />
-                        <span className="relative">{rotulo}</span>
-                      </>
-                    )}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div className="mt-auto hidden flex-col gap-2 lg:flex">
-            <BotaoDeTema comRotulo className="hover:bg-fundo" />
-            {acao}
-            <p className="flex gap-2 pt-2 text-sm text-texto-suave">
-              <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0 opacity-70" />
-              {rodape}
-            </p>
-          </div>
-        </aside>
-
-        <main className="min-w-0 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+        <main className="min-w-0 px-4 py-8 sm:px-6 lg:py-10">
           <div className="mx-auto flex max-w-6xl flex-col gap-8">
             <AnimatePresence>
               {aviso && (
@@ -249,6 +244,10 @@ function Moldura({ dados, arquivo, edicao, origem, acao, rodape, aviso, fecharAv
                 <Outlet />
               </motion.div>
             </AnimatePresence>
+            <p className="flex items-center justify-center gap-2 pt-4 text-sm text-texto-suave">
+              <ShieldCheck aria-hidden className="size-4 shrink-0 opacity-70" />
+              {rodape}
+            </p>
           </div>
         </main>
       </div>

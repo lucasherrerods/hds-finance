@@ -12,7 +12,7 @@ export function ResumoDoMes({ mes }: Props) {
       : `${formatarMoeda(mes.saldoInicial)} → ${formatarMoeda(mes.saldoFinal)}`
 
   return (
-    <section className="flex flex-col gap-6 rounded-2xl bg-superficie p-6 shadow-elevacao">
+    <section className="flex flex-col gap-6 rounded-2xl border border-borda bg-superficie p-6">
       <h2 className="text-2xl leading-tight font-semibold tracking-tight first-letter:uppercase">
         {formatarMes(mes.ano, mes.mes)}
       </h2>

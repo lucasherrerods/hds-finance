@@ -22,8 +22,8 @@ export function GraficosDoPeriodo({ meses }: Props) {
           <YAxis tickFormatter={valorCompacto} width={72} {...eixoDosGraficos} />
           <Tooltip content={(props) => <DicaDeFluxo {...props} />} cursor={{ fill: 'var(--color-fundo)' }} />
           <Legend formatter={(nome: string) => <span className="text-texto-suave">{nome}</span>} />
-          <Bar dataKey="entradas" name="Entradas (+)" fill="var(--color-entrada)" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="saidas" name="Saídas (−)" fill="var(--color-saida)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="entradas" name="Entradas (+)" fill="var(--color-entrada)" radius={[8, 8, 2, 2]} maxBarSize={28} />
+          <Bar dataKey="saidas" name="Saídas (−)" fill="var(--color-saida)" radius={[8, 8, 2, 2]} maxBarSize={28} />
         </BarChart>
       </ResponsiveContainer>
       <TabelaAcessivel

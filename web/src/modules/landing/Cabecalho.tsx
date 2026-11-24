@@ -3,8 +3,8 @@ import { Link } from 'react-router'
 import { BotaoDeTema, emModoPessoal } from '../../shared'
 
 const secoes = [
-  { href: '/#como-usar', rotulo: 'Como usar' },
-  { href: '/#exemplo', rotulo: 'Exemplo' },
+  { href: '/#como-usar', rotulo: 'Como funciona' },
+  { href: '/#exemplo', rotulo: 'Ver um exemplo' },
   { href: '/#privacidade', rotulo: 'Privacidade' },
 ]
 
@@ -29,9 +29,9 @@ export function Cabecalho() {
           <BotaoDeTema />
           <Link
             to={emModoPessoal() ? '/dashboard' : '/testar'}
-            className="rounded-lg bg-primaria px-4 py-2 font-medium text-primaria-texto transition-transform hover:-translate-y-0.5"
+            className="rounded-full bg-primaria px-4 py-2 font-semibold text-primaria-texto shadow-[0_0_20px_var(--color-brilho)] transition-transform hover:-translate-y-0.5"
           >
-            {emModoPessoal() ? 'Ver dashboard' : 'Testar'}
+            {emModoPessoal() ? 'Ver dashboard' : 'Testar agora'}
           </Link>
         </div>
       </div>

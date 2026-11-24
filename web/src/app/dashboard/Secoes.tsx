@@ -90,7 +90,7 @@ export function Evolucao() {
 
 function TabelaDosMeses({ meses }: { meses: ResumoMensal[] }) {
   return (
-    <section aria-label="Resumo por mês" className="overflow-x-auto rounded-2xl bg-superficie p-6 shadow-elevacao">
+    <section aria-label="Resumo por mês" className="overflow-x-auto rounded-2xl border border-borda bg-superficie p-6">
       <table className="w-full min-w-[32rem] text-left tabular-nums">
         <thead className="text-sm text-texto-suave">
           <tr>
@@ -157,7 +157,7 @@ export function Investimentos() {
             <CartaoDeNumero rotulo="Resgatado no período" icone={Undo2} valor={formatarMoeda(totais.resgatado)} />
             <CartaoDeNumero rotulo="Aplicado líquido" icone={Sigma} valor={formatarMoeda(totais.aplicadoAcumulado)} />
           </div>
-          <section aria-label="Investimentos por mês" className="overflow-x-auto rounded-2xl bg-superficie p-6 shadow-elevacao">
+          <section aria-label="Investimentos por mês" className="overflow-x-auto rounded-2xl border border-borda bg-superficie p-6">
             <table className="w-full min-w-[28rem] text-left tabular-nums">
               <thead className="text-sm text-texto-suave">
                 <tr>
@@ -197,7 +197,7 @@ export function Relatorio() {
         descricao="O fechamento do mês em PDF, com resumo, evolução, categorias e investimentos."
       />
       <div className="grid gap-4 md:grid-cols-2">
-        <section aria-label="PDF do fechamento" className="flex flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao">
+        <section aria-label="PDF do fechamento" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
           <h2 className="text-xl font-semibold tracking-tight">Baixar o PDF</h2>
           <p className="text-texto-suave">
             {arquivo ? 'O arquivo é montado na hora e não fica salvo no servidor.' : 'Montado a partir do histórico guardado nesta máquina.'}
@@ -205,14 +205,14 @@ export function Relatorio() {
           <BaixarRelatorio arquivo={arquivo ?? undefined} mes={ultimo} />
         </section>
         {emModoPessoal() ? (
-          <section aria-label="Enviar o fechamento" className="flex flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao">
+          <section aria-label="Enviar o fechamento" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
             <h2 className="text-xl font-semibold tracking-tight">Enviar por e-mail</h2>
             <p className="text-texto-suave">Vai para o e-mail configurado na api. Um mês já enviado só sai de novo se você pedir.</p>
             <EnviarFechamento mes={ultimo} />
           </section>
         ) : (
           arquivo && (
-            <section aria-label="Receber por e-mail" className="flex flex-col gap-4 rounded-2xl bg-superficie p-6 shadow-elevacao">
+            <section aria-label="Receber por e-mail" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
               <h2 className="text-xl font-semibold tracking-tight">Receber por e-mail</h2>
               <p className="text-texto-suave">Na primeira vez você confirma o e-mail com um código. O endereço fica só neste navegador.</p>
               <EnviarPorEmail arquivo={arquivo} mes={ultimo} />

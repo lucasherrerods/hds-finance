@@ -5,6 +5,8 @@ export {
   buscarHistorico,
   confirmarCodigo,
   corrigirCategoria,
+  mudarCategoria,
+  ocultarTransacao,
   pedirCodigo,
   sair,
   sessaoAberta,

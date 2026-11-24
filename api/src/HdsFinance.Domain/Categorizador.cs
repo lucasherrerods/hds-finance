@@ -93,7 +93,8 @@ public sealed class Categorizador
     }
 
     public string Categorizar(Transacao transacao) =>
-        _aprendidas.TryGetValue(ChaveDaDescricao(transacao.Descricao), out var aprendida)
+        transacao.Categoria is { } escolhida ? escolhida
+        : _aprendidas.TryGetValue(ChaveDaDescricao(transacao.Descricao), out var aprendida)
             ? aprendida
             : _regras.FirstOrDefault(r => TextoNormalizado.ContemAlgum(transacao.Descricao, r.Palavras)).Categoria ?? SemCategoria;
 }

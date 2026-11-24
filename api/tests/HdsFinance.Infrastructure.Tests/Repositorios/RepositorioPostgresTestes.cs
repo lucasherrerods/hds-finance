@@ -124,4 +124,20 @@ public sealed class RepositorioPostgresTestes : IDisposable
 
         (await repositorio.ListarAsync()).Should().Equal(setembro);
     }
+
+    [Fact]
+    public async Task Guarda_a_categoria_e_a_oculta_de_uma_transacao_so()
+    {
+        await using (var banco = NovoBanco())
+        {
+            var repositorio = new RepositorioPostgres(banco);
+            await repositorio.AdicionarAsync([Salario, Aplicacao]);
+            (await repositorio.DefinirCategoriaAsync(Salario.ChaveDeDeduplicacao, "Moradia")).Should().BeTrue();
+            (await repositorio.DefinirOcultaAsync(Salario.ChaveDeDeduplicacao, true)).Should().BeTrue();
+            (await repositorio.DefinirOcultaAsync("nao existe", true)).Should().BeFalse();
+        }
+
+        await using var outro = NovoBanco();
+        (await new RepositorioPostgres(outro).ListarAsync()).Should().Equal(Salario with { Categoria = "Moradia", Oculta = true }, Aplicacao);
+    }
 }

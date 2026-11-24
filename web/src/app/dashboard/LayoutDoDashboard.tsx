@@ -22,11 +22,14 @@ import {
   apagarTransacao,
   buscarHistorico,
   corrigirCategoria,
+  mudarCategoria,
+  ocultarTransacao,
   sair,
   sessaoAberta,
   type Historico,
 } from '../../modules/admin'
 import { periodoDosMeses, type EdicaoDoHistorico } from '../../modules/dashboard'
+import type { TransacaoCategorizada } from '../../modules/import'
 import { BotaoDeTema, formatarMesCurto } from '../../shared'
 import { useResultado } from '../contextoDoResultado'
 import { ContextoDoDashboard, type DadosDoDashboard } from './contextoDoDashboard'
@@ -76,6 +79,8 @@ function DashboardDaDemonstracao() {
   )
 }
 
+type Aviso = { texto: string; acao?: { rotulo: string; aoClicar: () => void } }
+
 type Estado =
   | { tipo: 'carregando' }
   | { tipo: 'sem-sessao' }
@@ -85,7 +90,7 @@ type Estado =
 /** Área admin: o histórico vem do Postgres, e cada extrato incluído soma ao que já existe. Sem sessão, volta para a entrada. */
 function DashboardDoAdmin() {
   const [estado, setEstado] = useState<Estado>({ tipo: 'carregando' })
-  const [aviso, setAviso] = useState<string | null>(null)
+  const [aviso, setAviso] = useState<Aviso | null>(null)
   // Cada mudança no histórico muda a versão, e o efeito busca o histórico de novo.
   const [versao, setVersao] = useState(0)
   const navegar = useNavigate()
@@ -104,22 +109,42 @@ function DashboardDoAdmin() {
     }
   }, [versao])
 
-  function mudou(mensagem: string) {
-    setAviso(mensagem)
+  const mostrar = (texto: string, acao?: Aviso['acao']) => setAviso({ texto, acao })
+
+  function mudou(mensagem: string, acao?: Aviso['acao']) {
+    mostrar(mensagem, acao)
     setVersao((v) => v + 1)
   }
 
-  async function aoMudarCategoria(descricao: string, categoria: string) {
-    const resultado = await corrigirCategoria(descricao, categoria)
-    if (resultado.ok) mudou(`"${descricao}" agora é ${categoria}, aqui e nas próximas importações.`)
-    else setAviso(resultado.mensagem)
+  async function aoMudarCategoria(transacao: TransacaoCategorizada, categoria: string) {
+    const resultado = await mudarCategoria(transacao.chave ?? '', categoria)
+    if (!resultado.ok) return mostrar(resultado.mensagem)
+    const podeAplicar = transacao.valor < 0 || transacao.noCartao
+    mudou(
+      `"${transacao.descricao}" agora é ${categoria}.`,
+      podeAplicar ? { rotulo: 'Aplicar a todas as iguais', aoClicar: () => void aplicarAsIguais(transacao, categoria) } : undefined,
+    )
+  }
+
+  async function aplicarAsIguais(transacao: TransacaoCategorizada, categoria: string) {
+    const resultado = await corrigirCategoria(transacao.descricao, categoria)
+    if (!resultado.ok) return mostrar(resultado.mensagem)
+    // Sem a escolha própria, ela segue a regra da descrição como as outras.
+    await mudarCategoria(transacao.chave ?? '', null)
+    mudou(`"${transacao.descricao}" agora é ${categoria} em todas, aqui e nas próximas importações.`)
+  }
+
+  async function aoOcultar(transacao: TransacaoCategorizada, oculta: boolean) {
+    const resultado = await ocultarTransacao(transacao.chave ?? '', oculta)
+    if (!resultado.ok) return mostrar(resultado.mensagem)
+    mudou(oculta ? `"${transacao.descricao}" não entra mais nas somas.` : `"${transacao.descricao}" voltou para as somas.`)
   }
 
   async function aoApagar(transacao: { data: string; valor: number; descricao: string }) {
     if (!window.confirm(`Apagar "${transacao.descricao}" do histórico?`)) return
     const resultado = await apagarTransacao(transacao)
     if (resultado.ok) mudou(`"${transacao.descricao}" saiu do histórico.`)
-    else setAviso(resultado.mensagem)
+    else mostrar(resultado.mensagem)
   }
 
   async function aoApagarMes(mes: { ano: number; mes: number }) {
@@ -127,7 +152,7 @@ function DashboardDoAdmin() {
     if (!window.confirm(`Apagar todas as transações de ${nome}? Não dá para desfazer.`)) return
     const resultado = await apagarMes(mes)
     if (resultado.ok) mudou(`${nome} saiu do histórico (${resultado.apagadas} transações).`)
-    else setAviso(resultado.mensagem)
+    else mostrar(resultado.mensagem)
   }
 
   async function sairDaConta() {
@@ -141,7 +166,7 @@ function DashboardDoAdmin() {
 
   const { historico } = estado
   const botaoDeIncluir = (rotulo?: string, className = acaoDoTopo) => (
-    <AdicionarExtrato aoImportar={mudou} rotulo={rotulo} className={className} />
+    <AdicionarExtrato aoImportar={(mensagem) => mudou(mensagem)} rotulo={rotulo} className={className} />
   )
 
   if (historico.meses.length === 0) {
@@ -150,7 +175,7 @@ function DashboardDoAdmin() {
         <h1 className="text-4xl font-bold tracking-[-0.03em] text-texto">Nenhum extrato ainda</h1>
         <span>O histórico fica guardado só para você, no banco da área admin.</span>
         {botaoDeIncluir('Incluir o primeiro extrato', 'rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto')}
-        {aviso && <span role="status">{aviso}</span>}
+        {aviso && <span role="status">{aviso.texto}</span>}
       </TelaCheia>
     )
   }
@@ -162,7 +187,8 @@ function DashboardDoAdmin() {
       arquivo={null}
       edicao={{
         categorias: historico.categorias,
-        aoMudar: (descricao, categoria) => void aoMudarCategoria(descricao, categoria),
+        aoMudar: (transacao, categoria) => void aoMudarCategoria(transacao, categoria),
+        aoOcultar: (transacao, oculta) => void aoOcultar(transacao, oculta),
         aoApagar: (transacao) => void aoApagar(transacao),
         aoApagarMes: (mes) => void aoApagarMes(mes),
       }}
@@ -197,7 +223,7 @@ type MolduraProps = {
   origem: { icone: LucideIcon; nome: string }
   acao: ReactNode
   rodape: string
-  aviso?: string | null
+  aviso?: Aviso | null
   fecharAviso?: () => void
 }
 
@@ -279,7 +305,14 @@ function Moldura({ base, dados, arquivo, edicao, origem, acao, rodape, aviso, fe
                   exit={{ opacity: 0 }}
                   className="flex items-start justify-between gap-4 rounded-xl bg-primaria-suave p-4 text-texto"
                 >
-                  {aviso}
+                  <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    {aviso.texto}
+                    {aviso.acao && (
+                      <button type="button" onClick={aviso.acao.aoClicar} className="font-medium text-primaria underline underline-offset-4">
+                        {aviso.acao.rotulo}
+                      </button>
+                    )}
+                  </span>
                   <button type="button" onClick={fecharAviso} aria-label="Fechar aviso" className="text-texto-suave hover:text-texto">
                     <X aria-hidden className="size-4" />
                   </button>

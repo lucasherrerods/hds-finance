@@ -343,4 +343,25 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
         (await Cliente().PostAsync("/admin/faturas", Arquivo())).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         (await (await ClienteLogadoAsync()).PostAsync("/admin/faturas", Arquivo())).StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
+
+    [Fact]
+    public async Task Muda_a_categoria_e_oculta_uma_transacao()
+    {
+        var cliente = await ClienteLogadoAsync();
+        await cliente.PostAsync("/admin/extratos", Amostra());
+        async Task<JsonElement> CompraAsync() => JsonDocument.Parse(await cliente.GetStringAsync("/admin/historico")).RootElement
+            .GetProperty("transacoes").EnumerateArray().Single(t => t.GetProperty("valor").GetDecimal() == -123.45m);
+        var chave = (await CompraAsync()).GetProperty("chave").GetString();
+
+        (await cliente.PutAsJsonAsync("/admin/transacoes/categoria", new { chave, categoria = "Lazer" })).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await cliente.PutAsJsonAsync("/admin/transacoes/oculta", new { chave, oculta = true })).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await cliente.PutAsJsonAsync("/admin/transacoes/categoria", new { chave, categoria = "Inventada" })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await cliente.PutAsJsonAsync("/admin/transacoes/oculta", new { chave = "x", oculta = true })).StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var compra = await CompraAsync();
+        compra.GetProperty("categoria").GetString().Should().Be("Lazer");
+        compra.GetProperty("oculta").GetBoolean().Should().BeTrue();
+        using var json = JsonDocument.Parse(await cliente.GetStringAsync("/admin/historico"));
+        json.RootElement.GetProperty("meses")[0].GetProperty("saidas").GetDecimal().Should().Be(0m);
+    }
 }

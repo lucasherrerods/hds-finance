@@ -23,12 +23,18 @@ public sealed record Transacao(
     TipoDeTransacao Tipo,
     string? IdExterno = null)
 {
-    public bool ContaNoFluxoDeCaixa => Tipo is TipoDeTransacao.Comum or TipoDeTransacao.CompraNoCartao;
+    /// <summary>Escolhida só para esta transação; vence as regras e as correções por descrição.</summary>
+    public string? Categoria { get; init; }
+
+    /// <summary>Fora de todas as somas. O saldo da conta ainda conta com ela, porque o dinheiro se moveu.</summary>
+    public bool Oculta { get; init; }
+
+    public bool ContaNoFluxoDeCaixa => !Oculta && Tipo is (TipoDeTransacao.Comum or TipoDeTransacao.CompraNoCartao);
 
     public bool MexeNoSaldo => Tipo != TipoDeTransacao.CompraNoCartao;
 
     /// <summary>Estorno no cartão também entra aqui: é valor positivo que abate o gasto, não receita.</summary>
-    public bool EhGasto => Tipo == TipoDeTransacao.CompraNoCartao || (Tipo == TipoDeTransacao.Comum && Valor < 0);
+    public bool EhGasto => !Oculta && (Tipo == TipoDeTransacao.CompraNoCartao || (Tipo == TipoDeTransacao.Comum && Valor < 0));
 
     public string ChaveDeDeduplicacao =>
         IdExterno ?? string.Join('|',

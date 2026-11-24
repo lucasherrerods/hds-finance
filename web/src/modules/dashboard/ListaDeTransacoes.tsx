@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, CreditCard, Equal, Hash, Search, Trash2, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, CreditCard, Equal, Eye, EyeOff, Hash, Search, Trash2, type LucideIcon } from 'lucide-react'
 import { useId, useState, type ReactNode } from 'react'
 import { formatarData, formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
@@ -6,10 +6,11 @@ import { Cartao } from './Cartao'
 import { IconeDaCategoria } from './IconeDaCategoria'
 import { categoriasDe, filtrarTransacoes, type Filtros, type Ordem } from './periodos'
 
-/** Só na área admin: trocar a categoria de uma transação e apagar transações ou meses do histórico. */
+/** Só na área admin: trocar a categoria, ocultar e apagar transações ou meses do histórico. */
 export type EdicaoDoHistorico = {
   categorias: string[]
-  aoMudar: (descricao: string, categoria: string) => void
+  aoMudar: (transacao: TransacaoCategorizada, categoria: string) => void
+  aoOcultar: (transacao: TransacaoCategorizada, oculta: boolean) => void
   aoApagar: (transacao: TransacaoCategorizada) => void
   aoApagarMes: (mes: { ano: number; mes: number }) => void
 }
@@ -18,6 +19,7 @@ type Props = { transacoes: TransacaoCategorizada[]; mes: ResumoMensal; edicao?: 
 
 // Aplicações, resgates e transferências entre contas próprias não são gasto, então não têm categoria para trocar.
 const MOVIMENTACAO_INTERNA = 'Investimentos e transferências'
+const ENTRADA = 'Entrada'
 
 const ordens: { valor: Ordem; rotulo: string }[] = [
   { valor: 'recentes', rotulo: 'Data (mais recentes)' },
@@ -104,9 +106,11 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
                 <th scope="col" className="w-full py-3 font-normal">
                   Descrição
                 </th>
-                <th scope="col" className="hidden py-3 font-normal sm:table-cell">
-                  Categoria
-                </th>
+                {!edicao && (
+                  <th scope="col" className="hidden py-3 font-normal sm:table-cell">
+                    Categoria
+                  </th>
+                )}
                 <th scope="col" className="hidden py-3 font-normal md:table-cell">
                   Data
                 </th>
@@ -138,8 +142,15 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
                               Cartão
                             </span>
                           )}
+                          {t.oculta && (
+                            <span className="flex items-center gap-1 text-sm text-texto-suave">
+                              <EyeOff aria-hidden className="size-3.5 opacity-70" />
+                              Fora da soma
+                            </span>
+                          )}
+                          {edicao && <Categoria transacao={t} edicao={edicao} />}
                           <span className="truncate text-sm text-texto-suave sm:hidden">
-                            {t.categoria} · {formatarData(t.data)}
+                            {edicao ? formatarData(t.data) : `${t.categoria} · ${formatarData(t.data)}`}
                           </span>
                           <span className="hidden truncate text-sm text-texto-suave sm:inline md:hidden">
                             {formatarData(t.data)}
@@ -147,44 +158,42 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
                         </span>
                       </span>
                     </td>
-                    <td className="hidden py-3 pr-4 sm:table-cell">
-                      {edicao && t.categoria !== MOVIMENTACAO_INTERNA ? (
-                        <select
-                          aria-label={`Categoria de ${t.descricao}`}
-                          value={t.categoria}
-                          onChange={(e) => edicao.aoMudar(t.descricao, e.target.value)}
-                          className="rounded-md border border-borda bg-fundo px-2 py-1 text-sm text-texto-suave focus:border-primaria focus:outline-none"
-                        >
-                          {[...new Set([...edicao.categorias, t.categoria])].map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className="rounded-md bg-fundo px-2 py-1 text-sm whitespace-nowrap text-texto-suave">
-                          {t.categoria}
-                        </span>
-                      )}
-                    </td>
+                    {!edicao && (
+                      <td className="hidden py-3 pr-4 sm:table-cell">
+                        <span className="rounded-md bg-fundo px-2 py-1 text-sm whitespace-nowrap text-texto-suave">{t.categoria}</span>
+                      </td>
+                    )}
                     <td className="hidden py-3 pr-4 whitespace-nowrap text-texto-suave tabular-nums md:table-cell">
                       {formatarData(t.data)}
                     </td>
                     <td
-                      className={`py-3 pl-3 text-right font-semibold sm:pl-6 whitespace-nowrap tabular-nums ${entrada ? 'text-entrada' : ''}`}
+                      className={`py-3 pl-3 text-right font-semibold sm:pl-6 whitespace-nowrap tabular-nums ${
+                        t.oculta ? 'text-texto-suave line-through' : entrada ? 'text-entrada' : ''
+                      }`}
                     >
                       {formatarMoedaComSinal(t.valor, entrada ? 'entrada' : 'saida')}
                     </td>
                     {edicao && (
                       <td className="py-3 pl-3">
-                        <button
-                          type="button"
-                          aria-label={`Apagar ${t.descricao}`}
-                          onClick={() => edicao.aoApagar(t)}
-                          className="grid size-8 place-items-center rounded-full text-texto-suave transition-colors hover:bg-fundo hover:text-saida"
-                        >
-                          <Trash2 aria-hidden className="size-4" />
-                        </button>
+                        <span className="flex flex-col sm:flex-row">
+                          <button
+                            type="button"
+                            aria-label={`${t.oculta ? 'Mostrar' : 'Ocultar'} ${t.descricao}`}
+                            title={t.oculta ? 'Voltar a somar' : 'Tirar das somas'}
+                            onClick={() => edicao.aoOcultar(t, !t.oculta)}
+                            className="grid size-8 place-items-center rounded-full text-texto-suave transition-colors hover:bg-fundo hover:text-texto"
+                          >
+                            {t.oculta ? <Eye aria-hidden className="size-4" /> : <EyeOff aria-hidden className="size-4" />}
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Apagar ${t.descricao}`}
+                            onClick={() => edicao.aoApagar(t)}
+                            className="grid size-8 place-items-center rounded-full text-texto-suave transition-colors hover:bg-fundo hover:text-saida"
+                          >
+                            <Trash2 aria-hidden className="size-4" />
+                          </button>
+                        </span>
                       </td>
                     )}
                   </tr>
@@ -195,6 +204,26 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
         </div>
       )}
     </Cartao>
+  )
+}
+
+function Categoria({ transacao: t, edicao }: { transacao: TransacaoCategorizada; edicao: EdicaoDoHistorico }) {
+  if (t.categoria === MOVIMENTACAO_INTERNA) return <span className="text-sm text-texto-suave">{t.categoria}</span>
+  const ehEntrada = t.valor > 0 && !t.noCartao
+  const opcoes = new Set([...(ehEntrada ? [ENTRADA] : []), ...edicao.categorias, t.categoria])
+  return (
+    <select
+      aria-label={`Categoria de ${t.descricao}`}
+      value={t.categoria}
+      onChange={(e) => edicao.aoMudar(t, e.target.value)}
+      className="mt-1 max-w-full self-start rounded-md border border-borda bg-fundo px-2 py-1 text-sm text-texto-suave focus:border-primaria focus:outline-none"
+    >
+      {[...opcoes].map((c) => (
+        <option key={c} value={c}>
+          {c}
+        </option>
+      ))}
+    </select>
   )
 }
 

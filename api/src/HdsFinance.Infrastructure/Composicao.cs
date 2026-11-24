@@ -76,6 +76,7 @@ public static class Composicao
         services.AddScoped<ImportarFatura>();
         services.AddScoped<ConsultarHistorico>();
         services.AddScoped<ApagarDados>();
+        services.AddScoped<AjustarTransacao>();
 
         // As correções do admin entram na frente das regras; por isso o categorizador nasce a cada requisição.
         services.AddScoped<ICategoriasAprendidas, CategoriasAprendidasPostgres>();

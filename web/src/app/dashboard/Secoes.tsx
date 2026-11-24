@@ -162,7 +162,7 @@ export function Transacoes() {
         titulo="Transações"
         descricao={
           edicao
-            ? 'Escolha o mês para ver cada lançamento. Trocou a categoria de um, os iguais seguem a escolha daqui pra frente. A lixeira tira o lançamento do histórico.'
+            ? 'Escolha o mês para ver cada lançamento. Troque a categoria, use o olho para tirar um lançamento das somas ou a lixeira para apagar.'
             : 'Escolha o mês para ver o fechamento, os gastos por categoria e cada lançamento.'
         }
       />

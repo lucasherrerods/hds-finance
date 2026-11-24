@@ -51,6 +51,14 @@ public static class RespostasHttp
             title: "Código inválido", detail: "O código não confere. Confira o e-mail recebido.", statusCode: StatusCodes.Status400BadRequest),
     };
 
+    public static IResult De(ResultadoDoAjuste resultado) => resultado switch
+    {
+        ResultadoDoAjuste.Ajustada => Results.NoContent(),
+        ResultadoDoAjuste.CategoriaInvalida => Results.Problem(
+            title: "Categoria inválida", detail: "Escolha uma das categorias da lista.", statusCode: StatusCodes.Status400BadRequest),
+        _ => Results.Problem(title: "Transação não encontrada", detail: "Ela não está mais no histórico.", statusCode: StatusCodes.Status404NotFound),
+    };
+
     public static IResult De(ResultadoDaFatura resultado) => resultado switch
     {
         ResultadoDaFatura.Importada i => Results.Ok(new { transacoesNovas = i.Novas, duplicadas = i.Duplicadas }),

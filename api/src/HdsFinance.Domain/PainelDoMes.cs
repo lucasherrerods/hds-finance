@@ -70,7 +70,7 @@ public sealed record PainelDoMes(
             CalcularRitmo(gastos, gastosAnteriores, temAnterior, diasNoMes, ultimoDiaComMovimento),
             mapa,
             CompararCategorias(gastos, gastosAnteriores, temAnterior, categorizador),
-            TransacaoCategorizada.Listar(doMes, categorizador).Take(LimiteDeTransacoes).ToList());
+            TransacaoCategorizada.Listar(doMes.Where(t => !t.Oculta), categorizador).Take(LimiteDeTransacoes).ToList());
     }
 
     private static List<Transacao> Gastos(IEnumerable<Transacao> transacoes) =>

@@ -1,7 +1,7 @@
 namespace HdsFinance.Domain;
 
 /// <summary>
-/// Fecha assim: saldo inicial + entradas − saídas + investimentos e transferências + compras no cartão = saldo final.
+/// Fecha assim: saldo inicial + entradas − saídas + investimentos e transferências + compras no cartão + ocultas = saldo final.
 /// Compra no cartão é saída no mês dela, mas o dinheiro só sai no pagamento: o campo ComprasNoCartao devolve o valor ao saldo.
 /// Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas
 /// próprias mexem no saldo da conta, mas ficam no próprio campo.
@@ -16,7 +16,10 @@ public sealed record ResumoMensal(
 {
     public decimal Resultado => Entradas - Saidas;
 
-    public decimal? SaldoFinal => SaldoInicial + Resultado + InvestimentosETransferencias + ComprasNoCartao;
+    public decimal? SaldoFinal => SaldoInicial + Resultado + InvestimentosETransferencias + ComprasNoCartao + Ocultas;
+
+    /// <summary>O que as transações ocultas moveram na conta: fora das somas, mas o saldo precisa fechar.</summary>
+    public decimal Ocultas { get; init; }
 
     /// <summary>O que foi gasto no cartão no mês, já com os estornos abatidos.</summary>
     public decimal ComprasNoCartao { get; init; }
@@ -37,7 +40,7 @@ public sealed record ResumoMensal(
 
         var entradas = fluxo.Where(t => !t.EhGasto).Sum(t => t.Valor);
         var saidas = -fluxo.Where(t => t.EhGasto).Sum(t => t.Valor);
-        var internas = doMes.Where(t => !t.ContaNoFluxoDeCaixa).Sum(t => t.Valor);
+        var internas = doMes.Where(t => !t.Oculta && !t.ContaNoFluxoDeCaixa).Sum(t => t.Valor);
 
         var gastos = fluxo.Where(t => t.EhGasto)
             .GroupBy((categorizador ?? Categorizador.Padrao).Categorizar)
@@ -49,8 +52,9 @@ public sealed record ResumoMensal(
         return new ResumoMensal(mes, saldoInicial, entradas, saidas, internas)
         {
             GastosPorCategoria = gastos,
-            ComprasNoCartao = -doMes.Where(t => t.Tipo == TipoDeTransacao.CompraNoCartao).Sum(t => t.Valor),
-            Investimentos = PosicaoDeInvestimento.Do(doMes, investidoAntes),
+            ComprasNoCartao = -doMes.Where(t => !t.Oculta && t.Tipo == TipoDeTransacao.CompraNoCartao).Sum(t => t.Valor),
+            Ocultas = doMes.Where(t => t.Oculta && t.MexeNoSaldo).Sum(t => t.Valor),
+            Investimentos = PosicaoDeInvestimento.Do(doMes.Where(t => !t.Oculta), investidoAntes),
         };
     }
 

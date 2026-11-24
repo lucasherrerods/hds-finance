@@ -53,6 +53,7 @@ describe('área admin', () => {
     painel: painelDeExemplo,
     transacoes: painelDeExemplo.transacoesRecentes,
     categorias: ['Alimentação', 'Lazer', 'Sem categoria'],
+    saldo: { valor: 10, em: '2026-10-31', informado: true, antesDoHistorico: 0 },
   }
 
   function respostaPara(url: string, dados: unknown, logado: boolean) {
@@ -114,6 +115,7 @@ describe('área admin', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: /outubro de 2026/i }, { timeout: 5000 })).toBeInTheDocument()
     expect(screen.getByText('Seu histórico')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Saldo da conta' })).toHaveTextContent(/R\$\s10,00/)
     expect(screen.getByLabelText(/incluir extrato/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /trocar extrato/i })).not.toBeInTheDocument()
   })

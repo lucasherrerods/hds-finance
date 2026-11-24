@@ -9,6 +9,7 @@ import {
   PainelDoMes,
   periodoDosMeses,
   recortesDaEvolucao,
+  SaldoDaConta,
   totaisDoPeriodo,
   type EdicaoDoHistorico,
   type Indicador,
@@ -47,6 +48,7 @@ export function VisaoGeral() {
         titulo={formatarMes(ultimo.ano, ultimo.mes)}
         descricao="O mês mais recente do extrato, comparado com o anterior."
       />
+      {resumo.saldo && <SaldoDaConta saldo={resumo.saldo} />}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {indicadoresDoMes(resumo.meses).map((indicador) => (
           <CartaoDeNumero

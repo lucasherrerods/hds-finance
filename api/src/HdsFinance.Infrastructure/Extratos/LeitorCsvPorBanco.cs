@@ -70,7 +70,7 @@ public sealed partial class LeitorCsvPorBanco : ILeitorDeExtrato
             Documento().Replace(AgenciaEConta().Replace(LeitorFaturaInterPdf.TextoLimpo(descricao), string.Empty), string.Empty), string.Empty).Trim();
 
     // O nome de um MEI costuma terminar com o CPF do dono.
-    [GeneratedRegex(@"\s*\d{11}")]
+    [GeneratedRegex(@"\s*\b\d{11}\b")]
     private static partial Regex CpfNoNome();
 
     [GeneratedRegex(@"\s*Ag[êe]ncia:.*$", RegexOptions.IgnoreCase)]

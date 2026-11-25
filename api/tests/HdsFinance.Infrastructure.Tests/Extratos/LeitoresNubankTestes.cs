@@ -37,8 +37,7 @@ public class LeitoresNubankTestes
     public async Task Tira_o_cpf_que_vem_no_nome_do_mei()
     {
         var lida = (ResultadoDaLeitura.Sucesso)await LerContaAsync(
-            "Data,Valor,Identificador,Descrição
-01/01/2024,-1.00,x,Transferência enviada pelo Pix - FULANO DE TAL 00000000000 - 00.000.000/0001-00 - BCO EXEMPLO (0001) Agência: 1 Conta: 1");
+            "Data,Valor,Identificador,Descrição\n01/01/2024,-1.00,x,Transferência enviada pelo Pix - FULANO DE TAL 00000000000 - 00.000.000/0001-00 - BCO EXEMPLO (0001) Agência: 1 Conta: 1");
 
         lida.Transacoes.Single().Descricao.Should().Be("Transferência enviada pelo Pix - FULANO DE TAL - BCO EXEMPLO (0001)");
     }

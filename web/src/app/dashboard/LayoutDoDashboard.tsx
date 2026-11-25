@@ -43,7 +43,7 @@ const secoes: { caminho: string; rotulo: string; icone: LucideIcon }[] = [
 ]
 
 // A demonstração não lê fatura.
-const secoesDoAdmin = [...secoes, { caminho: '/cartao', rotulo: 'Cartão', icone: CreditCard }]
+const secoesDoAdmin = [...secoes, { caminho: '/cartao', rotulo: 'Cartões', icone: CreditCard }]
 
 const SUAVE = [0.22, 1, 0.36, 1] as const
 const acaoDoTopo = 'h-10 rounded-full bg-primaria px-4 font-semibold text-primaria-texto transition-transform hover:-translate-y-0.5'
@@ -141,7 +141,10 @@ function DashboardDoAdmin() {
   async function aoOcultar(transacao: TransacaoCategorizada, oculta: boolean) {
     const resultado = await ocultarTransacao(transacao.chave ?? '', oculta)
     if (!resultado.ok) return mostrar(resultado.mensagem)
-    mudou(oculta ? `"${transacao.descricao}" não entra mais nas somas.` : `"${transacao.descricao}" voltou para as somas.`)
+    mudou(
+      oculta ? `"${transacao.descricao}" não entra mais nas somas.` : `"${transacao.descricao}" voltou para as somas.`,
+      oculta ? { rotulo: 'Desfazer', aoClicar: () => void aoOcultar(transacao, false) } : undefined,
+    )
   }
 
   async function aoApagar(transacao: { data: string; valor: number; descricao: string }) {

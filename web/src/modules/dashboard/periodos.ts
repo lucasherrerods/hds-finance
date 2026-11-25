@@ -42,7 +42,9 @@ export function bancosDe(transacoes: TransacaoCategorizada[]): string[] {
 
 export type Ordem = 'recentes' | 'antigas' | 'maior' | 'menor'
 
-export type Filtros = { busca: string; categoria: string; ordem: Ordem; banco?: string }
+export type Filtros = { busca: string; categoria: string; ordem: Ordem; banco?: string; tipo?: TipoDeFiltro; comOcultas?: boolean }
+
+export type TipoDeFiltro = '' | 'entradas' | 'saidas' | 'cartao'
 
 const semAcento = (texto: string) =>
   texto
@@ -50,12 +52,29 @@ const semAcento = (texto: string) =>
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
 
+function doTipo(t: TransacaoCategorizada, tipo: TipoDeFiltro = '') {
+  switch (tipo) {
+    case 'entradas':
+      return t.valor > 0 && !t.noCartao
+    case 'saidas':
+      return t.valor < 0
+    case 'cartao':
+      return t.noCartao === true
+    default:
+      return true
+  }
+}
+
 /** A api já manda da mais nova para a mais antiga; "antigas" inverte por data mantendo a ordem do mesmo dia. */
 export function filtrarTransacoes(transacoes: TransacaoCategorizada[], filtros: Filtros): TransacaoCategorizada[] {
   const busca = semAcento(filtros.busca.trim())
   const filtradas = transacoes.filter(
     (t) =>
-      (!busca || semAcento(t.descricao).includes(busca)) && (!filtros.categoria || t.categoria === filtros.categoria) && (!filtros.banco || bancoDa(t) === filtros.banco),
+      (filtros.comOcultas !== false || !t.oculta) &&
+      doTipo(t, filtros.tipo) &&
+      (!busca || semAcento(t.descricao).includes(busca)) &&
+      (!filtros.categoria || t.categoria === filtros.categoria) &&
+      (!filtros.banco || bancoDa(t) === filtros.banco),
   )
 
   const porData = (a: TransacaoCategorizada, b: TransacaoCategorizada) => a.data.localeCompare(b.data)

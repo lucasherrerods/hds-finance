@@ -39,3 +39,9 @@ export function formatarPercentual(valor: number): string {
   if (inteiro === 0) return '0%'
   return `${valor > 0 ? '+' : '−'}${inteiro}%`
 }
+
+const moedaCompacta = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' })
+
+export function formatarMoedaCompacta(valor: number): string {
+  return moedaCompacta.format(valor)
+}

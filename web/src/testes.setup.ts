@@ -26,6 +26,15 @@ vi.stubGlobal(
   })),
 )
 
+// O jsdom não abre nem fecha o dialog.
+HTMLDialogElement.prototype.showModal = function () {
+  this.open = true
+}
+HTMLDialogElement.prototype.close = function () {
+  this.open = false
+  this.dispatchEvent(new Event('close'))
+}
+
 // O Node 25 expõe um localStorage próprio, incompleto sem configuração, que esconde o do jsdom.
 function criarArmazenamento(): Storage {
   const itens = new Map<string, string>()

@@ -1,111 +1,154 @@
-import { ChevronDown, CircleCheck, CircleHelp } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CreditCard } from 'lucide-react'
 import { useId, useState } from 'react'
-import { formatarData, formatarMes, formatarMoeda, formatarMoedaComSinal } from '../../shared'
-import type { TransacaoCategorizada } from '../import'
-import { Abas } from './Abas'
-import { IconeDaCategoria } from './IconeDaCategoria'
+import { formatarData, formatarMes, formatarMesCurto, formatarMoeda, formatarMoedaCompacta, IconeDoBanco, type NomeDoBanco } from '../../shared'
+import { Cartao } from './Cartao'
+import { DetalheDaFatura } from './DetalheDaFatura'
+import { bancoDaFatura, chaveDaFatura, janelaDeFaturas, mesDaFatura, ultimaDeCadaBanco, valorDaFatura, type Fatura } from './faturas'
+import { Seletor } from './Seletor'
+import { Seta } from './Seta'
+import { Situacao } from './Situacao'
 
-export type Fatura = {
-  vencimento: string
-  total: number | null
-  gasto: number
-  /** Nulo quando não dá para saber. */
-  paga: boolean | null
-  compras: TransacaoCategorizada[]
-  banco?: 'Inter' | 'Nubank'
-}
-
-const anoDa = (f: Fatura) => f.vencimento.slice(0, 4)
-
-/** As faturas incluídas, da mais nova para a mais antiga, com as compras de cada uma. */
+/** A fatura mais nova em destaque, um cartão por banco e o gráfico das faturas. Cada uma abre num painel lateral. */
 export function FaturasDoCartao({ faturas }: { faturas: Fatura[] }) {
-  const anos = [...new Set(faturas.map(anoDa))]
-  const [escolhido, setEscolhido] = useState(anos[0])
-  const idDoPainel = useId()
-  const ano = anos.includes(escolhido) ? escolhido : anos[0]
-  const comAbas = anos.length > 1
+  const [aberta, setAberta] = useState<string | null>(null)
+  const abrir = (f: Fatura) => setAberta(chaveDaFatura(f))
+  const cartoes = ultimaDeCadaBanco(faturas)
+  const emDetalhe = faturas.find((f) => chaveDaFatura(f) === aberta)
+  const maisNova = faturas[0]
+  if (!maisNova) return null
 
   return (
-    <div className="flex flex-col gap-6">
-      {comAbas && (
-        <Abas
-          rotulo="Anos das faturas"
-          abas={anos.map((a) => ({ chave: a, rotulo: a }))}
-          selecionada={ano}
-          aoSelecionar={setEscolhido}
-          idDoPainel={idDoPainel}
-        />
-      )}
-      <div id={idDoPainel} role={comAbas ? 'tabpanel' : undefined} className="flex flex-col gap-4">
-        {faturas
-          .filter((f) => anoDa(f) === ano)
-          .map((f, i) => (
-            <CartaoDaFatura key={`${f.banco ?? 'Inter'}-${f.vencimento}`} fatura={f} abertaNoInicio={i === 0} />
+    <div className="flex flex-col gap-8">
+      <section
+        aria-label="Fatura mais recente"
+        className="flex flex-col items-center gap-2 rounded-2xl border border-borda bg-linear-to-b from-primaria-suave to-superficie px-6 py-8 text-center"
+      >
+        <span className="flex items-center gap-2 text-texto-suave">
+          <CreditCard aria-hidden className="size-4 opacity-70" />
+          Fatura mais recente
+        </span>
+        <span className="text-4xl leading-tight font-bold tracking-[-0.03em] tabular-nums sm:text-5xl">{formatarMoeda(valorDaFatura(maisNova))}</span>
+        <span className="text-texto-suave">Vencimento em {formatarData(maisNova.vencimento)}</span>
+        <Situacao paga={maisNova.paga} />
+      </section>
+
+      <section aria-label="Seus cartões" className="flex flex-col gap-4">
+        <h2 className="font-semibold">
+          Seus cartões <span className="font-normal text-texto-suave">({cartoes.length})</span>
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {cartoes.map((f) => (
+            <CartaoDoBanco key={bancoDaFatura(f)} fatura={f} quantas={faturas.filter((o) => bancoDaFatura(o) === bancoDaFatura(f)).length} aoAbrir={() => abrir(f)} />
           ))}
-      </div>
+        </div>
+      </section>
+
+      <GraficoDeFaturas faturas={faturas} bancos={cartoes.map(bancoDaFatura)} aberta={aberta} aoAbrir={abrir} />
+
+      {emDetalhe && <DetalheDaFatura fatura={emDetalhe} aoFechar={() => setAberta(null)} />}
     </div>
   )
 }
 
-function CartaoDaFatura({ fatura, abertaNoInicio }: { fatura: Fatura; abertaNoInicio: boolean }) {
-  const [aberta, setAberta] = useState(abertaNoInicio)
-  const id = useId()
-  const [ano, mes] = fatura.vencimento.split('-').map(Number)
-
+function CartaoDoBanco({ fatura, quantas, aoAbrir }: { fatura: Fatura; quantas: number; aoAbrir: () => void }) {
+  const banco = bancoDaFatura(fatura)
   return (
-    <section className="rounded-2xl border border-borda bg-superficie">
-      <button
-        type="button"
-        aria-expanded={aberta}
-        aria-controls={id}
-        onClick={() => setAberta(!aberta)}
-        className="flex w-full items-center justify-between gap-4 rounded-2xl p-6 text-left"
-      >
-        <span className="flex min-w-0 flex-col gap-1">
-          <span className="text-lg font-semibold tracking-tight first-letter:uppercase">{formatarMes(ano, mes)}</span>
-          <span className="text-sm text-texto-suave">{fatura.banco ?? 'Inter'} · Vence em {formatarData(fatura.vencimento)}</span>
-          {fatura.paga !== null && <Situacao paga={fatura.paga} />}
+    <button
+      type="button"
+      onClick={aoAbrir}
+      className="relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl border border-borda bg-superficie p-6 text-left transition-colors hover:border-primaria/40"
+    >
+      <span aria-hidden className="absolute -top-16 -right-12 -z-10 size-44 rounded-full bg-primaria-suave opacity-60" />
+      <span className="flex items-center gap-4">
+        <IconeDoBanco banco={banco} />
+        <span className="flex flex-col">
+          <span className="text-lg font-semibold tracking-tight">Cartão {banco}</span>
+          <span className="text-sm text-texto-suave">{quantas === 1 ? '1 fatura incluída' : `${quantas} faturas incluídas`}</span>
         </span>
-        <span className="flex shrink-0 items-center gap-4">
-          <span className="flex flex-col items-end">
-            <span className="text-xl font-semibold tabular-nums">{formatarMoeda(fatura.total ?? fatura.gasto)}</span>
-            <span className="text-sm text-texto-suave">{fatura.compras.length} lançamentos</span>
-          </span>
-          <ChevronDown aria-hidden className={`size-5 text-texto-suave transition-transform ${aberta ? 'rotate-180' : ''}`} />
-        </span>
-      </button>
-
-      {aberta && (
-        <ul id={id} className="flex flex-col px-6 pb-4">
-          {fatura.compras.map((c, i) => (
-            <li key={c.chave ?? i} className="flex items-center justify-between gap-4 border-t border-borda py-3">
-              <span className="flex min-w-0 items-center gap-3">
-                <IconeDaCategoria categoria={c.categoria} className="size-4 shrink-0 opacity-70" />
-                <span className="flex min-w-0 flex-col">
-                  <span className="truncate">{c.descricao}</span>
-                  <span className="text-sm text-texto-suave">
-                    {formatarData(c.data)} · {c.categoria}
-                    {c.oculta && ' · Fora da soma'}
-                  </span>
-                </span>
-              </span>
-              <span className={`shrink-0 font-semibold tabular-nums ${c.oculta ? 'text-texto-suave line-through' : c.valor > 0 ? 'text-entrada' : ''}`}>
-                {formatarMoedaComSinal(c.valor, c.valor > 0 ? 'entrada' : 'saida')}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+      </span>
+      <span className="flex flex-col gap-1">
+        <span className="text-sm text-texto-suave">Última fatura</span>
+        <span className="text-2xl font-semibold tracking-tight tabular-nums">{formatarMoeda(valorDaFatura(fatura))}</span>
+      </span>
+      <span className="flex flex-wrap items-center justify-between gap-2 border-t border-borda pt-4 text-sm text-texto-suave">
+        Vencimento em {formatarData(fatura.vencimento)}
+        <Situacao paga={fatura.paga} />
+      </span>
+    </button>
   )
 }
 
-function Situacao({ paga }: { paga: boolean }) {
-  const Icone = paga ? CircleCheck : CircleHelp
+type GraficoProps = { faturas: Fatura[]; bancos: NomeDoBanco[]; aberta: string | null; aoAbrir: (f: Fatura) => void }
+
+function GraficoDeFaturas({ faturas, bancos, aberta, aoAbrir }: GraficoProps) {
+  const [escolhido, setEscolhido] = useState(bancos[0])
+  const [pagina, setPagina] = useState(0)
+  const idDoBanco = useId()
+  const banco = bancos.includes(escolhido) ? escolhido : bancos[0]
+  const doBanco = faturas.filter((f) => bancoDaFatura(f) === banco)
+  const janela = janelaDeFaturas(doBanco, pagina)
+  const maior = Math.max(1, ...janela.faturas.map(valorDaFatura))
+  const mesCurto = (f: Fatura) => formatarMesCurto(...(mesDaFatura(f).slice(0, 2) as [number, number]))
+  const [primeira, ultima] = [janela.faturas.at(0), janela.faturas.at(-1)]
+
   return (
-    <span className={`flex items-center gap-1 text-sm ${paga ? 'text-entrada' : 'text-texto-suave'}`}>
-      <Icone aria-hidden className="size-4 opacity-80" />
-      {paga ? 'Paga' : 'Pagamento não encontrado'}
-    </span>
+    <Cartao titulo="Faturas">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {bancos.length > 1 ? (
+          <>
+            <label htmlFor={idDoBanco} className="sr-only">
+              Cartão do gráfico
+            </label>
+            <Seletor
+              id={idDoBanco}
+              value={banco}
+              onChange={(e) => {
+                setEscolhido(e.target.value as NomeDoBanco)
+                setPagina(0)
+              }}
+            >
+              {bancos.map((b) => (
+                <option key={b}>{b}</option>
+              ))}
+            </Seletor>
+          </>
+        ) : (
+          <span />
+        )}
+        <div className="flex items-center gap-1">
+          <Seta rotulo="Faturas anteriores" icone={ChevronLeft} ativa={janela.temAntes} aoClicar={() => setPagina(pagina + 1)} />
+          <span className="min-w-36 text-center tabular-nums">{primeira && ultima && (primeira === ultima ? mesCurto(primeira) : `${mesCurto(primeira)} – ${mesCurto(ultima)}`)}</span>
+          <Seta rotulo="Faturas seguintes" icone={ChevronRight} ativa={janela.temDepois} aoClicar={() => setPagina(pagina - 1)} />
+        </div>
+      </div>
+
+      <ul aria-label="Faturas do período" className="grid grid-cols-6 gap-2 sm:gap-4">
+        {janela.faturas.map((f) => {
+          const [ano, mes] = mesDaFatura(f)
+          const chave = chaveDaFatura(f)
+          return (
+            <li key={chave} className="min-w-0">
+              <button
+                type="button"
+                aria-label={`Fatura de ${formatarMes(ano, mes)}, ${formatarMoeda(valorDaFatura(f))}`}
+                onClick={() => aoAbrir(f)}
+                className="group flex w-full flex-col items-center gap-2 rounded-xl py-2"
+              >
+                <span className="flex h-48 w-full flex-col items-center justify-end gap-2">
+                  <span className="hidden text-sm whitespace-nowrap text-texto-suave tabular-nums sm:inline">{formatarMoedaCompacta(valorDaFatura(f))}</span>
+                  <span
+                    className={`w-full max-w-20 rounded-lg transition-colors ${
+                      chave === aberta || f === doBanco[0] ? 'bg-primaria' : 'bg-primaria/25 group-hover:bg-primaria/50'
+                    }`}
+                    style={{ height: `${Math.max(2, (valorDaFatura(f) / maior) * 80)}%` }}
+                  />
+                </span>
+                <span className="text-sm text-texto-suave">{mesCurto(f)}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </Cartao>
   )
 }

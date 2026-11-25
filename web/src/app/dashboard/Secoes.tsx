@@ -6,12 +6,12 @@ import {
   FaturasDoCartao,
   GraficosDoPeriodo,
   indicadoresDoMes,
-  MesesPorAbas,
   PainelDoMes,
   periodoDosMeses,
   recortesDaEvolucao,
   SaldoDaConta,
   totaisDoPeriodo,
+  TransacoesPorMes,
   type EdicaoDoHistorico,
   type Indicador,
 } from '../../modules/dashboard'
@@ -83,7 +83,7 @@ export function Evolucao() {
       <CabecalhoDaSecao
         sobretitulo={periodoDosMeses(recorte.meses)}
         titulo="Evolução"
-        descricao="Como entradas, saídas e saldo andaram mês a mês."
+        descricao="Como entradas e saídas andaram mês a mês."
       />
       {comAbas && (
         <Abas rotulo="Período da evolução" abas={recortes} selecionada={recorte.chave} aoSelecionar={setChave} idDoPainel={idDoPainel} />
@@ -119,7 +119,6 @@ function TabelaDosMeses({ meses, edicao }: { meses: ResumoMensal[]; edicao?: Edi
             <th className="pb-3 text-right font-medium">Entrou</th>
             <th className="pb-3 text-right font-medium">Saiu</th>
             <th className="pb-3 text-right font-medium">Sobrou</th>
-            <th className="pb-3 text-right font-medium">Saldo final</th>
             {edicao && (
               <th className="pb-3">
                 <span className="sr-only">Ações</span>
@@ -134,7 +133,6 @@ function TabelaDosMeses({ meses, edicao }: { meses: ResumoMensal[]; edicao?: Edi
               <td className="py-3 text-right text-entrada">{formatarMoedaComSinal(m.entradas, 'entrada')}</td>
               <td className="py-3 text-right text-saida">{formatarMoedaComSinal(m.saidas, 'saida')}</td>
               <td className="py-3 text-right">{formatarMoeda(m.resultado)}</td>
-              <td className="py-3 text-right">{m.saldoFinal === null ? '—' : formatarMoeda(m.saldoFinal)}</td>
               {edicao && (
                 <td className="py-3 pl-3 text-right">
                   <button
@@ -166,10 +164,10 @@ export function Transacoes() {
         descricao={
           edicao
             ? 'Escolha o mês para ver cada lançamento. Troque a categoria, use o olho para tirar um lançamento das somas ou a lixeira para apagar.'
-            : 'Escolha o mês para ver o fechamento, os gastos por categoria e cada lançamento.'
+            : 'Escolha o mês para ver cada lançamento e os gastos por categoria.'
         }
       />
-      <MesesPorAbas meses={resumo.meses} transacoes={resumo.transacoes} edicao={edicao} />
+      <TransacoesPorMes meses={resumo.meses} transacoes={resumo.transacoes} edicao={edicao} />
     </>
   )
 }
@@ -231,8 +229,8 @@ export function CartaoDeCredito() {
     <>
       <CabecalhoDaSecao
         sobretitulo={faturas.length === 1 ? '1 fatura' : `${faturas.length} faturas`}
-        titulo="Cartão"
-        descricao="As faturas incluídas. O pagamento é procurado no extrato da conta pelo valor e pela data."
+        titulo="Cartões"
+        descricao="Clique numa fatura para ver categorias e lançamentos. O pagamento é procurado no extrato da conta pelo valor e pela data."
       />
       {faturas.length === 0 ? (
         <SemDados>Nenhuma fatura incluída. Use "Incluir extrato" e escolha o PDF da fatura do Inter ou o CSV da fatura do Nubank.</SemDados>

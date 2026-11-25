@@ -27,6 +27,33 @@ public class RelatorioQuestPdfTestes
         EhPdf(pdf).Should().BeTrue();
     }
 
+    private static string TextoDo(byte[] pdf)
+    {
+        using var documento = UglyToad.PdfPig.PdfDocument.Open(pdf);
+        return string.Join(" ", documento.GetPages().SelectMany(p => p.GetWords()).Select(w => w.Text));
+    }
+
+    [Fact]
+    public void Abre_com_o_que_sobrou_e_compara_com_o_mes_anterior()
+    {
+        var setembro = Mes(9) with { Saidas = 1000m, GastosPorCategoria = [new GastoPorCategoria("Alimentação", 400m)] };
+        var outubro = Mes(10);
+
+        var texto = TextoDo(new RelatorioQuestPdf().Gerar(new Relatorio(outubro, [setembro, outubro], new DateOnly(2026, 11, 9))));
+
+        texto.Should().Contain("Sobrou no mês").And.Contain("R$ 2.265,44").And.Contain("65% do que entrou");
+        texto.Should().Contain("+23% vs. set/26").And.Contain("+100%").And.Contain("Mês a mês");
+    }
+
+    [Fact]
+    public void Mes_no_vermelho_diz_que_faltou()
+    {
+        var mes = Mes(10) with { Entradas = 1000m };
+
+        TextoDo(new RelatorioQuestPdf().Gerar(new Relatorio(mes, [mes], new DateOnly(2026, 11, 9))))
+            .Should().Contain("Faltou no mês").And.Contain("R$ 234,56").And.Contain("123% do que entrou");
+    }
+
     [Fact]
     public void Gera_mesmo_sem_saldo_sem_categorias_e_sem_historico()
     {

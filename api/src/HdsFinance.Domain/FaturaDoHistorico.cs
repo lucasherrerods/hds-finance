@@ -9,6 +9,8 @@ public sealed record FaturaDoHistorico(
 {
     public Banco Banco { get; init; } = Banco.Inter;
 
+    public IReadOnlyList<GastoPorCategoria> GastosPorCategoria { get; init; } = [];
+
     private const int DiasAteAFaturaSeguinte = 45;
 
     /// <summary>Da mais nova para a mais antiga.</summary>
@@ -45,6 +47,7 @@ public sealed record FaturaDoHistorico(
                 TransacaoCategorizada.Listar(compras, categorizador))
             {
                 Banco = banco,
+                GastosPorCategoria = GastoPorCategoria.Somar(compras.Where(c => !c.Oculta), categorizador),
             };
         }
     }

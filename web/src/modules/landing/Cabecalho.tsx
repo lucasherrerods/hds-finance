@@ -29,7 +29,7 @@ export function Cabecalho() {
           <BotaoDeTema />
           <Link
             to="/testar"
-            className="rounded-full bg-primaria px-4 py-2 font-semibold text-primaria-texto shadow-[0_0_20px_var(--color-brilho)] transition-transform hover:-translate-y-0.5"
+            className="rounded-full bg-primaria px-4 py-2 font-semibold text-primaria-texto transition-transform hover:-translate-y-0.5"
           >
             Testar agora
           </Link>

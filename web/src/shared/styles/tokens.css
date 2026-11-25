@@ -1,18 +1,18 @@
 @import 'tailwindcss';
 
 /*
-  Neutros frios levemente tingidos de azul, sem preto e branco puros.
-  Escuro: elevação por brilho (superfície mais clara que o fundo), sem sombras.
+  Neutros frios levemente tingidos de verde, sem preto e branco puros.
+  Elevação por brilho e borda (superfície mais clara que o fundo), sem sombras, nos dois temas.
   Paleta de gráficos com brilhos distintos entre as séries, legível nos dois temas.
 */
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 
   --color-fundo: #f5f8f7;
   --color-superficie: #fbfdfc;
   --color-borda: #dbe3e0;
-  --color-texto: #121a17;
-  --color-texto-suave: #55635e;
+  --color-texto: #191a1a;
+  --color-texto-suave: #5c605f;
   --color-primaria: #0f8a5f;
   --color-primaria-texto: #f5f8f7;
   --color-entrada: #0f7a52;
@@ -21,9 +21,9 @@
 
   --color-grafico-1: #0f8a5f;
   --color-grafico-2: #e0a42b;
-  --color-grafico-3: #1f8f7a;
-  --color-grafico-4: #8a5ad6;
-  --color-grafico-5: #d0613c;
+  --color-grafico-3: #14706a;
+  --color-grafico-4: #7a4fc0;
+  --color-grafico-5: #a84a2c;
 
   --color-primaria-suave: #dcf1e8;
 
@@ -38,9 +38,6 @@
   --color-calor-2: color-mix(in oklab, var(--color-saida) 45%, var(--color-superficie));
   --color-calor-3: color-mix(in oklab, var(--color-saida) 70%, var(--color-superficie));
   --color-calor-4: var(--color-saida);
-
-  --shadow-elevacao: 0 2px 4px rgb(22 26 34 / 0.08);
-  --shadow-elevacao-alta: 0 8px 16px rgb(22 26 34 / 0.06);
 }
 
 @layer base {
@@ -50,24 +47,22 @@
 
   :root[data-tema='escuro'] {
     color-scheme: dark;
-    --color-fundo: #0c0f0e;
-    --color-superficie: #141917;
-    --color-borda: #242c29;
+    --color-fundo: #0e0f0f;
+    --color-superficie: #181919;
+    --color-borda: #2a2c2b;
     --color-texto: #ecf1ef;
-    --color-texto-suave: #93a09b;
+    --color-texto-suave: #999f9d;
     --color-primaria: #3ddc97;
-    --color-primaria-texto: #0c0f0e;
+    --color-primaria-texto: #0e0f0f;
     --color-primaria-suave: #11261d;
     --color-entrada: #3ddc97;
     --color-saida: #f2665c;
     --color-brilho: color-mix(in oklab, var(--color-primaria) 22%, transparent);
     --color-grafico-1: #3ddc97;
-    --color-grafico-2: #f0c060;
-    --color-grafico-3: #4cc2ab;
-    --color-grafico-4: #b494ee;
-    --color-grafico-5: #f2946f;
-    --shadow-elevacao: none;
-    --shadow-elevacao-alta: none;
+    --color-grafico-2: #f5c866;
+    --color-grafico-3: #3a9c8a;
+    --color-grafico-4: #8468b8;
+    --color-grafico-5: #cc7a5a;
   }
 
   html {

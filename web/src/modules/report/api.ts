@@ -1,3 +1,4 @@
+import { formularioDoExtrato, type Ajuste } from '../import'
 import { chamarAdmin, MENSAGEM_SEM_SERVIDOR, mensagemDoProblema } from '../../shared'
 
 export type MesDoRelatorio = { ano: number; mes: number }
@@ -5,9 +6,8 @@ export type MesDoRelatorio = { ano: number; mes: number }
 export type ResultadoDoRelatorio = { ok: true; pdf: Blob } | { ok: false; mensagem: string }
 
 /** Reenvia o extrato, porque o servidor não guarda nada entre uma requisição e outra. */
-export async function baixarRelatorio(arquivo: File, mes?: MesDoRelatorio): Promise<ResultadoDoRelatorio> {
-  const corpo = new FormData()
-  corpo.append('arquivo', arquivo)
+export async function baixarRelatorio(arquivo: File, mes?: MesDoRelatorio, ajustes: Ajuste[] = []): Promise<ResultadoDoRelatorio> {
+  const corpo = formularioDoExtrato(arquivo, ajustes)
   const consulta = mes ? `?mes=${mes.ano}-${String(mes.mes).padStart(2, '0')}` : ''
 
   let resposta: Response

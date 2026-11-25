@@ -109,6 +109,11 @@ public sealed class RelatorioQuestPdf : IGeradorDeRelatorio
             {
                 r.Spacing(8);
                 Destaque(r.RelativeItem(), "Investimentos e transferências", Moeda(mes.InvestimentosETransferencias), CoresDoRelatorio.Texto, null);
+                if (mes.Emprestimos != 0m)
+                {
+                    Destaque(r.RelativeItem(), "Empréstimos recebidos", Moeda(mes.Emprestimos), CoresDoRelatorio.Texto, "Não contam como receita");
+                }
+
                 if (mes.ComprasNoCartao != 0m)
                 {
                     Destaque(r.RelativeItem(), "Compras no cartão", Moeda(mes.ComprasNoCartao), CoresDoRelatorio.Texto, Comparado(mes.ComprasNoCartao, anterior?.ComprasNoCartao));

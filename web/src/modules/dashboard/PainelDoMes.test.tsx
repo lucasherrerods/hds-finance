@@ -71,6 +71,7 @@ describe('PainelDoMes', () => {
 
     const linhas = within(screen.getByRole('table', { name: 'Principais categorias' })).getAllByRole('row')
     expect(linhas[1]).toHaveTextContent('Alimentação')
+    expect(within(linhas[1]).getByText('Alimentação')).not.toHaveClass('truncate')
     expect(linhas[1]).toHaveTextContent('+64%')
     expect(within(linhas[1]).getByLabelText('subiu')).toBeInTheDocument()
     expect(linhas[2]).toHaveTextContent('−79%')

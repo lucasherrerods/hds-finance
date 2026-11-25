@@ -21,7 +21,7 @@ export function TransacoesRecentes({ transacoes }: Props) {
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-fundo">
                       <IconeDaCategoria categoria={t.categoria} className="size-5 opacity-70" />
                     </span>
-                    <span className="min-w-0 flex-1 truncate">{t.descricao}</span>
+                    <span className="line-clamp-2 min-w-0 flex-1" title={t.descricao}>{t.descricao}</span>
                     <span className="hidden shrink-0 rounded-md bg-fundo px-2 py-1 text-sm text-texto-suave sm:inline">
                       {t.categoria}
                     </span>

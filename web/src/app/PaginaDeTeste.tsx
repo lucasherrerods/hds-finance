@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router'
-import { AvisoDePrivacidade, EnvioDeExtrato } from '../modules/import'
+import { EnvioDeExtrato } from '../modules/import'
+import { AvisoDePrivacidade } from '../modules/privacy'
 import { useResultado } from './contextoDoResultado'
 
 const SUAVE = [0.22, 1, 0.36, 1] as const
@@ -33,7 +34,7 @@ export function PaginaDeTeste() {
       >
         <EnvioDeExtrato
           aoResumir={(resumo, arquivo) => {
-            definir({ resumo, arquivo })
+            definir({ resumo, arquivo, ajustes: [] })
             navegar('/dashboard')
           }}
         />

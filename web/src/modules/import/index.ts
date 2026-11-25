@@ -1,4 +1,5 @@
-export { AvisoDePrivacidade } from './AvisoDePrivacidade'
+export { comAjuste, formularioDoExtrato, iguaisA, type Ajuste } from './ajustes'
+export { enviarExtrato } from './api'
 export { EnvioDeExtrato } from './EnvioDeExtrato'
 export type {
   CategoriaComparada,

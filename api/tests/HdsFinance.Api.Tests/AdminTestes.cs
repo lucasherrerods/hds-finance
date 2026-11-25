@@ -66,7 +66,7 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
 
     private WebApplicationFactory<Program> Fabrica(bool comAdmin, int limite) => fabrica.WithWebHostBuilder(b =>
     {
-        b.UseSetting("Demonstracao:LimiteDeRequisicoesPorMinuto", limite.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        b.UseSetting("Admin:LimiteDeLoginPorMinuto", limite.ToString(System.Globalization.CultureInfo.InvariantCulture));
         if (!comAdmin)
         {
             return;

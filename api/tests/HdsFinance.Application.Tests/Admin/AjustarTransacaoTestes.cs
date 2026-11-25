@@ -26,12 +26,18 @@ public class AjustarTransacaoTestes
         await _repositorio.Received(1).DefinirCategoriaAsync("F1", "Moradia", Arg.Any<CancellationToken>());
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData(TransacaoCategorizada.CategoriaDeEntrada)]
-    public async Task Sem_categoria_propria_volta_a_valer_a_automatica(string? categoria)
+    [Fact]
+    public async Task Guarda_que_e_entrada_para_vencer_a_descricao_de_emprestimo()
     {
-        await Ajustar().CategoriaAsync("F1", categoria);
+        (await Ajustar().CategoriaAsync("F1", TransacaoCategorizada.CategoriaDeEntrada)).Should().BeOfType<ResultadoDoAjuste.Ajustada>();
+
+        await _repositorio.Received(1).DefinirCategoriaAsync("F1", TransacaoCategorizada.CategoriaDeEntrada, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Sem_categoria_propria_volta_a_valer_a_automatica()
+    {
+        await Ajustar().CategoriaAsync("F1", null);
 
         await _repositorio.Received(1).DefinirCategoriaAsync("F1", null, Arg.Any<CancellationToken>());
     }

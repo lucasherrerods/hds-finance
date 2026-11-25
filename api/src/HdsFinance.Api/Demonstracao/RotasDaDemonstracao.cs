@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Threading.RateLimiting;
 using HdsFinance.Application.Extratos;
 using HdsFinance.Application.Relatorios;
@@ -10,6 +11,10 @@ namespace HdsFinance.Api.Demonstracao;
 public static class RotasDaDemonstracao
 {
     public const long TamanhoMaximoDoArquivo = 2 * 1024 * 1024;
+
+    /// <summary>O que cabe no formulário além do arquivo: os ajustes e os cabeçalhos das partes.</summary>
+    private const int FolgaDoFormulario = 1024 * 1024;
+
     private const string PoliticaDeLimite = "demonstracao";
 
     public static IServiceCollection AdicionarLimitesDaDemonstracao(this IServiceCollection services, IConfiguration configuracao)
@@ -18,17 +23,19 @@ public static class RotasDaDemonstracao
         services.Configure<FormOptions>(o =>
         {
             o.MultipartBodyLengthLimit = TamanhoMaximoDoArquivo;
-            o.MemoryBufferThreshold = (int)TamanhoMaximoDoArquivo + 64 * 1024;
+            o.MemoryBufferThreshold = (int)TamanhoMaximoDoArquivo + FolgaDoFormulario;
+            o.ValueLengthLimit = FolgaDoFormulario;
         });
 
-        var limitePorMinuto = configuracao.GetValue("Demonstracao:LimiteDeRequisicoesPorMinuto", 10);
+        var limitePorMinuto = configuracao.GetValue("Demonstracao:LimiteDeRequisicoesPorMinuto", 30);
+        var limiteDoLogin = configuracao.GetValue("Admin:LimiteDeLoginPorMinuto", 10);
         services.AddRateLimiter(o =>
         {
             o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             o.AddPolicy(PoliticaDeLimite, contexto => RateLimitPartition.GetFixedWindowLimiter(
                 contexto.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = limitePorMinuto, Window = TimeSpan.FromMinutes(1) }));
-            o.AddPolicy(Admin.RotasDoAdmin.PoliticaDoLogin, contexto => Admin.RotasDoAdmin.LimiteDoLogin(contexto, limitePorMinuto));
+            o.AddPolicy(Admin.RotasDoAdmin.PoliticaDoLogin, contexto => Admin.RotasDoAdmin.LimiteDoLogin(contexto, limiteDoLogin));
         });
 
         return services;
@@ -40,7 +47,7 @@ public static class RotasDaDemonstracao
         var demonstracao = app.MapGroup("/demonstracao")
             .DisableAntiforgery()
             .RequireRateLimiting(PoliticaDeLimite)
-            .WithMetadata(new RequestSizeLimitAttribute(TamanhoMaximoDoArquivo + 64 * 1024));
+            .WithMetadata(new RequestSizeLimitAttribute(TamanhoMaximoDoArquivo + FolgaDoFormulario));
 
         demonstracao.MapPost("/resumo", ResumirAsync);
         demonstracao.MapPost("/relatorio", RelatorioAsync);
@@ -54,8 +61,13 @@ public static class RotasDaDemonstracao
             return erro!;
         }
 
+        if (LerAjustes(requisicao) is not { } ajustes)
+        {
+            return RespostasHttp.AjusteInvalido();
+        }
+
         await using var conteudo = arquivo.Value.Conteudo.OpenReadStream();
-        return RespostasHttp.De(await resumir.ExecutarAsync(conteudo, arquivo.Value.Formato, cancelamento));
+        return RespostasHttp.De(await resumir.ExecutarAsync(conteudo, arquivo.Value.Formato, ajustes, cancelamento));
     }
 
     private static async Task<IResult> RelatorioAsync(
@@ -73,11 +85,36 @@ public static class RotasDaDemonstracao
             return erro!;
         }
 
+        if (LerAjustes(requisicao) is not { } ajustes)
+        {
+            return RespostasHttp.AjusteInvalido();
+        }
+
         await using var conteudo = arquivo.Value.Conteudo.OpenReadStream();
-        var resumo = await resumir.ExecutarAsync(conteudo, arquivo.Value.Formato, cancelamento);
+        var resumo = await resumir.ExecutarAsync(conteudo, arquivo.Value.Formato, ajustes, cancelamento);
         return resumo is ResultadoDoResumo.Resumido resumido
             ? RespostasHttp.De(gerar.Executar(resumido.Meses, pedido))
             : RespostasHttp.De(resumo);
+    }
+
+    /// <summary>O campo "ajustes" é opcional. Nulo quando veio e não dá para ler. Só depois de o formulário ter sido lido.</summary>
+    private static IReadOnlyList<AjusteDoExtrato>? LerAjustes(HttpRequest requisicao)
+    {
+        var texto = requisicao.Form["ajustes"].ToString();
+        if (texto.Length == 0)
+        {
+            return [];
+        }
+
+        try
+        {
+            var ajustes = JsonSerializer.Deserialize<List<AjusteDoExtrato?>>(texto, JsonSerializerOptions.Web);
+            return ajustes is null || ajustes.Any(a => string.IsNullOrEmpty(a?.Chave)) ? null : ajustes.OfType<AjusteDoExtrato>().ToList();
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Lê o campo "arquivo" do formulário e confere tamanho e formato.</summary>

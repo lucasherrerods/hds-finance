@@ -8,7 +8,7 @@ type Etapa = 'email' | 'codigo'
 const campo =
   'w-full rounded-full border border-borda bg-superficie px-6 py-3 outline-none placeholder:text-texto-suave focus-visible:border-primaria'
 const botao =
-  'rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto shadow-[0_0_24px_var(--color-brilho)] transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50'
+  'rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50'
 
 /** Entrada da área admin. Não tem link no site: só quem sabe o endereço chega aqui. */
 export function PaginaDeEntrada() {

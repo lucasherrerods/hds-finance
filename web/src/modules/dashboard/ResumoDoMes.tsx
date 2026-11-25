@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ChevronDown, PiggyBank, Sigma, Undo2, type LucideIcon } from 'lucide-react'
+import { ArrowLeftRight, ChevronDown, HandCoins, PiggyBank, Sigma, Undo2, type LucideIcon } from 'lucide-react'
 import { formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal } from '../import'
 import { GastosPorCategoria } from './GastosPorCategoria'
@@ -20,6 +20,7 @@ export function ResumoDoMes({ mes }: Props) {
           texto={formatarMoedaComSinal(mes.investimentosETransferencias, mes.investimentosETransferencias < 0 ? 'saida' : 'entrada')}
           cor="text-texto"
         />
+      {mes.emprestimos ? <Valor rotulo="Empréstimos recebidos (não são receita)" icone={HandCoins} texto={formatarMoeda(mes.emprestimos)} cor="text-texto" /> : null}
       <Investimentos mes={mes} />
       <GastosPorCategoria gastos={mes.gastosPorCategoria} totalDeSaidas={mes.saidas} />
       </div>

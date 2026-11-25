@@ -47,7 +47,7 @@ public class TransacaoAjustadaTestes
         painel.GastoNoMes.Should().Be(100m);
         painel.TransacoesRecentes.Should().ContainSingle().Which.Descricao.Should().Be("Mercado");
         TransacaoCategorizada.Listar([Mercado, Oculta], Categorizador.Padrao).Should().HaveCount(2)
-            .And.ContainSingle(t => t.Oculta && t.Categoria == Categorizador.SemCategoria);
+            .And.ContainSingle(t => t.Oculta && t.Categoria == Emprestimo.Categoria);
     }
 
     [Fact]

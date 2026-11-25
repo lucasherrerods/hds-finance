@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Equal, PiggyBank, Sigma, Trash2, Undo2, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Equal, HandCoins, PiggyBank, Sigma, Trash2, Undo2, Wallet, type LucideIcon } from 'lucide-react'
 import { useId, useState } from 'react'
 import { EnviarFechamento } from '../../modules/admin'
 import {
@@ -16,7 +16,7 @@ import {
   type Indicador,
 } from '../../modules/dashboard'
 import type { ResumoMensal } from '../../modules/import'
-import { BaixarRelatorio } from '../../modules/report'
+import { BaixarRelatorio, CompartilharMes } from '../../modules/report'
 import { formatarMes, formatarMesCurto, formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import { useDashboard } from './contextoDoDashboard'
 import { CabecalhoDaSecao, CartaoDeNumero, SemDados } from './partes'
@@ -63,6 +63,12 @@ export function VisaoGeral() {
           />
         ))}
       </div>
+      {ultimo.emprestimos ? (
+        <p className="flex items-start gap-2 text-texto-suave">
+          <HandCoins aria-hidden className="mt-1 size-4 shrink-0 opacity-70" />
+          {formatarMoeda(ultimo.emprestimos)} de empréstimo entraram na conta e não contam como receita.
+        </p>
+      ) : null}
       {resumo.painel && <PainelDoMes painel={resumo.painel} />}
     </>
   )
@@ -119,7 +125,7 @@ function TabelaDosMeses({ meses, edicao }: { meses: ResumoMensal[]; edicao?: Edi
             <th className="pb-3 text-right font-medium">Entrou</th>
             <th className="pb-3 text-right font-medium">Saiu</th>
             <th className="pb-3 text-right font-medium">Sobrou</th>
-            {edicao && (
+            {edicao?.aoApagarMes && (
               <th className="pb-3">
                 <span className="sr-only">Ações</span>
               </th>
@@ -133,12 +139,12 @@ function TabelaDosMeses({ meses, edicao }: { meses: ResumoMensal[]; edicao?: Edi
               <td className="py-3 text-right text-entrada">{formatarMoedaComSinal(m.entradas, 'entrada')}</td>
               <td className="py-3 text-right text-saida">{formatarMoedaComSinal(m.saidas, 'saida')}</td>
               <td className="py-3 text-right">{formatarMoeda(m.resultado)}</td>
-              {edicao && (
+              {edicao?.aoApagarMes && (
                 <td className="py-3 pl-3 text-right">
                   <button
                     type="button"
                     aria-label={`Apagar ${formatarMesCurto(m.ano, m.mes)}`}
-                    onClick={() => edicao.aoApagarMes({ ano: m.ano, mes: m.mes })}
+                    onClick={() => edicao.aoApagarMes?.({ ano: m.ano, mes: m.mes })}
                     className="inline-grid size-8 place-items-center rounded-full text-texto-suave transition-colors hover:bg-fundo hover:text-saida"
                   >
                     <Trash2 aria-hidden className="size-4" />
@@ -162,9 +168,9 @@ export function Transacoes() {
         sobretitulo={`${resumo.quantidade} transações`}
         titulo="Transações"
         descricao={
-          edicao
+          edicao?.aoApagar
             ? 'Escolha o mês para ver cada lançamento. Troque a categoria, use o olho para tirar um lançamento das somas ou a lixeira para apagar.'
-            : 'Escolha o mês para ver cada lançamento e os gastos por categoria.'
+            : 'Escolha o mês para ver cada lançamento. Troque a categoria ou use o olho para tirar um lançamento das somas. As mudanças somem ao fechar a aba.'
         }
       />
       <TransacoesPorMes meses={resumo.meses} transacoes={resumo.transacoes} edicao={edicao} />
@@ -242,7 +248,7 @@ export function CartaoDeCredito() {
 }
 
 export function Relatorio() {
-  const { dados, arquivo } = useDashboard()
+  const { dados, arquivo, ajustes } = useDashboard()
   const ultimo = dados.meses.at(-1)!
 
   return (
@@ -258,7 +264,12 @@ export function Relatorio() {
           <p className="text-texto-suave">
             {arquivo ? 'O arquivo é montado na hora e não fica salvo no servidor.' : 'Montado a partir do seu histórico guardado.'}
           </p>
-          <BaixarRelatorio arquivo={arquivo ?? undefined} mes={ultimo} />
+          <BaixarRelatorio arquivo={arquivo ?? undefined} ajustes={ajustes} mes={ultimo} />
+        </section>
+        <section aria-label="Compartilhar" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
+          <h2 className="text-xl font-semibold tracking-tight">Compartilhar</h2>
+          <p className="text-texto-suave">Abre o menu do seu aparelho. Onde ele não existe, o arquivo é baixado.</p>
+          <CompartilharMes arquivo={arquivo ?? undefined} ajustes={ajustes} mes={ultimo} />
         </section>
         {!arquivo && (
           <section aria-label="Enviar o fechamento" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">

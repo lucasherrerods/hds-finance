@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { IconeGithub, IconeLinkedin } from "../../shared";
 
 const links = [
@@ -19,7 +20,10 @@ export function Rodape() {
   return (
     <footer className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-12 text-texto-suave sm:flex-row">
       <span>© {anoAtual} hds finance · cada centavo no seu lugar</span>
-      <nav aria-label="Links do autor" className="flex items-center gap-6">
+      <nav aria-label="Rodapé" className="flex items-center gap-6">
+        <Link to="/privacidade" className="transition-colors hover:text-texto">
+          Privacidade
+        </Link>
         {links.map(({ href, rotulo, Icone }) => (
           <a
             key={href}

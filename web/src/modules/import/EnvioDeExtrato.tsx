@@ -1,7 +1,8 @@
-import { FileCheck2, FileUp } from 'lucide-react'
+import { FileCheck2, FileUp, FlaskConical } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useEffect, useState, type DragEvent, type FormEvent } from 'react'
 import { enviarExtrato, type ResumoDoExtrato } from './api'
+import { extratoDeExemplo } from './extratoDeExemplo'
 
 type Props = { aoResumir: (resumo: ResumoDoExtrato, arquivo: File) => void }
 
@@ -33,10 +34,12 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
     escolher(evento.dataTransfer.files[0] ?? null)
   }
 
-  async function enviar(evento: FormEvent) {
+  function enviar(evento: FormEvent) {
     evento.preventDefault()
-    if (!arquivo) return
+    if (arquivo) void resumir(arquivo)
+  }
 
+  async function resumir(arquivo: File) {
     setEnviando(true)
     setErro(null)
     const resultado = await enviarExtrato(arquivo)
@@ -94,13 +97,24 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
           className="sr-only"
         />
       </motion.label>
-      <button
-        type="submit"
-        disabled={!arquivo || enviando}
-        className="self-start rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto shadow-[0_0_24px_var(--color-brilho)] transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
-      >
-        {enviando ? 'Fazendo as contas…' : 'Ver resumo'}
-      </button>
+      <div className="flex flex-wrap gap-4">
+        <button
+          type="submit"
+          disabled={!arquivo || enviando}
+          className="rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+        >
+          {enviando ? 'Fazendo as contas…' : 'Ver resumo'}
+        </button>
+        <button
+          type="button"
+          disabled={enviando}
+          onClick={() => void resumir(extratoDeExemplo(new Date()))}
+          className="flex items-center gap-2 rounded-full border border-borda bg-superficie px-6 py-3 font-medium transition-colors hover:border-primaria disabled:opacity-50"
+        >
+          <FlaskConical aria-hidden className="size-4 opacity-70" />
+          Testar com dados fictícios
+        </button>
+      </div>
       {demorando && (
         <p role="status" className="text-texto-suave">
           O servidor gratuito pode estar acordando. Na primeira vez do dia isso leva até um minuto.

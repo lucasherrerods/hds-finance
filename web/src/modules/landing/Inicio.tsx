@@ -33,7 +33,7 @@ export function Inicio() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: SUAVE }}
-            className="flex w-fit items-center gap-2 rounded-full border border-borda bg-superficie/70 px-4 py-1 text-sm text-texto-suave backdrop-blur"
+            className="flex w-fit items-center gap-2 rounded-full border border-borda bg-superficie/70 px-4 py-2 text-sm text-texto-suave backdrop-blur"
           >
             <span aria-hidden className="size-2 rounded-full bg-primaria motion-safe:animate-pulse" />
             Nada do seu extrato fica guardado
@@ -62,7 +62,7 @@ export function Inicio() {
           >
             <Link
               to="/testar"
-              className="group flex items-center gap-2 rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto shadow-[0_0_32px_var(--color-brilho)] transition-transform hover:-translate-y-0.5"
+              className="group flex items-center gap-2 rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto transition-transform hover:-translate-y-0.5"
             >
               Testar com meu extrato
               <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
@@ -85,7 +85,7 @@ export function Inicio() {
         >
           <motion.div
             style={parado ? undefined : { scale: cartaoEscala, y: cartaoY }}
-            className="flex flex-col gap-2 rounded-3xl border border-borda bg-superficie/80 p-8 shadow-elevacao-alta backdrop-blur-xl"
+            className="flex flex-col gap-2 rounded-3xl border border-borda bg-superficie/80 p-8 backdrop-blur-xl"
           >
             <span className="text-texto-suave">Outubro de 2026</span>
             <span className="text-4xl font-bold tracking-tight tabular-nums">

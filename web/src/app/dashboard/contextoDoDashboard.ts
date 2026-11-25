@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { EdicaoDoHistorico, Fatura, Saldo } from '../../modules/dashboard'
-import type { Painel, ResumoMensal, TransacaoCategorizada } from '../../modules/import'
+import type { Ajuste, Painel, ResumoMensal, TransacaoCategorizada } from '../../modules/import'
 
 /** O que as seções mostram, venha do extrato recém-enviado (demonstração) ou do histórico guardado (área admin). */
 export type DadosDoDashboard = {
@@ -17,7 +17,9 @@ export type ValorDoDashboard = {
   dados: DadosDoDashboard
   /** Só na demonstração: o arquivo é reenviado para gerar o PDF. Na área admin, tudo sai do histórico. */
   arquivo: File | null
-  /** Só na área admin: trocar categorias e apagar transações ou meses. */
+  /** Só na demonstração: o que a pessoa mudou, para o PDF sair igual à tela. */
+  ajustes?: Ajuste[]
+  /** Trocar categorias e ocultar; apagar, só na área admin. */
   edicao?: EdicaoDoHistorico
 }
 

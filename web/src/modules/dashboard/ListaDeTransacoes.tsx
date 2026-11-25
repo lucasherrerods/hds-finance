@@ -7,13 +7,13 @@ import { tomDaCategoria } from './iconesDeCategoria'
 import { Seletor } from './Seletor'
 import { bancosDe, categoriasDe, filtrarTransacoes, type Filtros, type Ordem, type TipoDeFiltro } from './periodos'
 
-/** Só na área admin: trocar a categoria, ocultar e apagar transações ou meses do histórico. */
+/** Trocar a categoria e ocultar. Apagar só existe na área admin, onde há histórico guardado. */
 export type EdicaoDoHistorico = {
   categorias: string[]
   aoMudar: (transacao: TransacaoCategorizada, categoria: string) => void
   aoOcultar: (transacao: TransacaoCategorizada, oculta: boolean) => void
-  aoApagar: (transacao: TransacaoCategorizada) => void
-  aoApagarMes: (mes: { ano: number; mes: number }) => void
+  aoApagar?: (transacao: TransacaoCategorizada) => void
+  aoApagarMes?: (mes: { ano: number; mes: number }) => void
 }
 
 type Props = { transacoes: TransacaoCategorizada[]; mes: ResumoMensal; edicao?: EdicaoDoHistorico }
@@ -21,6 +21,7 @@ type Props = { transacoes: TransacaoCategorizada[]; mes: ResumoMensal; edicao?: 
 // Aplicações, resgates e transferências entre contas próprias não são gasto, então não têm categoria para trocar.
 const MOVIMENTACAO_INTERNA = 'Investimentos e transferências'
 const ENTRADA = 'Entrada'
+const EMPRESTIMOS = 'Empréstimos'
 
 const ordens: { valor: Ordem; rotulo: string }[] = [
   { valor: 'recentes', rotulo: 'Mais recentes' },
@@ -224,15 +225,17 @@ function Linha({ transacao: t, edicao }: { transacao: TransacaoCategorizada; edi
             >
               {t.oculta ? <Eye aria-hidden className="size-4" /> : <EyeOff aria-hidden className="size-4" />}
             </button>
-            <button
-              type="button"
-              aria-label={`Apagar ${t.descricao}`}
-              title="Apagar"
-              onClick={() => edicao.aoApagar(t)}
-              className="grid size-8 place-items-center rounded-full text-texto-suave transition-colors hover:bg-fundo hover:text-saida"
-            >
-              <Trash2 aria-hidden className="size-4" />
-            </button>
+            {edicao.aoApagar && (
+              <button
+                type="button"
+                aria-label={`Apagar ${t.descricao}`}
+                title="Apagar"
+                onClick={() => edicao.aoApagar?.(t)}
+                className="grid size-8 place-items-center rounded-full text-texto-suave transition-colors hover:bg-fundo hover:text-saida"
+              >
+                <Trash2 aria-hidden className="size-4" />
+              </button>
+            )}
           </span>
         </td>
       )}
@@ -241,13 +244,14 @@ function Linha({ transacao: t, edicao }: { transacao: TransacaoCategorizada; edi
 }
 
 function Etiqueta({ categoria }: { categoria: string }) {
-  return <span className={`inline-block max-w-full truncate rounded-full px-3 py-1 align-middle text-sm whitespace-nowrap ${tomDaCategoria(categoria)}`}>{categoria}</span>
+  return <span className={`inline-block max-w-full truncate rounded-full px-2 py-1 align-middle text-sm whitespace-nowrap ${tomDaCategoria(categoria)}`}>{categoria}</span>
 }
 
 function Categoria({ transacao: t, edicao }: { transacao: TransacaoCategorizada; edicao: EdicaoDoHistorico }) {
   if (t.categoria === MOVIMENTACAO_INTERNA) return <Etiqueta categoria={t.categoria} />
   const ehEntrada = t.valor > 0 && !t.noCartao
-  const opcoes = new Set([...(ehEntrada ? [ENTRADA] : []), ...edicao.categorias, t.categoria])
+  // Numa entrada, as duas que mudam a conta vêm primeiro: receita ou dinheiro emprestado.
+  const opcoes = new Set([...(ehEntrada ? [ENTRADA, EMPRESTIMOS] : []), ...edicao.categorias, t.categoria])
   return (
     <Seletor
       compacto

@@ -2,6 +2,7 @@ import {
   ArrowDownLeft,
   ArrowLeftRight,
   CircleDashed,
+  HandCoins,
   HeartPulse,
   House,
   Repeat,
@@ -18,6 +19,7 @@ const icones: Record<string, LucideIcon> = {
   Saúde: HeartPulse,
   Assinaturas: Repeat,
   Compras: ShoppingBag,
+  Empréstimos: HandCoins,
   Entrada: ArrowDownLeft,
   'Investimentos e transferências': ArrowLeftRight,
 }
@@ -31,6 +33,7 @@ const tons: Record<string, string> = {
   Compras: 'bg-grafico-5/15',
   Lazer: 'bg-grafico-2/15',
   Educação: 'bg-grafico-3/15',
+  Empréstimos: 'bg-grafico-4/15',
   Entrada: 'bg-grafico-1/15',
 }
 

@@ -20,7 +20,7 @@ O Inter mostra o extrato e o saldo dos investimentos, mas não oferece uma visã
 | Para quem | só o dono, com login por código no e-mail | quem quiser testar |
 | Armazenamento | Postgres, só os dados do dono | nenhum: tudo em memória |
 | Entrada | incluir extrato no painel | upload |
-| Saída | painel, PDF e fechamento por e-mail | painel e PDF para baixar |
+| Saída | painel, PDF e fechamento por e-mail | painel, PDF e imagem para baixar ou compartilhar |
 
 Na demonstração o servidor não guarda nada: o extrato é processado durante a requisição e descartado. A área admin guarda só os dados do próprio dono.
 
@@ -58,6 +58,8 @@ O comando mostra quantas transações leu e as entradas, saídas e o resultado d
 Para testar pela tela, suba a API e o web em dois terminais, copie `web/.env.example` para `web/.env` e abra `http://localhost:5173`. O extrato enviado é lido em memória e descartado ao fim da requisição.
 
 ## Privacidade
+
+A página `/privacidade` do site explica, em linguagem simples, o que acontece com o extrato.
 
 - Extratos, bancos de dados e relatórios nunca entram no repositório.
 - No modo demonstração nenhum dado financeiro é armazenado no servidor.

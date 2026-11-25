@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import {
   AdicionarExtrato,
@@ -30,7 +30,7 @@ import {
   type Historico,
 } from '../../modules/admin'
 import { periodoDosMeses, type EdicaoDoHistorico } from '../../modules/dashboard'
-import type { TransacaoCategorizada } from '../../modules/import'
+import { comAjuste, enviarExtrato, iguaisA, type Ajuste, type TransacaoCategorizada } from '../../modules/import'
 import { BotaoDeTema, formatarMesCurto } from '../../shared'
 import { useResultado } from '../contextoDoResultado'
 import { ContextoDoDashboard, type DadosDoDashboard } from './contextoDoDashboard'
@@ -56,11 +56,54 @@ export function LayoutDoDashboard({ modo }: { modo: 'demonstracao' | 'admin' }) 
 
 /** Demonstração: o extrato enviado vive só na memória da aba. Trocar o extrato esquece tudo. */
 function DashboardDaDemonstracao() {
-  const { resultado, esquecer } = useResultado()
+  const { resultado, definir, esquecer } = useResultado()
   const navegar = useNavigate()
+  const [aviso, setAviso] = useState<Aviso | null>(null)
+  // Clicar rápido em duas transações não pode perder a primeira mudança nem mostrar a resposta atrasada.
+  const ajustesAtuais = useRef<Ajuste[]>(resultado?.ajustes ?? [])
+  const confirmados = useRef<Ajuste[]>(resultado?.ajustes ?? [])
+  const pedido = useRef(0)
   if (!resultado) return <Navigate to="/testar" replace />
 
-  const { resumo, arquivo } = resultado
+  const { resumo, arquivo, ajustes } = resultado
+
+  async function ajustar(transacoes: TransacaoCategorizada[], mudanca: Omit<Ajuste, 'chave'>, depois: Aviso) {
+    const novos = comAjuste(ajustesAtuais.current, transacoes.map((t) => t.chave ?? ''), mudanca)
+    ajustesAtuais.current = novos
+    const meu = ++pedido.current
+    setAviso({ texto: 'Refazendo as contas…' })
+    const resposta = await enviarExtrato(arquivo, novos)
+    if (meu !== pedido.current) return
+    if (!resposta.ok) {
+      ajustesAtuais.current = confirmados.current
+      return setAviso({ texto: resposta.mensagem })
+    }
+    confirmados.current = novos
+    definir({ resumo: resposta.resumo, arquivo, ajustes: novos })
+    setAviso(depois)
+  }
+
+  function aoMudar(transacao: TransacaoCategorizada, categoria: string) {
+    const iguais = iguaisA(transacao, resumo.transacoes)
+    void ajustar([transacao], { categoria }, {
+      texto: `"${transacao.descricao}" agora é ${categoria}.`,
+      acao:
+        iguais.length > 1
+          ? {
+              rotulo: `Aplicar às ${iguais.length} iguais`,
+              aoClicar: () => void ajustar(iguais, { categoria }, { texto: `"${transacao.descricao}" agora é ${categoria} em todas.` }),
+            }
+          : undefined,
+    })
+  }
+
+  function aoOcultar(transacao: TransacaoCategorizada, oculta: boolean) {
+    void ajustar([transacao], { oculta }, {
+      texto: oculta ? `"${transacao.descricao}" não entra mais nas somas.` : `"${transacao.descricao}" voltou para as somas.`,
+      acao: oculta ? { rotulo: 'Desfazer', aoClicar: () => aoOcultar(transacao, false) } : undefined,
+    })
+  }
+
   function trocarExtrato() {
     esquecer()
     navegar('/testar')
@@ -71,6 +114,10 @@ function DashboardDaDemonstracao() {
       base="/dashboard"
       dados={{ ...resumo, quantidade: resumo.transacoesNovas }}
       arquivo={arquivo}
+      ajustes={ajustes}
+      edicao={{ categorias: resumo.categorias ?? [], aoMudar, aoOcultar }}
+      aviso={aviso}
+      fecharAviso={() => setAviso(null)}
       origem={{ icone: FileText, nome: arquivo.name }}
       acao={
         <button type="button" onClick={trocarExtrato} className={`flex items-center gap-2 ${acaoDoTopo}`}>
@@ -225,6 +272,7 @@ type MolduraProps = {
   base: '/dashboard' | '/admin'
   dados: DadosDoDashboard
   arquivo: File | null
+  ajustes?: Ajuste[]
   edicao?: EdicaoDoHistorico
   origem: { icone: LucideIcon; nome: string }
   acao: ReactNode
@@ -235,12 +283,12 @@ type MolduraProps = {
 }
 
 /** Cabeçalho no topo, abas centralizadas e a seção da rota abaixo. */
-function Moldura({ base, dados, arquivo, edicao, origem, acao, sair, rodape, aviso, fecharAviso }: MolduraProps) {
+function Moldura({ base, dados, arquivo, ajustes, edicao, origem, acao, sair, rodape, aviso, fecharAviso }: MolduraProps) {
   const { pathname } = useLocation()
   const IconeDaOrigem = origem.icone
 
   return (
-    <ContextoDoDashboard.Provider value={{ dados, arquivo, edicao }}>
+    <ContextoDoDashboard.Provider value={{ dados, arquivo, ajustes, edicao }}>
       <div className="relative isolate min-h-svh">
         <div
           aria-hidden
@@ -290,7 +338,7 @@ function Moldura({ base, dados, arquivo, edicao, origem, acao, sair, rodape, avi
                       {isActive && (
                         <motion.span
                           layoutId="aba-ativa"
-                          className="absolute inset-0 rounded-full bg-primaria-suave shadow-[0_0_24px_var(--color-brilho)]"
+                          className="absolute inset-0 rounded-full bg-primaria-suave"
                           transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                         />
                       )}

@@ -34,7 +34,7 @@ export function CartaoDeNumero({ rotulo, icone: Icone, valor, cor = 'text-texto'
   const Seta = (variacao ?? 0) > 0 ? TrendingUp : TrendingDown
 
   return (
-    <div role="group" aria-label={rotulo} className="flex min-w-0 flex-col gap-3 rounded-2xl border border-borda bg-superficie p-5">
+    <div role="group" aria-label={rotulo} className="flex min-w-0 flex-col gap-3 rounded-2xl border border-borda bg-superficie p-6">
       <span className="flex items-center gap-2 text-sm text-texto-suave">
         <Icone aria-hidden className="size-4 opacity-70" />
         {rotulo}

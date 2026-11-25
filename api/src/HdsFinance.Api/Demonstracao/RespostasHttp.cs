@@ -17,8 +17,14 @@ public static class RespostasHttp
             statusCode: StatusCodes.Status422UnprocessableEntity,
             extensions: new Dictionary<string, object?> { ["linha"] = invalido.Linha }),
         ResultadoDoResumo.NaoImportado { Motivo: ResultadoDaImportacao.FormatoNaoSuportado } => FormatoNaoSuportado(),
+        ResultadoDoResumo.AjusteInvalido => AjusteInvalido(),
         _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
     };
+
+    public static IResult AjusteInvalido() => Results.Problem(
+        title: "Ajuste inválido",
+        detail: "Não deu para aplicar o que você mudou. Envie o extrato de novo.",
+        statusCode: StatusCodes.Status400BadRequest);
 
     public static IResult De(ResultadoDoRelatorio resultado) => resultado switch
     {

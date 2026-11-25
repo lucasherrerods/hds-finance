@@ -14,10 +14,10 @@ A mesma api serve os dois, lado a lado. A diferença é só qual adaptador entra
 | Rota no front | `/admin` (sem link no site; entrada em `/admin/entrar`) | `/testar` e `/dashboard` |
 | Armazenamento | Postgres (Neon), só os dados do admin | nada: tudo em memória, durante a requisição |
 | Entrada | "Incluir extrato" no painel (extratos e faturas do cartão em PDF, vários de uma vez), ou a CLI | upload |
-| Saída | painel, PDF e e-mail para o admin | painel e PDF para baixar |
+| Saída | painel, PDF e e-mail para o admin | painel, PDF e imagem para baixar ou compartilhar |
 
 - **Admin:** liga só quando `Admin:Email` e `ConnectionStrings:Banco` estão configurados. O login é por código enviado ao e-mail do admin; qualquer outro e-mail recebe a mesma resposta e nenhum código. Desafio e sessão são tokens assinados em cookies `HttpOnly`, e o servidor não guarda sessão. Cada extrato incluído soma ao histórico; se o mês ficou completo, o fechamento sai por e-mail. O admin também apaga transações ou meses inteiros.
-- **Demonstração:** o extrato é lido do stream, consolidado em memória e descartado no fim da requisição. O servidor não guarda nada de quem usa, mesmo com a área admin ligada: o resumo da demo monta o próprio repositório em memória e nunca toca o banco.
+- **Demonstração:** o extrato é lido do stream, consolidado em memória e descartado no fim da requisição. A pessoa pode trocar categorias e ocultar transações: os ajustes vivem na memória da aba, e o front reenvia o arquivo com eles para a api refazer as contas. O servidor não guarda nada de quem usa, mesmo com a área admin ligada: o resumo da demo monta o próprio repositório em memória e nunca toca o banco.
 
 ## Repositório
 
@@ -71,7 +71,7 @@ Regra central do projeto: **o servidor nunca guarda dados financeiros de terceir
 - A área admin não tem link no site, só aceita o e-mail configurado em `Admin:Email` e não revela qual e-mail é esse. Toda rota do admin exige a sessão (cookie `HttpOnly`) e o cabeçalho `X-Hds-Admin`, que um site de fora não consegue mandar sem passar pelo CORS.
 - Logs nunca contêm valores, descrições de transações, nomes, e-mails, telefones ou trechos do arquivo. Erro de parser diz a linha, não o conteúdo.
 - Nada de gravar corpo de requisição em middleware, APM ou ferramenta de observabilidade.
-- A tela da demo avisa claramente que nada é armazenado.
+- A tela da demo avisa claramente que nada é armazenado, com um modal e a página `/privacidade`. Os pontos ficam em `web/src/modules/privacy`: quem muda o tratamento dos dados muda o texto junto. O site não carrega nada de terceiros (a fonte é própria) e não usa cookie com quem testa.
 - Upload tem limite de tamanho, e as rotas da demo têm limite de requisições por IP.
 
 ### Economia de tokens
@@ -146,8 +146,9 @@ Regras:
 - Importar o mesmo extrato duas vezes não duplica transações: cada transação tem uma chave de deduplicação (id do OFX, ou data + valor + descrição normalizada).
 - Entrada é valor positivo, saída é negativo. Transferências entre contas próprias e aplicações/resgates de investimento não contam como receita nem despesa.
 - O admin pode mudar a categoria de uma transação só (vence as regras) ou de todas as iguais, e ocultar uma transação: ela continua na lista (atrás de "Mostrar ocultas"), sai de todas as somas e só mexe no saldo da conta.
+- Empréstimo recebido não é receita: fica fora das entradas, num campo próprio, e mexe só no saldo. É achado pela descrição, e a categoria escolhida pela pessoa ("Empréstimos" ou "Entrada") vence. A parcela paga é gasto, na categoria "Empréstimos".
 - Compra no cartão (fatura em PDF, só na área admin) é gasto no dia da compra, e a parcela no mês em que é cobrada; estorno abate o gasto. O pagamento da fatura incluída não é gasto: a conciliação acha o pagamento na conta pelo valor e pela data. Fatura cujos números não fecham é recusada inteira. A senha do PDF nunca é guardada nem vai para log. O leitor conhece dois desenhos de fatura: o atual e o de 2024, sem resumo.
-- O resumo do mês fecha: saldo inicial + entradas − saídas + investimentos e transferências + compras no cartão + ocultas + outros bancos = saldo final. A parcela das compras no cartão devolve ao saldo o gasto que ainda não saiu da conta. Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas próprias mexem no saldo, mas ficam num campo próprio. Existe teste para isso.
+- O resumo do mês fecha: saldo inicial + entradas − saídas + investimentos e transferências + empréstimos + compras no cartão + ocultas + outros bancos = saldo final. A parcela das compras no cartão devolve ao saldo o gasto que ainda não saiu da conta. Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas próprias mexem no saldo, mas ficam num campo próprio. Existe teste para isso.
 - O saldo vem do próprio extrato (saldo final informado no arquivo). Sem ele, o saldo do mês fica como não informado. O saldo da conta na visão geral do admin também parte do informado; sem ele, é a soma do que foi importado, e a tela diz qual dos dois é.
 - O Nubank (só na área admin, CSV da conta e da fatura) é histórico: entra nos gastos, mas saldo, cobertura e fechamento são só do Inter. Dinheiro passado entre os dois não é gasto nem receita (valor oposto, data próxima e um lado citando o outro banco). Documento, agência e conta de terceiros saem da descrição. O vencimento da fatura vem do nome do arquivo, e ela não tem total para conferir.
 - Categorização por regras configuráveis (palavras na descrição → categoria), com "Sem categoria" como padrão.
@@ -184,7 +185,7 @@ npm run build       # typecheck + build
 web/src/
   app/              composição das telas e navegação
   shared/           ui (shadcn), utilitários (formatar moeda e data) e estilos
-  modules/<nome>/   uma pasta por funcionalidade (landing, import, dashboard, report, admin)
+  modules/<nome>/   uma pasta por funcionalidade (landing, import, dashboard, report, privacy, admin)
 ```
 
 ### Regras do web

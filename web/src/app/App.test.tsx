@@ -259,11 +259,12 @@ describe('dashboard', () => {
     duplicadas: 0,
     meses: mesesDeExemplo,
     painel: painelDeExemplo,
-    transacoes: painelDeExemplo.transacoesRecentes,
+    transacoes: painelDeExemplo.transacoesRecentes.map((t, i) => ({ ...t, chave: `t${i}` })),
+    categorias: ['Lazer', 'Empréstimos', 'Sem categoria'],
   }
 
   async function verResumo() {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(resumo))))
+    vi.stubGlobal('fetch', vi.fn((_url: string, _opcoes?: RequestInit) => Promise.resolve(new Response(JSON.stringify(resumo)))))
     abrir('/testar')
     fireEvent.drop(screen.getByTestId('area-do-arquivo'), { dataTransfer: { files: [new File(['x'], 'outubro.ofx')] } })
     fireEvent.click(screen.getByRole('button', { name: /ver resumo/i }))
@@ -299,7 +300,26 @@ describe('dashboard', () => {
 
     expect(menu.queryByRole('link', { name: /relatório|cart(ão|ões)/i })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('link', { name: 'Relatório' }))
-    expect(await screen.findByRole('button', { name: /baixar pdf/i })).toBeInTheDocument()
+    // A seção que sai e a que entra se revezam na animação, então o botão pode ser trocado uma vez.
+    await vi.waitFor(() => expect(screen.getByRole('button', { name: /baixar pdf/i })).toBeInTheDocument())
+  })
+
+  it('na demonstração dá para trocar a categoria e ocultar, e o extrato vai de novo com os ajustes', async () => {
+    const menu = await verResumo()
+    fireEvent.click(menu.getByRole('link', { name: /transações/i }))
+    const [seletor] = await screen.findAllByRole('combobox', { name: /^categoria de /i }, { timeout: 5000 })
+    fireEvent.change(seletor, { target: { value: 'Empréstimos' } })
+
+    expect(await screen.findByText(/agora é Empréstimos/)).toBeInTheDocument()
+    const corpo = vi.mocked(fetch).mock.calls.at(-1)![1]!.body as FormData
+    expect(JSON.parse(String(corpo.get('ajustes')))).toEqual([expect.objectContaining({ categoria: 'Empréstimos' })])
+    expect(screen.queryByRole('button', { name: /^apagar /i })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^ocultar /i }).length).toBeGreaterThan(0)
+  })
+
+  it('a política de privacidade tem página própria', () => {
+    abrir('/privacidade')
+    expect(screen.getByRole('heading', { level: 1, name: /política de privacidade/i })).toBeInTheDocument()
   })
 
   it('trocar o extrato esquece o resultado e volta para o envio', async () => {

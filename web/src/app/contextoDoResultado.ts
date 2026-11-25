@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react'
-import type { ResumoDoExtrato } from '../modules/import'
+import type { Ajuste, ResumoDoExtrato } from '../modules/import'
 
-export type Resultado = { resumo: ResumoDoExtrato; arquivo: File }
+export type Resultado = { resumo: ResumoDoExtrato; arquivo: File; ajustes: Ajuste[] }
 
 export type ValorDoContexto = {
   resultado: Resultado | null

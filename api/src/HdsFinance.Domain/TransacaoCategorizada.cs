@@ -17,7 +17,8 @@ public sealed record TransacaoCategorizada(DateOnly Data, string Descricao, stri
     {
         // Oculta só sai das somas: na lista, a categoria é a mesma de antes.
         var visivel = transacao with { Oculta = false };
-        var categoria = !visivel.ContaNoFluxoDeCaixa ? CategoriaDeMovimentacaoInterna
+        var categoria = visivel.EhEmprestimoRecebido ? Emprestimo.Categoria
+            : !visivel.ContaNoFluxoDeCaixa ? CategoriaDeMovimentacaoInterna
             : !visivel.EhGasto ? transacao.Categoria ?? CategoriaDeEntrada
             : categorizador.Categorizar(transacao);
         return new TransacaoCategorizada(

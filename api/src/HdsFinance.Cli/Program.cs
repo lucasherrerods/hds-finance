@@ -75,6 +75,11 @@ async Task<int> ImportarAsync(string caminho)
         Console.WriteLine($"  Saídas:    {resumo.Saidas.ToString("C", ptBr)}");
         Console.WriteLine($"  Resultado: {resumo.Resultado.ToString("C", ptBr)}");
         Console.WriteLine($"  Investimentos e transferências: {resumo.InvestimentosETransferencias.ToString("C", ptBr)}");
+        if (resumo.Emprestimos != 0m)
+        {
+            Console.WriteLine($"  Empréstimos recebidos: {resumo.Emprestimos.ToString("C", ptBr)}");
+        }
+
         Console.WriteLine($"  Saldo:     {Saldo(resumo.SaldoInicial)} → {Saldo(resumo.SaldoFinal)}");
     }
 

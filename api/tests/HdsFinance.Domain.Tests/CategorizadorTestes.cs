@@ -89,6 +89,6 @@ public class CategorizadorTestes
     [Fact]
     public void Lista_as_categorias_possiveis_para_escolher()
     {
-        _categorizador.Categorias.Should().Equal("Alimentação", "Transporte", Categorizador.SemCategoria);
+        _categorizador.Categorias.Should().Equal("Alimentação", "Transporte", Emprestimo.Categoria, Categorizador.SemCategoria);
     }
 }

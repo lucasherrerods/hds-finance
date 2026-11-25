@@ -13,7 +13,7 @@ function escolherArquivo() {
 
 describe('EnvioDeExtrato', () => {
   it('entrega o resumo devolvido pela api', async () => {
-    const resumo = { transacoesNovas: 1, duplicadas: 0, meses: [], painel: null, transacoes: [] }
+    const resumo = { transacoesNovas: 1, duplicadas: 0, meses: [], painel: null, transacoes: [], categorias: [] }
     vi.mocked(enviarExtrato).mockResolvedValue({ ok: true, resumo })
     const aoResumir = vi.fn()
     render(<EnvioDeExtrato aoResumir={aoResumir} />)
@@ -30,6 +30,17 @@ describe('EnvioDeExtrato', () => {
     escolherArquivo()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Data da transação inválida. (linha 3)')
+  })
+
+  it('sem arquivo, dá para testar com dados fictícios', async () => {
+    const resumo = { transacoesNovas: 1, duplicadas: 0, meses: [], painel: null, transacoes: [], categorias: [] }
+    vi.mocked(enviarExtrato).mockResolvedValue({ ok: true, resumo })
+    const aoResumir = vi.fn()
+    render(<EnvioDeExtrato aoResumir={aoResumir} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /dados fictícios/i }))
+
+    await vi.waitFor(() => expect(aoResumir).toHaveBeenCalledWith(resumo, expect.objectContaining({ name: 'extrato-de-exemplo.csv' })))
   })
 
   it('só libera o envio depois de escolher um arquivo', () => {

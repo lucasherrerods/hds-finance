@@ -16,56 +16,43 @@ export function PrincipaisCategorias({ categorias }: Props) {
         <p className="text-texto-suave">Nenhum gasto no mês.</p>
       ) : (
         <table aria-label="Principais categorias" className="w-full border-separate border-spacing-y-3 text-left">
-          <thead className="text-sm text-texto-suave">
+          <thead className="sr-only">
             <tr>
-              <th scope="col" className="font-normal">
-                Categoria
-              </th>
-              <th scope="col" className="text-right font-normal">
-                Atual
-              </th>
-              <th scope="col" className="hidden font-normal md:table-cell">
-                <span className="sr-only">Participação</span>
-              </th>
-              <th scope="col" className="text-right font-normal">
-                Variação
-              </th>
-              <th scope="col" className="hidden text-right font-normal sm:table-cell">
-                Anterior
-              </th>
+              <th scope="col">Categoria</th>
+              <th scope="col">Atual, variação e mês anterior</th>
             </tr>
           </thead>
           <tbody>
-            {categorias.map((c, indice) => {
-              return (
-                <tr key={c.categoria}>
-                  <td className="max-w-0 pr-4">
-                    <span className="flex items-center gap-3">
+            {categorias.map((c, indice) => (
+              <tr key={c.categoria}>
+                {/* O nome nunca é cortado: se faltar espaço, ele quebra a linha. */}
+                <td className="w-full">
+                  <span className="flex flex-col gap-2">
+                    <span className="flex items-center gap-2">
                       <IconeDaCategoria categoria={c.categoria} className="size-4 shrink-0 opacity-70" />
-                      <span className="truncate">{c.categoria}</span>
+                      {c.categoria}
                     </span>
-                  </td>
-                  <td className="text-right font-semibold whitespace-nowrap tabular-nums">{formatarMoeda(c.atual)}</td>
-                  <td className="hidden w-1/4 px-4 md:table-cell">
-                    <div aria-hidden className="h-2 overflow-hidden rounded-full bg-fundo">
-                      <motion.div
-                        className={`h-full rounded-full ${(c.variacaoPercentual ?? 0) > 0 ? 'bg-saida' : 'bg-entrada'}`}
+                    <span aria-hidden className="block h-2 overflow-hidden rounded-full bg-fundo">
+                      <motion.span
+                        className={`block h-full rounded-full ${(c.variacaoPercentual ?? 0) > 0 ? 'bg-saida' : 'bg-entrada'}`}
                         initial={{ width: 0 }}
                         whileInView={{ width: `${(c.atual / maior) * 100}%` }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.8, delay: indice * 0.08, ease: [0.22, 1, 0.36, 1] }}
                       />
-                    </div>
-                  </td>
-                  <td className="pl-4 text-right">
+                    </span>
+                  </span>
+                </td>
+                <td className="pl-4 text-right whitespace-nowrap tabular-nums">
+                  <span className="block font-semibold">{formatarMoeda(c.atual)}</span>
+                  {/* No celular, as duas colunas só cabem sem o valor anterior. */}
+                  <span className="flex items-center justify-end gap-2">
+                    {c.anterior !== null && <span className="hidden text-sm text-texto-suave sm:inline">antes {formatarMoeda(c.anterior)}</span>}
                     <Variacao valor={c.variacaoPercentual} />
-                  </td>
-                  <td className="hidden pl-4 text-right whitespace-nowrap text-texto-suave tabular-nums sm:table-cell">
-                    {c.anterior === null ? '—' : formatarMoeda(c.anterior)}
-                  </td>
-                </tr>
-              )
-            })}
+                  </span>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       )}

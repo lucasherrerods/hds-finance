@@ -6,7 +6,7 @@ type Props = { titulo: string; children: ReactNode; className?: string }
 export function Cartao({ titulo, children, className = '' }: Props) {
   return (
     <section aria-label={titulo} className={`flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6 transition-colors hover:border-primaria/40 ${className}`}>
-      <h3 className="text-xs font-medium tracking-[0.12em] text-texto-suave uppercase">{titulo}</h3>
+      <h3 className="text-sm font-medium tracking-wider text-texto-suave uppercase">{titulo}</h3>
       {children}
     </section>
   )

@@ -1,3 +1,4 @@
+import { formularioDoExtrato, type Ajuste } from './ajustes'
 import { MENSAGEM_SEM_SERVIDOR, mensagemDoProblema } from '../../shared'
 
 export type ResumoMensal = {
@@ -11,6 +12,8 @@ export type ResumoMensal = {
   saldoFinal: number | null
   gastosPorCategoria: GastoPorCategoria[]
   investimentos: Investimentos
+  /** O que entrou emprestado: não é receita. */
+  emprestimos?: number
 }
 
 /** O extrato da conta não traz rendimentos: é só o que saiu para investir e o que voltou. */
@@ -27,13 +30,15 @@ export type ResumoDoExtrato = {
   meses: ResumoMensal[]
   painel: Painel | null
   transacoes: TransacaoCategorizada[]
+  /** As que dá para escolher numa transação. */
+  categorias: string[]
 }
 
 export type ResultadoDoEnvio = { ok: true; resumo: ResumoDoExtrato } | { ok: false; mensagem: string }
 
-export async function enviarExtrato(arquivo: File): Promise<ResultadoDoEnvio> {
-  const corpo = new FormData()
-  corpo.append('arquivo', arquivo)
+/** Com ajustes, a api refaz todas as contas: o front nunca soma nada. */
+export async function enviarExtrato(arquivo: File, ajustes: Ajuste[] = []): Promise<ResultadoDoEnvio> {
+  const corpo = formularioDoExtrato(arquivo, ajustes)
 
   let resposta: Response
   try {

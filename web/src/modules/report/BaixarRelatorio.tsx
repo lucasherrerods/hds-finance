@@ -1,32 +1,23 @@
 import { FileDown } from 'lucide-react'
 import { useState } from 'react'
-import { baixarRelatorio, baixarRelatorioDoHistorico, type MesDoRelatorio } from './api'
+import type { Ajuste } from '../import'
+import type { MesDoRelatorio } from './api'
+import { gerarPdf, nomeDoPdf, salvar } from './arquivos'
 
 /** Com arquivo, reenvia o extrato (demonstração); sem arquivo, usa o histórico guardado (área admin). */
-type Props = { arquivo?: File; mes: MesDoRelatorio }
+type Props = { arquivo?: File; ajustes?: Ajuste[]; mes: MesDoRelatorio }
 
-const nomeDoArquivo = ({ ano, mes }: MesDoRelatorio) => `fechamento-${ano}-${String(mes).padStart(2, '0')}.pdf`
-
-function salvar(pdf: Blob, nome: string) {
-  const endereco = URL.createObjectURL(pdf)
-  const link = document.createElement('a')
-  link.href = endereco
-  link.download = nome
-  link.click()
-  URL.revokeObjectURL(endereco)
-}
-
-export function BaixarRelatorio({ arquivo, mes }: Props) {
+export function BaixarRelatorio({ arquivo, ajustes, mes }: Props) {
   const [gerando, setGerando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
   async function baixar() {
     setGerando(true)
     setErro(null)
-    const resultado = arquivo ? await baixarRelatorio(arquivo, mes) : await baixarRelatorioDoHistorico(mes)
+    const resultado = await gerarPdf(mes, arquivo, ajustes)
     setGerando(false)
 
-    if (resultado.ok) salvar(resultado.pdf, nomeDoArquivo(mes))
+    if (resultado.ok) salvar(resultado.pdf, nomeDoPdf(mes))
     else setErro(resultado.mensagem)
   }
 

@@ -12,18 +12,18 @@ public abstract record ResultadoDoAjuste
     public sealed record NaoEncontrada : ResultadoDoAjuste;
 }
 
-/// <summary>Ajustes do admin numa transação só: a categoria dela e se ela entra nas somas.</summary>
+/// <summary>Ajustes da pessoa numa transação só: a categoria dela e se ela entra nas somas.</summary>
 public sealed class AjustarTransacao(IRepositorioDeTransacoes repositorio, Categorizador categorizador)
 {
     public async Task<ResultadoDoAjuste> CategoriaAsync(string chave, string? categoria, CancellationToken cancelamento = default)
     {
-        var escolhida = categoria == TransacaoCategorizada.CategoriaDeEntrada ? null : categoria;
-        if (escolhida is not null && !categorizador.Categorias.Contains(escolhida))
+        // "Entrada" fica guardada: é ela que diz que um valor com cara de empréstimo é receita.
+        if (categoria is not null and not TransacaoCategorizada.CategoriaDeEntrada && !categorizador.Categorias.Contains(categoria))
         {
             return new ResultadoDoAjuste.CategoriaInvalida();
         }
 
-        return Resultado(await repositorio.DefinirCategoriaAsync(chave, escolhida, cancelamento));
+        return Resultado(await repositorio.DefinirCategoriaAsync(chave, categoria, cancelamento));
     }
 
     public async Task<ResultadoDoAjuste> OcultarAsync(string chave, bool oculta, CancellationToken cancelamento = default) =>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import { Cabecalho, Rodape } from '../modules/landing'
+import { PoliticaDePrivacidade } from '../modules/privacy'
 import { LayoutDoDashboard } from './dashboard/LayoutDoDashboard'
 import { CartaoDeCredito, Evolucao, Investimentos, Relatorio, Transacoes, VisaoGeral } from './dashboard/Secoes'
 import { PaginaDeEntrada } from './PaginaDeEntrada'
@@ -16,6 +17,7 @@ export function App() {
         <Route element={<LayoutDoSite />}>
           <Route path="/" element={<PaginaInicial />} />
           <Route path="/testar" element={<PaginaDeTeste />} />
+          <Route path="/privacidade" element={<PoliticaDePrivacidade />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
         <Route path="/dashboard" element={<LayoutDoDashboard modo="demonstracao" />}>

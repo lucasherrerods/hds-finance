@@ -2,6 +2,8 @@
 
 Regras de design visual seguras para seguir sempre. Baseadas em "Visual design rules you can safely follow every time", de Anthony Hobday (https://anthonyhobday.com/sideprojects/saferules/).
 
+As 28 regras vêm primeiro. Depois vêm como elas valem neste projeto, as exceções e o checklist.
+
 Nenhuma regra é obrigatória: quebre qualquer uma quando houver um bom motivo. Sem um motivo, siga-as.
 
 ## Cor
@@ -49,13 +51,42 @@ Nenhuma regra é obrigatória: quebre qualquer uma quando houver um bom motivo. 
 
 ---
 
+## Como as regras valem aqui
+
+| Assunto | Decisão | Onde fica |
+|---|---|---|
+| Cores (1, 2, 3) | Neutros frios, tingidos de verde, saturação HSB perto de 5%. Nunca uma cor solta no componente. | `src/shared/styles/tokens.css` |
+| Gráficos (4) | Cinco cores com pelo menos 5 pontos de brilho HSB entre elas, em cada tema. | `--color-grafico-*` |
+| Profundidade (6, 7, 10, 11, 12) | Uma técnica só: superfície mais clara que o fundo, mais uma borda. Sem sombra em nenhum tema, nem brilho em volta de botão. | `bg-superficie` + `border-borda` |
+| Cartão (14, 21) | `rounded-2xl` com `p-6`. Blocos dentro dele usam `rounded-xl` ou menos e `p-4`. | `Cartao`, `CartaoDeNumero` |
+| Espaço (18) | Escala de 4/8: `gap-2`, `gap-4`, `gap-6`, `gap-8`, `gap-12`. | classes do Tailwind |
+| Botão (28) | `px-6 py-3` no principal, `px-4 py-2` no pequeno. Um só botão preenchido por tela. | |
+| Ícone com texto (8) | `opacity-70` e menor que a linha (`size-4`). | |
+| Texto (24, 25, 26) | Corpo de 16px, até 60ch. Título com `tracking` negativo, rótulo em caixa alta com `tracking-wider`. | |
+| Fonte (27) | Só a Inter, hospedada no próprio site. | `@fontsource-variable/inter` |
+| Peso visual (22) | Na linha: ícone e nome à esquerda, valor em negrito à direita. | listas e tabelas |
+| Conteúdo que importa (5) | Nome de categoria e valor em dinheiro nunca são cortados: o nome quebra a linha. Só a descrição longa pode ter reticências, com o texto inteiro no `title`. | `PrincipaisCategorias` |
+| Diálogo | Um componente só, sobre o `dialog` nativo. | `Dialogo` |
+
+As regras 1, 2, 4, 6, 7, 9 e 11 são conferidas por `src/shared/styles/tokens.test.ts`. O PDF usa as mesmas cores, em `CoresDoRelatorio.cs`.
+
+## Exceções, e por quê
+
+- **14px** (`text-sm`) em rótulo, legenda, data e etiqueta: são apoio, e o corpo continua em 16px. **12px** só nos números do mapa de calor, que não cabem maiores.
+- **Saturação até 7%** nos neutros perto do preto: nessa faixa, um único passo de cor já vale mais de 5%.
+- **Laranja do Inter e roxo do Nubank** são quentes e frios ao mesmo tempo: identificam o banco e ficam iguais nos dois temas.
+- **Mancha de luz no fundo** (`bg-brilho`) no topo das páginas: é decoração, atrás de tudo, e não indica profundidade.
+
+---
+
 ## Checklist rápido
 
 - [ ] Sem `#000` / `#fff` puros. Neutros levemente tingidos, com uma única temperatura
 - [ ] Espaçamentos e tamanhos em uma escala (4/8)
 - [ ] Corpo ≥ 16px, linhas com ~70ch, no máximo 2 fontes
 - [ ] Botões com padding `y : x = 1 : 2`
-- [ ] Sombras com `blur = 2 × y`, uma única técnica de profundidade e nenhuma sombra no dark mode
+- [ ] Uma única técnica de profundidade: brilho e borda, sem sombras
+- [ ] Nomes de categoria e valores aparecem inteiros no celular e no computador
 - [ ] Container vs. fundo: Δ de brilho ≤ 7% (claro) / ≤ 12% (escuro)
 - [ ] Raios aninhados: `interno = externo − gap`
 - [ ] Nunca dois divisores rígidos juntos

@@ -8,7 +8,8 @@ public sealed record ResumoDoExtratoJson(
     int Duplicadas,
     IReadOnlyList<MesJson> Meses,
     PainelJson? Painel,
-    IReadOnlyList<TransacaoJson> Transacoes);
+    IReadOnlyList<TransacaoJson> Transacoes,
+    IReadOnlyList<string> Categorias);
 
 public sealed record MesJson(
     int Ano,
@@ -20,7 +21,8 @@ public sealed record MesJson(
     decimal? SaldoInicial,
     decimal? SaldoFinal,
     IReadOnlyList<GastoJson> GastosPorCategoria,
-    InvestimentosJson Investimentos);
+    InvestimentosJson Investimentos,
+    decimal Emprestimos);
 
 /// <summary>Aplicado e resgatado no mês e o aplicado líquido desde o início do histórico, sem rendimentos.</summary>
 public sealed record InvestimentosJson(decimal Aplicado, decimal Resgatado, decimal AplicadoAcumulado);
@@ -56,13 +58,15 @@ public static class JsonDoResumo
         resumido.Importacao.Duplicadas,
         resumido.Meses.Select(De).ToList(),
         resumido.Painel is null ? null : De(resumido.Painel),
-        resumido.Transacoes.Select(De).ToList());
+        resumido.Transacoes.Select(De).ToList(),
+        resumido.Categorias);
 
     internal static MesJson De(ResumoMensal m) => new(
         m.Mes.Ano, m.Mes.Mes, m.Entradas, m.Saidas, m.Resultado,
         m.InvestimentosETransferencias, m.SaldoInicial, m.SaldoFinal,
         m.GastosPorCategoria.Select(g => new GastoJson(g.Categoria, g.Valor)).ToList(),
-        new InvestimentosJson(m.Investimentos.Aplicado, m.Investimentos.Resgatado, m.Investimentos.AplicadoAcumulado));
+        new InvestimentosJson(m.Investimentos.Aplicado, m.Investimentos.Resgatado, m.Investimentos.AplicadoAcumulado),
+        m.Emprestimos);
 
     internal static PainelJson De(PainelDoMes p) => new(
         p.Mes.Ano,

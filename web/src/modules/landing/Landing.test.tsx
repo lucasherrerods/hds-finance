@@ -64,7 +64,7 @@ describe('landing', () => {
 
 describe('rodapé', () => {
   it('leva ao repositório e ao perfil do autor e mostra o copyright', () => {
-    render(<Rodape />)
+    render(<Rodape />, { wrapper: MemoryRouter })
 
     expect(screen.getByRole('link', { name: /github/i })).toHaveAttribute('href', 'https://github.com/lucasherrerods/hds-finance')
     expect(screen.getByRole('link', { name: /linkedin/i })).toHaveAttribute('href', 'https://www.linkedin.com/in/lucasherrero/')

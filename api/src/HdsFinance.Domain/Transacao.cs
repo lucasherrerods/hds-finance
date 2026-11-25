@@ -35,7 +35,11 @@ public sealed record Transacao(
     /// <summary>Fora de todas as somas. O saldo da conta ainda conta com ela, porque o dinheiro se moveu.</summary>
     public bool Oculta { get; init; }
 
-    public bool ContaNoFluxoDeCaixa => !Oculta && Tipo is (TipoDeTransacao.Comum or TipoDeTransacao.CompraNoCartao);
+    /// <summary>A escolha da pessoa vence a descrição: só ela sabe que um Pix comum era um empréstimo, ou o contrário.</summary>
+    public bool EhEmprestimoRecebido => Tipo == TipoDeTransacao.Comum && Valor > 0
+        && (Categoria is { } escolhida ? escolhida == Emprestimo.Categoria : Emprestimo.NaDescricao(Descricao));
+
+    public bool ContaNoFluxoDeCaixa => !Oculta && !EhEmprestimoRecebido && Tipo is (TipoDeTransacao.Comum or TipoDeTransacao.CompraNoCartao);
 
     public Banco Banco { get; init; } = Banco.Inter;
 

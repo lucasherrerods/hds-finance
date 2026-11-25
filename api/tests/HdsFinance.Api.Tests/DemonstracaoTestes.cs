@@ -169,3 +169,90 @@ public class DemonstracaoTransacoesTestes(WebApplicationFactory<Program> fabrica
         transacoes[1].GetProperty("valor").GetDecimal().Should().Be(-123.45m);
     }
 }
+
+public class DemonstracaoAjustesTestes(WebApplicationFactory<Program> fabrica) : IClassFixture<WebApplicationFactory<Program>>
+{
+    private const string Csv =
+        "Data Lançamento;Histórico;Descrição;Valor;Saldo\n" +
+        "01/10/2026;Pix recebido;Fulano Ficticio;1.000,00;1.000,00\n" +
+        "02/10/2026;Compra no debito;Mercado Exemplo;-100,00;900,00";
+
+    private async Task<HttpResponseMessage> EnviarAsync(string? ajustes, string rota = "resumo")
+    {
+        var corpo = new MultipartFormDataContent { { new ByteArrayContent(Encoding.UTF8.GetBytes(Csv)), "arquivo", "extrato.csv" } };
+        if (ajustes is not null)
+        {
+            corpo.Add(new StringContent(ajustes), "ajustes");
+        }
+
+        return await fabrica.WithWebHostBuilder(b => b.UseSetting("Demonstracao:LimiteDeRequisicoesPorMinuto", "1000"))
+            .CreateClient().PostAsync($"/demonstracao/{rota}", corpo);
+    }
+
+    private static async Task<System.Text.Json.JsonElement> LerAsync(HttpResponseMessage resposta)
+    {
+        resposta.StatusCode.Should().Be(HttpStatusCode.OK);
+        return System.Text.Json.JsonDocument.Parse(await resposta.Content.ReadAsStringAsync()).RootElement.Clone();
+    }
+
+    private async Task<string> ChaveAsync(string trecho) =>
+        (await LerAsync(await EnviarAsync(null))).GetProperty("transacoes").EnumerateArray()
+            .First(t => t.GetProperty("descricao").GetString()!.Contains(trecho, StringComparison.Ordinal))
+            .GetProperty("chave").GetString()!;
+
+    private static string Json(params object[] ajustes) => System.Text.Json.JsonSerializer.Serialize(ajustes);
+
+    [Fact]
+    public async Task Marcar_um_pix_como_emprestimo_tira_da_receita()
+    {
+        var json = await LerAsync(await EnviarAsync(Json(new { chave = await ChaveAsync("Fulano"), categoria = "Empréstimos" })));
+
+        var mes = json.GetProperty("meses")[0];
+        mes.GetProperty("entradas").GetDecimal().Should().Be(0m);
+        mes.GetProperty("emprestimos").GetDecimal().Should().Be(1000m);
+        json.GetProperty("categorias").EnumerateArray().Select(c => c.GetString()).Should().Contain("Empréstimos");
+    }
+
+    [Fact]
+    public async Task Ocultar_tira_das_somas_e_a_transacao_continua_na_lista()
+    {
+        var json = await LerAsync(await EnviarAsync(Json(new { chave = await ChaveAsync("Mercado"), oculta = true })));
+
+        json.GetProperty("meses")[0].GetProperty("saidas").GetDecimal().Should().Be(0m);
+        json.GetProperty("transacoes").GetArrayLength().Should().Be(2);
+    }
+
+    [Fact]
+    public async Task O_ajuste_vale_so_para_a_requisicao()
+    {
+        await EnviarAsync(Json(new { chave = await ChaveAsync("Mercado"), oculta = true }));
+
+        (await LerAsync(await EnviarAsync(null))).GetProperty("meses")[0].GetProperty("saidas").GetDecimal().Should().Be(100m);
+    }
+
+    [Theory]
+    [InlineData("isto não é json")]
+    [InlineData("[null]")]
+    [InlineData("[{}]")]
+    [InlineData("null")]
+    public async Task Ajuste_que_nao_da_para_ler_e_recusado(string ajustes)
+    {
+        (await EnviarAsync(ajustes)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await EnviarAsync(ajustes, "relatorio")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Categoria_inventada_e_recusada_e_transacao_desconhecida_e_ignorada()
+    {
+        (await EnviarAsync(Json(new { chave = await ChaveAsync("Mercado"), categoria = "Inventada" }))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await EnviarAsync(Json(new { chave = "não existe", categoria = "Lazer" }))).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task O_pdf_aceita_os_ajustes()
+    {
+        var resposta = await EnviarAsync(Json(new { chave = await ChaveAsync("Fulano"), categoria = "Empréstimos" }), "relatorio");
+
+        resposta.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+    }
+}

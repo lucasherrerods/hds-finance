@@ -24,7 +24,7 @@ describe('BaixarRelatorio', () => {
     fireEvent.click(screen.getByRole('button', { name: /baixar pdf/i }))
 
     await vi.waitFor(() => expect(clicar).toHaveBeenCalled())
-    expect(baixarRelatorio).toHaveBeenCalledWith(arquivo, mes)
+    expect(baixarRelatorio).toHaveBeenCalledWith(arquivo, mes, [])
     expect((clicar.mock.contexts[0] as HTMLAnchorElement).download).toBe('fechamento-2026-10.pdf')
   })
 

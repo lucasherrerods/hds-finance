@@ -83,8 +83,8 @@ public sealed class Categorizador
         _aprendidas = aprendidas;
     }
 
-    /// <summary>As categorias que as regras conhecem, na ordem delas, e "Sem categoria" no fim.</summary>
-    public IReadOnlyList<string> Categorias => [.. _regras.Select(r => r.Categoria).Distinct(), SemCategoria];
+    /// <summary>As categorias que as regras conhecem, na ordem delas, e "Empréstimos" e "Sem categoria" no fim.</summary>
+    public IReadOnlyList<string> Categorias => [.. _regras.Select(r => r.Categoria).Append(Emprestimo.Categoria).Distinct(), SemCategoria];
 
     /// <summary>A forma da descrição usada para lembrar uma correção: sem acento, caixa nem pontuação.</summary>
     public static string ChaveDaDescricao(string descricao) => TextoNormalizado.ParaComparar(descricao);
@@ -102,8 +102,9 @@ public sealed class Categorizador
     }
 
     public string Categorizar(Transacao transacao) =>
-        transacao.Categoria is { } escolhida ? escolhida
+        transacao.Categoria is { } escolhida && escolhida != TransacaoCategorizada.CategoriaDeEntrada ? escolhida
         : _aprendidas.TryGetValue(ChaveDaDescricao(transacao.Descricao), out var aprendida)
             ? aprendida
+            : Emprestimo.NaDescricao(transacao.Descricao) ? Emprestimo.Categoria
             : _regras.FirstOrDefault(r => TextoNormalizado.ContemAlgum(transacao.Descricao, r.Palavras)).Categoria ?? SemCategoria;
 }

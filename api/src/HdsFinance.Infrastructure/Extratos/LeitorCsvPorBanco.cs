@@ -66,7 +66,12 @@ public sealed partial class LeitorCsvPorBanco : ILeitorDeExtrato
 
     /// <summary>O Pix traz documento, agência e conta da outra pessoa, que não servem para nada aqui.</summary>
     private static string SemDadosDeTerceiros(string descricao) =>
-        Documento().Replace(AgenciaEConta().Replace(LeitorFaturaInterPdf.TextoLimpo(descricao), string.Empty), string.Empty).Trim();
+        CpfNoNome().Replace(
+            Documento().Replace(AgenciaEConta().Replace(LeitorFaturaInterPdf.TextoLimpo(descricao), string.Empty), string.Empty), string.Empty).Trim();
+
+    // O nome de um MEI costuma terminar com o CPF do dono.
+    [GeneratedRegex(@"\s*\b\d{11}\b")]
+    private static partial Regex CpfNoNome();
 
     [GeneratedRegex(@"\s*Ag[êe]ncia:.*$", RegexOptions.IgnoreCase)]
     private static partial Regex AgenciaEConta();

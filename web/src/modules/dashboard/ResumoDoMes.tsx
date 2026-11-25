@@ -1,38 +1,29 @@
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Equal, PiggyBank, Sigma, Undo2, Wallet, type LucideIcon } from 'lucide-react'
-import { formatarMes, formatarMoeda, formatarMoedaComSinal } from '../../shared'
+import { ArrowLeftRight, ChevronDown, PiggyBank, Sigma, Undo2, type LucideIcon } from 'lucide-react'
+import { formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal } from '../import'
 import { GastosPorCategoria } from './GastosPorCategoria'
 
 type Props = { mes: ResumoMensal }
 
+/** O que os indicadores da lista não mostram, recolhido para a lista vir primeiro. */
 export function ResumoDoMes({ mes }: Props) {
-  const saldo =
-    mes.saldoInicial === null || mes.saldoFinal === null
-      ? 'Não informado no extrato'
-      : `${formatarMoeda(mes.saldoInicial)} → ${formatarMoeda(mes.saldoFinal)}`
-
   return (
-    <section className="flex flex-col gap-6 rounded-2xl border border-borda bg-superficie p-6">
-      <h2 className="text-2xl leading-tight font-semibold tracking-tight first-letter:uppercase">
-        {formatarMes(mes.ano, mes.mes)}
-      </h2>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Valor rotulo="Entradas" icone={ArrowDownLeft} texto={formatarMoedaComSinal(mes.entradas, 'entrada')} cor="text-entrada" />
-        <Valor rotulo="Saídas" icone={ArrowUpRight} texto={formatarMoedaComSinal(mes.saidas, 'saida')} cor="text-saida" />
-        <Valor rotulo="Resultado" icone={Equal} texto={formatarMoeda(mes.resultado)} cor="text-texto" />
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <details className="group rounded-2xl border border-borda bg-superficie">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-2xl p-6 font-semibold [&::-webkit-details-marker]:hidden">
+        Categorias e investimentos do mês
+        <ChevronDown aria-hidden className="size-5 text-texto-suave transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="flex flex-col gap-6 px-6 pb-6">
         <Valor
           rotulo="Investimentos e transferências"
           icone={ArrowLeftRight}
           texto={formatarMoedaComSinal(mes.investimentosETransferencias, mes.investimentosETransferencias < 0 ? 'saida' : 'entrada')}
           cor="text-texto"
         />
-        <Valor rotulo="Saldo" icone={Wallet} texto={saldo} cor="text-texto" />
-      </div>
       <Investimentos mes={mes} />
       <GastosPorCategoria gastos={mes.gastosPorCategoria} totalDeSaidas={mes.saidas} />
-    </section>
+      </div>
+    </details>
   )
 }
 

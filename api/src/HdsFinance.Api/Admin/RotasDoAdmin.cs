@@ -14,7 +14,8 @@ public sealed record HistoricoJson(
     IReadOnlyList<MesJson> Meses, PainelJson? Painel, IReadOnlyList<TransacaoJson> Transacoes, IReadOnlyList<string> Categorias,
     SaldoJson? Saldo, IReadOnlyList<FaturaJson> Faturas);
 
-public sealed record FaturaJson(DateOnly Vencimento, decimal? Total, decimal Gasto, bool? Paga, IReadOnlyList<TransacaoJson> Compras, string Banco);
+public sealed record FaturaJson(DateOnly Vencimento, decimal? Total, decimal Gasto, bool? Paga, IReadOnlyList<TransacaoJson> Compras, string Banco,
+    IReadOnlyList<GastoJson> GastosPorCategoria);
 
 public sealed record SaldoJson(decimal Valor, DateOnly Em, bool Informado, decimal? AntesDoHistorico);
 
@@ -165,7 +166,8 @@ public static class RotasDoAdmin
             historico.Transacoes.Select(JsonDoResumo.De).ToList(),
             categorizador.Categorias,
             historico.Saldo is { } s ? new SaldoJson(s.Valor, s.Em, s.Informado, s.AntesDoHistorico) : null,
-            historico.Faturas.Select(f => new FaturaJson(f.Vencimento, f.Total, f.Gasto, f.Paga, f.Compras.Select(JsonDoResumo.De).ToList(), f.Banco.ToString())).ToList()));
+            historico.Faturas.Select(f => new FaturaJson(f.Vencimento, f.Total, f.Gasto, f.Paga, f.Compras.Select(JsonDoResumo.De).ToList(), f.Banco.ToString(),
+                f.GastosPorCategoria.Select(g => new GastoJson(g.Categoria, g.Valor)).ToList())).ToList()));
     }
 
     private static async Task<IResult> CorrigirCategoriaAsync(CorrecaoJson correcao, CorrigirCategoria corrigir, CancellationToken cancelamento) =>

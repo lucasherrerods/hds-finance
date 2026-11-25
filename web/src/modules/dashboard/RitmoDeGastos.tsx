@@ -1,7 +1,7 @@
 import { Area, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { formatarMoeda } from '../../shared'
+import { formatarMoeda, formatarMoedaCompacta } from '../../shared'
 import type { PontoDoRitmo } from '../import'
-import { eixoDosGraficos, valorCompacto } from './estiloDosGraficos'
+import { eixoDosGraficos } from './estiloDosGraficos'
 import { CaixaDaDica, TabelaAcessivel, type PropsDaDica } from './partesDosGraficos'
 
 type Props = { ritmo: PontoDoRitmo[] }
@@ -23,7 +23,7 @@ export function RitmoDeGastos({ ritmo }: Props) {
           </defs>
           <CartesianGrid vertical={false} stroke="var(--color-borda)" strokeDasharray="2 6" />
           <XAxis dataKey="dia" ticks={[1, 15, 25, ritmo.length]} {...eixoDosGraficos} />
-          <YAxis tickFormatter={valorCompacto} width={72} {...eixoDosGraficos} />
+          <YAxis tickFormatter={formatarMoedaCompacta} width={72} {...eixoDosGraficos} />
           <Tooltip content={(props) => <Dica {...props} />} cursor={{ stroke: 'var(--color-borda)' }} />
           <Legend formatter={(nome: string) => <span className="text-texto-suave">{nome}</span>} />
           {temAnterior && (

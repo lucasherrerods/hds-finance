@@ -30,6 +30,8 @@
   /* Identifica o banco; igual nos dois temas. */
   --color-inter: #f57600;
   --color-inter-texto: #1a1410;
+  --color-nubank: #820ad1;
+  --color-nubank-texto: #f5f1f9;
 
   /* Mapa de calor: a cor de saída misturada à superfície, do mais fraco ao mais forte. */
   --color-calor-1: color-mix(in oklab, var(--color-saida) 22%, var(--color-superficie));

@@ -2,28 +2,18 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { SaldoDaConta } from './SaldoDaConta'
 
-const saldo = { valor: 1234.5, em: '2026-10-31', informado: true, antesDoHistorico: 0 }
+const saldo = { valor: 1234.5, em: '2026-10-31', informado: true, antesDoHistorico: 50 }
 
 describe('SaldoDaConta', () => {
-  it('mostra o saldo do Inter e de quando ele é', () => {
+  it('mostra só o banco e o valor', () => {
     render(<SaldoDaConta saldo={saldo} />)
 
-    const cartao = screen.getByRole('region', { name: 'Saldo da conta' })
-    expect(cartao).toHaveTextContent('Inter')
-    expect(cartao).toHaveTextContent(/R\$\s1\.234,50/)
-    expect(cartao).toHaveTextContent('Informado pelo banco em 31/10/2026')
-    expect(cartao).not.toHaveTextContent(/faltam/i)
+    expect(screen.getByRole('region', { name: 'Saldo da conta' }).textContent).toMatch(/^interSaldo da conta · InterR\$\s1\.234,50$/)
   })
 
-  it('avisa quando o saldo é só a soma do que foi importado', () => {
-    render(<SaldoDaConta saldo={{ ...saldo, informado: false, antesDoHistorico: null }} />)
+  it('avisa no título quando o saldo é só a soma do que foi importado', () => {
+    render(<SaldoDaConta saldo={{ ...saldo, informado: false }} />)
 
-    expect(screen.getByText(/soma do que foi importado até 31\/10\/2026/i)).toBeInTheDocument()
-  })
-
-  it('avisa que faltam extratos quando a soma não explica o saldo', () => {
-    render(<SaldoDaConta saldo={{ ...saldo, antesDoHistorico: 50 }} />)
-
-    expect(screen.getByText(/R\$\s50,00 não vêm dos extratos incluídos/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Saldo estimado · Inter' })).toBeInTheDocument()
   })
 })

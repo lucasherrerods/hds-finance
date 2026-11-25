@@ -145,7 +145,7 @@ Regras:
 ### Regras do domínio
 - Importar o mesmo extrato duas vezes não duplica transações: cada transação tem uma chave de deduplicação (id do OFX, ou data + valor + descrição normalizada).
 - Entrada é valor positivo, saída é negativo. Transferências entre contas próprias e aplicações/resgates de investimento não contam como receita nem despesa.
-- O admin pode mudar a categoria de uma transação só (vence as regras) ou de todas as iguais, e ocultar uma transação: ela continua na lista, sai de todas as somas e só mexe no saldo da conta.
+- O admin pode mudar a categoria de uma transação só (vence as regras) ou de todas as iguais, e ocultar uma transação: ela continua na lista (atrás de "Mostrar ocultas"), sai de todas as somas e só mexe no saldo da conta.
 - Compra no cartão (fatura em PDF, só na área admin) é gasto no dia da compra, e a parcela no mês em que é cobrada; estorno abate o gasto. O pagamento da fatura incluída não é gasto: a conciliação acha o pagamento na conta pelo valor e pela data. Fatura cujos números não fecham é recusada inteira. A senha do PDF nunca é guardada nem vai para log. O leitor conhece dois desenhos de fatura: o atual e o de 2024, sem resumo.
 - O resumo do mês fecha: saldo inicial + entradas − saídas + investimentos e transferências + compras no cartão + ocultas + outros bancos = saldo final. A parcela das compras no cartão devolve ao saldo o gasto que ainda não saiu da conta. Entradas e saídas são só receitas e despesas; aplicações, resgates e transferências entre contas próprias mexem no saldo, mas ficam num campo próprio. Existe teste para isso.
 - O saldo vem do próprio extrato (saldo final informado no arquivo). Sem ele, o saldo do mês fica como não informado. O saldo da conta na visão geral do admin também parte do informado; sem ele, é a soma do que foi importado, e a tela diz qual dos dois é.
@@ -154,7 +154,7 @@ Regras:
 - O fechamento automático da área admin só sai quando o mês está completo, e o mesmo mês não é enviado duas vezes, a menos que forçado (pelo painel ou pela CLI).
 
 ### Relatório e e-mail
-- PDF com QuestPDF: resumo do mês, entradas x saídas dos últimos 12 meses (quando houver histórico), evolução do saldo, gastos por categoria e posição dos investimentos.
+- PDF com QuestPDF: resumo do mês, entradas x saídas dos últimos 12 meses (quando houver histórico), tabela mês a mês, comparação com o mês anterior, gastos por categoria e posição dos investimentos.
 - Valores em `pt-BR` (`R$ 1.234,56`), datas `dd/MM/yyyy`.
 - E-mail por serviço transacional (Resend, Brevo ou SES), nunca pelo SMTP de uma conta pessoal, para não deixar cópia na caixa de enviados.
 - E-mail só existe na área admin: o código de acesso e o fechamento vão para o e-mail do admin. A demonstração não envia e-mail.

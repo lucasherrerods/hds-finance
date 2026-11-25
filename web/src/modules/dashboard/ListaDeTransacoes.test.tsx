@@ -46,6 +46,23 @@ describe('ListaDeTransacoes', () => {
     expect(screen.queryByText('Pix enviado Joao')).not.toBeInTheDocument()
   })
 
+  it('filtra por tipo; cartão só aparece quando há compra nele', () => {
+    render(<ListaDeTransacoes transacoes={[transacoes[0], { ...transacoes[1], noCartao: true }]} mes={mes} />)
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Tipo' }), { target: { value: 'cartao' } })
+    expect(screen.queryByText('Pix enviado Joao')).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Tipo' }), { target: { value: 'entradas' } })
+    expect(screen.getByText('Nenhuma transação encontrada.')).toBeInTheDocument()
+  })
+
+  it('sem ocultas, não há o que mostrar de novo', () => {
+    render(<ListaDeTransacoes transacoes={transacoes} mes={mes} />)
+
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Só no cartão' })).not.toBeInTheDocument()
+  })
+
   it('com um banco só, não há filtro de banco', () => {
     render(<ListaDeTransacoes transacoes={transacoes} mes={mes} />)
 
@@ -58,6 +75,8 @@ describe('ListaDeTransacoes', () => {
     render(<ListaDeTransacoes transacoes={[transacoes[0], oculta]} mes={mes} edicao={edicao({ aoOcultar })} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Ocultar Pix enviado Joao' }))
+    expect(screen.queryByText('Aplicação CDB')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('switch', { name: 'Mostrar ocultas (1)' }))
     fireEvent.click(screen.getByRole('button', { name: 'Mostrar Aplicação CDB' }))
 
     expect(aoOcultar.mock.calls).toEqual([[transacoes[0], true], [oculta, false]])

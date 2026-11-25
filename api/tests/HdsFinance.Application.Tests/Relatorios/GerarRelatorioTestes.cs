@@ -46,6 +46,33 @@ public class GerarRelatorioTestes
     }
 
     [Fact]
+    public void Compara_so_com_o_mes_imediatamente_anterior()
+    {
+        var outubro = Mes(2026, 10);
+        var hoje = new DateOnly(2026, 11, 9);
+
+        new Relatorio(outubro, [Mes(2026, 9), outubro], hoje).Anterior.Should().Be(Mes(2026, 9));
+        new Relatorio(outubro, [Mes(2026, 8), outubro], hoje).Anterior.Should().BeNull();
+        new Relatorio(Mes(2026, 1), [Mes(2025, 12), Mes(2026, 1)], hoje).Anterior!.Mes.Should().Be(new MesDeReferencia(2025, 12));
+    }
+
+    [Theory]
+    [InlineData(150, 100, 0.5)]
+    [InlineData(50, 100, -0.5)]
+    [InlineData(50, -100, 1.5)]
+    public void Variacao_e_sobre_o_valor_anterior(int atual, int anterior, double esperada)
+    {
+        Relatorio.Variacao(atual, anterior).Should().Be((decimal)esperada);
+    }
+
+    [Fact]
+    public void Sem_valor_anterior_nao_ha_variacao()
+    {
+        Relatorio.Variacao(10m, null).Should().BeNull();
+        Relatorio.Variacao(10m, 0m).Should().BeNull();
+    }
+
+    [Fact]
     public void Registra_a_data_de_geracao_pelo_relogio()
     {
         var (gerar, gerador) = Montar();

@@ -2,7 +2,16 @@ namespace HdsFinance.Domain;
 
 public sealed record RegraDeCategoria(string Categoria, IReadOnlyList<string> Palavras);
 
-public sealed record GastoPorCategoria(string Categoria, decimal Valor);
+public sealed record GastoPorCategoria(string Categoria, decimal Valor)
+{
+    /// <summary>Do maior para o menor, com os estornos abatidos.</summary>
+    public static IReadOnlyList<GastoPorCategoria> Somar(IEnumerable<Transacao> gastos, Categorizador categorizador) => gastos
+        .GroupBy(categorizador.Categorizar)
+        .Select(g => new GastoPorCategoria(g.Key, -g.Sum(t => t.Valor)))
+        .Where(g => g.Valor > 0)
+        .OrderByDescending(g => g.Valor)
+        .ToList();
+}
 
 /// <summary>Uma correção feita pela pessoa: aquela descrição, inteira, vai sempre para aquela categoria.</summary>
 public sealed record CategoriaAprendida(string Descricao, string Categoria);

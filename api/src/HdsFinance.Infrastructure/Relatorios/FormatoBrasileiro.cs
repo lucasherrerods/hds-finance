@@ -13,6 +13,12 @@ public static class FormatoBrasileiro
 
     public static string Moeda(decimal? valor) => valor is { } v ? Moeda(v) : "não informado";
 
+    public static string Percentual(decimal valor) => valor.ToString("P0", PtBr);
+
+    /// <summary>O sinal vem escrito para a variação não depender só da cor.</summary>
+    public static string PercentualComSinal(decimal valor) =>
+        Math.Round(valor, 2) == 0m ? "0%" : $"{(valor > 0m ? "+" : "−")}{Percentual(Math.Abs(valor))}";
+
     public static string Data(DateOnly data) => data.ToString("dd/MM/yyyy", PtBr);
 
     public static string Mes(MesDeReferencia mes) => new DateOnly(mes.Ano, mes.Mes, 1).ToString("MMMM 'de' yyyy", PtBr);

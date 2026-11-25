@@ -45,12 +45,7 @@ public sealed record ResumoMensal(
         var saidas = -fluxo.Where(t => t.EhGasto).Sum(t => t.Valor);
         var internas = doMes.Where(t => !t.Oculta && !t.ContaNoFluxoDeCaixa).Sum(t => t.Valor);
 
-        var gastos = fluxo.Where(t => t.EhGasto)
-            .GroupBy((categorizador ?? Categorizador.Padrao).Categorizar)
-            .Select(g => new GastoPorCategoria(g.Key, -g.Sum(t => t.Valor)))
-            .Where(g => g.Valor > 0)
-            .OrderByDescending(g => g.Valor)
-            .ToList();
+        var gastos = GastoPorCategoria.Somar(fluxo.Where(t => t.EhGasto), categorizador ?? Categorizador.Padrao);
 
         return new ResumoMensal(mes, saldoInicial, entradas, saidas, internas)
         {

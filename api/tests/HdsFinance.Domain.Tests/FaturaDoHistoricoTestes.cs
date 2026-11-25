@@ -56,6 +56,19 @@ public class FaturaDoHistoricoTestes
     }
 
     [Fact]
+    public void Soma_os_gastos_por_categoria_sem_as_ocultas()
+    {
+        var fatura = Montar(new DateOnly(2026, 11, 2), 130m,
+            new LinhaDaFatura(new DateOnly(2026, 10, 3), "UBER VIAGEM", -30m), new LinhaDaFatura(new DateOnly(2026, 10, 4), "ESTORNO UBER", 10m));
+        var transacoes = fatura.ParaTransacoes().ToList();
+
+        Listar(transacoes).Single().GastosPorCategoria.Should().Equal(
+            new GastoPorCategoria("Compras", 130m), new GastoPorCategoria("Transporte", 20m));
+        Listar(transacoes.Select(t => t with { Oculta = t.Descricao == "LOJA" })).Single().GastosPorCategoria.Should().Equal(
+            new GastoPorCategoria("Transporte", 20m));
+    }
+
+    [Fact]
     public void Sem_fatura_a_lista_e_vazia()
     {
         Listar([new Transacao(new DateOnly(2026, 10, 2), -1m, "Loja", TipoDeTransacao.Comum)]).Should().BeEmpty();

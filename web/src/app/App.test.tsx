@@ -202,6 +202,7 @@ describe('área admin', () => {
 
     const tabela = within(screen.getByRole('region', { name: 'Resumo por mês' }))
     expect(tabela.getAllByRole('button', { name: /^apagar /i })).toHaveLength(1)
+    expect(tabela.queryByText(/saldo/i)).not.toBeInTheDocument()
     expect(tabela.getByRole('button', { name: /2024|\/24/ })).toBeInTheDocument()
   })
 
@@ -227,9 +228,9 @@ describe('área admin', () => {
     abrir('/admin')
     const menu = within(await screen.findByRole('navigation', { name: 'Seções do dashboard' }, { timeout: 5000 }))
 
-    fireEvent.click(menu.getByRole('link', { name: 'Cartão' }))
+    fireEvent.click(menu.getByRole('link', { name: 'Cartões' }))
 
-    expect(await screen.findByRole('button', { name: /novembro de 2026/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /fatura de novembro de 2026/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Relatório' })).toHaveAttribute('href', '/admin/relatorio')
   })
 
@@ -291,12 +292,12 @@ describe('dashboard', () => {
     const menu = await verResumo()
 
     fireEvent.click(menu.getByRole('link', { name: /transações/i }))
-    expect(await screen.findByRole('tablist', { name: 'Anos' })).toBeInTheDocument()
+    expect(await screen.findByRole('combobox', { name: 'Mês' })).toBeInTheDocument()
 
     fireEvent.click(menu.getByRole('link', { name: /investimentos/i }))
     expect(await screen.findByRole('heading', { level: 1, name: /investimentos/i })).toBeInTheDocument()
 
-    expect(menu.queryByRole('link', { name: /relatório|cartão/i })).not.toBeInTheDocument()
+    expect(menu.queryByRole('link', { name: /relatório|cart(ão|ões)/i })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('link', { name: 'Relatório' }))
     expect(await screen.findByRole('button', { name: /baixar pdf/i })).toBeInTheDocument()
   })

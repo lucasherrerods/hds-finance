@@ -1,9 +1,9 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { formatarMoedaComSinal } from '../../shared'
+import { formatarMoedaCompacta, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal } from '../import'
 import { Cartao } from './Cartao'
 import { dadosDeEntradasESaidas } from './dadosDosGraficos'
-import { eixoDosGraficos, valorCompacto } from './estiloDosGraficos'
+import { eixoDosGraficos } from './estiloDosGraficos'
 import { CaixaDaDica, TabelaAcessivel, type PropsDaDica } from './partesDosGraficos'
 
 type Props = { meses: ResumoMensal[] }
@@ -19,7 +19,7 @@ export function GraficosDoPeriodo({ meses }: Props) {
         <BarChart data={fluxo} barGap={4} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--color-borda)" />
           <XAxis dataKey="rotulo" {...eixoDosGraficos} />
-          <YAxis tickFormatter={valorCompacto} width={72} {...eixoDosGraficos} />
+          <YAxis tickFormatter={formatarMoedaCompacta} width={72} {...eixoDosGraficos} />
           <Tooltip content={(props) => <DicaDeFluxo {...props} />} cursor={{ fill: 'var(--color-fundo)' }} />
           <Legend formatter={(nome: string) => <span className="text-texto-suave">{nome}</span>} />
           <Bar dataKey="entradas" name="Entradas (+)" fill="var(--color-entrada)" radius={[8, 8, 2, 2]} maxBarSize={28} />

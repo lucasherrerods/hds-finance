@@ -24,7 +24,11 @@ public sealed class OpcoesDoAssistente
     /// </summary>
     public string? Raciocinio { get; set; } = "low";
 
-    public int SegundosDeEspera { get; set; } = 60;
+    /// <summary>Tentado quando o principal está sobrecarregado (503), sem cota (429) ou demora demais. Vazio desliga.</summary>
+    public string? ModeloReserva { get; set; } = "gemini-flash-lite-latest";
+
+    /// <summary>Limite de cada tentativa; com a reserva, a espera total pode chegar ao dobro.</summary>
+    public int SegundosDeEspera { get; set; } = 40;
 
     public string Endereco { get; set; } = EnderecoPadrao;
 
@@ -70,8 +74,26 @@ public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssist
             new Configuracao(0.3, json ? "application/json" : "text/plain",
                 string.IsNullOrWhiteSpace(configuracao.Raciocinio) ? null : new Raciocinio(configuracao.Raciocinio)));
 
+        var modelos = new[] { configuracao.Modelo, configuracao.ModeloReserva }
+            .Where(m => !string.IsNullOrWhiteSpace(m)).Select(m => m!.Trim()).Distinct();
+        foreach (var modelo in modelos)
+        {
+            var (texto, tentarOutro) = await TentarAsync(modelo, corpo, configuracao, cancelamento);
+            if (texto is not null || !tentarOutro)
+            {
+                return texto;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Uma chamada a um modelo. Diz se vale tentar o próximo: só em sobrecarga, falta de cota ou demora.</summary>
+    private async Task<(string? Texto, bool TentarOutro)> TentarAsync(
+        string modelo, Pedido corpo, OpcoesDoAssistente configuracao, CancellationToken cancelamento)
+    {
         // A chave vai no cabeçalho, não na URL, para não aparecer em log de acesso.
-        using var requisicao = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/{Uri.EscapeDataString(configuracao.Modelo)}:generateContent")
+        using var requisicao = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/{Uri.EscapeDataString(modelo)}:generateContent")
         {
             Content = JsonContent.Create(corpo),
         };
@@ -79,25 +101,27 @@ public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssist
 
         using var limite = CancellationTokenSource.CreateLinkedTokenSource(cancelamento);
         limite.CancelAfter(TimeSpan.FromSeconds(Math.Max(5, configuracao.SegundosDeEspera)));
-        cancelamento = limite.Token;
 
         try
         {
-            using var resposta = await cliente.SendAsync(requisicao, cancelamento);
+            using var resposta = await cliente.SendAsync(requisicao, limite.Token);
             if (!resposta.IsSuccessStatusCode)
             {
-                // Só o código e o status do Google (ex.: PERMISSION_DENIED, RESOURCE_EXHAUSTED), nunca o pedido.
-                log?.LogWarning("O Gemini recusou o pedido: {Codigo} {Status}", (int)resposta.StatusCode, await StatusDoErroAsync(resposta, cancelamento));
-                return null;
+                // Só o código e o status do Google (ex.: UNAVAILABLE, RESOURCE_EXHAUSTED), nunca o pedido.
+                log?.LogWarning("O Gemini ({Modelo}) recusou o pedido: {Codigo} {Status}",
+                    modelo, (int)resposta.StatusCode, await StatusDoErroAsync(resposta, limite.Token));
+                return (null, (int)resposta.StatusCode is 429 or 500 or 503 or 504);
             }
 
-            using var documento = await JsonDocument.ParseAsync(await resposta.Content.ReadAsStreamAsync(cancelamento), cancellationToken: cancelamento);
-            return TextoDa(documento.RootElement);
+            using var documento = await JsonDocument.ParseAsync(await resposta.Content.ReadAsStreamAsync(limite.Token), cancellationToken: limite.Token);
+            return (TextoDa(documento.RootElement), false);
         }
         catch (Exception erro) when (erro is HttpRequestException or JsonException or TaskCanceledException)
         {
-            log?.LogWarning("Não foi possível falar com o Gemini: {Erro}", erro is TaskCanceledException ? "tempo esgotado" : erro.GetType().Name);
-            return null;
+            log?.LogWarning("Não foi possível falar com o Gemini ({Modelo}): {Erro}",
+                modelo, erro is TaskCanceledException ? "tempo esgotado" : erro.GetType().Name);
+            // Se quem cancelou foi a requisição do painel, não adianta tentar outro modelo.
+            return (null, !cancelamento.IsCancellationRequested && erro is not JsonException);
         }
     }
 

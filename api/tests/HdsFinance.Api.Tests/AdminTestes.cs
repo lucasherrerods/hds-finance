@@ -383,13 +383,4 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
         json.RootElement.GetProperty("faturas")[0].GetProperty("banco").GetString().Should().Be("Nubank");
         json.RootElement.GetProperty("saldo").ValueKind.Should().Be(JsonValueKind.Null);
     }
-
-    [Fact]
-    public async Task A_demonstracao_nao_le_nubank()
-    {
-        var conta = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "samples", "nubank-conta.csv"));
-        var resposta = await Cliente().PostAsync("/demonstracao/resumo", new MultipartFormDataContent { { new ByteArrayContent(conta), "arquivo", "conta.csv" } });
-
-        resposta.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
-    }
 }

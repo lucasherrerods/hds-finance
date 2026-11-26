@@ -5,7 +5,7 @@ using HdsFinance.Domain;
 
 namespace HdsFinance.Infrastructure.Extratos;
 
-/// <summary>Só na área admin: reconhece pelo cabeçalho se o CSV é da conta do Nubank; senão, é do Inter.</summary>
+/// <summary>Reconhece pelo cabeçalho se o CSV é da conta do Nubank; senão, é do Inter.</summary>
 public sealed partial class LeitorCsvPorBanco : ILeitorDeExtrato
 {
     private const string CabecalhoDoNubank = "Data,Valor,Identificador,";

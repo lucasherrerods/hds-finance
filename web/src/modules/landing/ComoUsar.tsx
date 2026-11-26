@@ -2,7 +2,7 @@ import { BarChart3, Download, Upload, type LucideIcon } from 'lucide-react'
 import { AbreNaRolagem, Revelar } from '../../shared'
 
 const passos: { icone: LucideIcon; titulo: string; texto: string }[] = [
-  { icone: Download, titulo: 'Exporta', texto: 'No app do Inter: Extrato, escolhe o período e exporta em OFX ou CSV.' },
+  { icone: Download, titulo: 'Exporta', texto: 'No app do Inter ou do Nubank: escolhe o período e exporta o extrato da conta.' },
   { icone: Upload, titulo: 'Solta aqui', texto: 'O arquivo é lido na hora e esquecido logo depois.' },
   { icone: BarChart3, titulo: 'Confere', texto: 'Quanto entrou, quanto saiu, quanto sobrou. E onde foi parar o resto.' },
 ]

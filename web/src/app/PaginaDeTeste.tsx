@@ -20,7 +20,7 @@ export function PaginaDeTeste() {
       >
         <h1 className="text-5xl leading-[1.02] font-bold tracking-[-0.03em] sm:text-6xl">Solta o extrato aqui</h1>
         <p className="max-w-[48ch] text-lg leading-relaxed text-texto-suave">
-          No app do Inter, vá em Extrato, escolha o período e exporte em OFX ou CSV. Depois é só largar o arquivo ao
+          No app do Inter, vá em Extrato e exporte em OFX ou CSV. No Nubank, peça o extrato da conta em CSV. Depois é só largar o arquivo ao
           lado.
         </p>
         <AvisoDePrivacidade />

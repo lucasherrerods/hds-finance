@@ -98,7 +98,8 @@ public static class Composicao
         services.AddHttpClient<IAssistente, AssistenteGemini>(cliente =>
         {
             cliente.BaseAddress = new Uri(configuracao[$"{OpcoesDoAssistente.Secao}:Endereco"] ?? OpcoesDoAssistente.EnderecoPadrao);
-            cliente.Timeout = TimeSpan.FromSeconds(30);
+            // O limite de verdade é Assistente:SegundosDeEspera, aplicado em cada pedido.
+            cliente.Timeout = TimeSpan.FromMinutes(3);
         });
         services.AddSingleton<MemoriaDoAssistente>();
         services.AddScoped<AnalisarMes>();

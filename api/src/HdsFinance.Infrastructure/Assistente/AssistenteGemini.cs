@@ -12,11 +12,19 @@ public sealed class OpcoesDoAssistente
 {
     public const string Secao = "Assistente";
     public const string EnderecoPadrao = "https://generativelanguage.googleapis.com/";
-    public const string ModeloPadrao = "gemini-2.5-flash";
+    public const string ModeloPadrao = "gemini-flash-latest";
 
     public string? ChaveDaApi { get; set; }
 
     public string Modelo { get; set; } = ModeloPadrao;
+
+    /// <summary>
+    /// Quanto o modelo "pensa" antes de responder (minimal, low, medium, high). Os pedidos daqui são simples,
+    /// e pensar muito estoura o tempo limite. Vazio deixa o padrão do modelo.
+    /// </summary>
+    public string? Raciocinio { get; set; } = "low";
+
+    public int SegundosDeEspera { get; set; } = 60;
 
     public string Endereco { get; set; } = EnderecoPadrao;
 
@@ -35,9 +43,12 @@ public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssist
         [property: JsonPropertyName("parts")] Parte[] Partes,
         [property: JsonPropertyName("role"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Papel = null);
 
+    private sealed record Raciocinio([property: JsonPropertyName("thinkingLevel")] string Nivel);
+
     private sealed record Configuracao(
         [property: JsonPropertyName("temperature")] double Temperatura,
-        [property: JsonPropertyName("responseMimeType")] string TipoDaResposta);
+        [property: JsonPropertyName("responseMimeType")] string TipoDaResposta,
+        [property: JsonPropertyName("thinkingConfig"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Raciocinio? Raciocinio);
 
     private sealed record Pedido(
         [property: JsonPropertyName("systemInstruction")] Conteudo Instrucoes,
@@ -56,7 +67,8 @@ public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssist
         var corpo = new Pedido(
             new Conteudo([new Parte(instrucoes)]),
             [new Conteudo([new Parte(pedido)], "user")],
-            new Configuracao(0.3, json ? "application/json" : "text/plain"));
+            new Configuracao(0.3, json ? "application/json" : "text/plain",
+                string.IsNullOrWhiteSpace(configuracao.Raciocinio) ? null : new Raciocinio(configuracao.Raciocinio)));
 
         // A chave vai no cabeçalho, não na URL, para não aparecer em log de acesso.
         using var requisicao = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/{Uri.EscapeDataString(configuracao.Modelo)}:generateContent")
@@ -64,6 +76,10 @@ public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssist
             Content = JsonContent.Create(corpo),
         };
         requisicao.Headers.Add("x-goog-api-key", configuracao.ChaveDaApi);
+
+        using var limite = CancellationTokenSource.CreateLinkedTokenSource(cancelamento);
+        limite.CancelAfter(TimeSpan.FromSeconds(Math.Max(5, configuracao.SegundosDeEspera)));
+        cancelamento = limite.Token;
 
         try
         {
@@ -80,7 +96,7 @@ public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssist
         }
         catch (Exception erro) when (erro is HttpRequestException or JsonException or TaskCanceledException)
         {
-            log?.LogWarning("Não foi possível falar com o Gemini: {Erro}", erro.GetType().Name);
+            log?.LogWarning("Não foi possível falar com o Gemini: {Erro}", erro is TaskCanceledException ? "tempo esgotado" : erro.GetType().Name);
             return null;
         }
     }

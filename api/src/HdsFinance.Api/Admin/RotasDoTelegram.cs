@@ -50,7 +50,7 @@ public static class RotasDoTelegram
         try
         {
             using var json = await JsonDocument.ParseAsync(requisicao.Body, cancellationToken: cancelamento);
-            if (!json.RootElement.TryGetProperty("message", out var mensagem)
+            if (json.RootElement.ValueKind != JsonValueKind.Object || !json.RootElement.TryGetProperty("message", out var mensagem)
                 || !mensagem.TryGetProperty("chat", out var chat) || !chat.TryGetProperty("id", out var id) || !id.TryGetInt64(out var chatId)
                 || !mensagem.TryGetProperty("text", out var texto) || texto.ValueKind != JsonValueKind.String)
             {

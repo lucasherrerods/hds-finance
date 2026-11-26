@@ -63,7 +63,7 @@ public sealed class SugerirCategorias(IAssistente assistente, MemoriaDoAssistent
         try
         {
             using var json = JsonDocument.Parse(resposta);
-            if (!json.RootElement.TryGetProperty("sugestoes", out var lista) || lista.ValueKind != JsonValueKind.Array)
+            if (json.RootElement.ValueKind != JsonValueKind.Object || !json.RootElement.TryGetProperty("sugestoes", out var lista) || lista.ValueKind != JsonValueKind.Array)
             {
                 return [];
             }

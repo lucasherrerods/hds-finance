@@ -8,6 +8,7 @@ import {
   PiggyBank,
   ReceiptText,
   ShieldCheck,
+  Tags,
   TrendingUp,
   Upload,
   Wallet,
@@ -39,6 +40,7 @@ const secoes: { caminho: string; rotulo: string; icone: LucideIcon }[] = [
   { caminho: '', rotulo: 'Visão geral', icone: LayoutDashboard },
   { caminho: '/evolucao', rotulo: 'Evolução', icone: TrendingUp },
   { caminho: '/transacoes', rotulo: 'Transações', icone: ReceiptText },
+  { caminho: '/categorias', rotulo: 'Categorias', icone: Tags },
   { caminho: '/investimentos', rotulo: 'Investimentos', icone: PiggyBank },
 ]
 
@@ -115,7 +117,7 @@ function DashboardDaDemonstracao() {
       dados={{ ...resumo, quantidade: resumo.transacoesNovas }}
       arquivo={arquivo}
       ajustes={ajustes}
-      edicao={{ categorias: resumo.categorias ?? [], aoMudar, aoOcultar }}
+      edicao={{ categorias: resumo.categorias ?? [], grupos: resumo.grupos, aoMudar, aoOcultar }}
       aviso={aviso}
       fecharAviso={() => setAviso(null)}
       origem={{ icone: FileText, nome: arquivo.name }}
@@ -241,6 +243,7 @@ function DashboardDoAdmin() {
       arquivo={null}
       edicao={{
         categorias: historico.categorias,
+        grupos: historico.grupos,
         aoMudar: (transacao, categoria) => void aoMudarCategoria(transacao, categoria),
         aoOcultar: (transacao, oculta) => void aoOcultar(transacao, oculta),
         aoApagar: (transacao) => void aoApagar(transacao),

@@ -4,8 +4,6 @@ Fechamento mensal das finanças a partir dos extratos do Banco Inter.
 
 O Inter mostra o extrato e o saldo dos investimentos, mas não oferece uma visão consolidada do mês: entradas x saídas, evolução do saldo, gastos por categoria e posição dos investimentos, num lugar só. Também não há API de leitura de extrato para pessoa física. O hds-finance resolve isso a partir do arquivo que o próprio banco exporta (`.ofx` ou `.csv`).
 
-> Projeto pessoal e de portfólio, em desenvolvimento.
-
 ## Como funciona
 
 1. Exporte o extrato no app ou no site do Inter.

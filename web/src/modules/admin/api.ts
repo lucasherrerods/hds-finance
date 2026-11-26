@@ -1,6 +1,6 @@
 import { chamarAdmin, MENSAGEM_SEM_SERVIDOR, mensagemDoProblema } from '../../shared'
 import type { Fatura, Saldo } from '../dashboard'
-import type { Painel, ResumoMensal, TransacaoCategorizada } from '../import'
+import type { GrupoDeCategoria, Painel, ResumoMensal, TransacaoCategorizada } from '../import'
 
 export type Historico = {
   meses: ResumoMensal[]
@@ -10,6 +10,7 @@ export type Historico = {
   categorias: string[]
   saldo: Saldo | null
   faturas: Fatura[]
+  grupos?: GrupoDeCategoria[]
 }
 
 type Falha = { ok: false; mensagem: string }

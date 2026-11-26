@@ -80,6 +80,6 @@ public class EmprestimoTestes
     [Fact]
     public void Gasto_marcado_como_entrada_segue_as_regras()
     {
-        Categorizador.Padrao.Categorizar(Em(-50m, "Mercado", TransacaoCategorizada.CategoriaDeEntrada)).Should().Be("Alimentação");
+        Categorizador.Padrao.Categorizar(Em(-50m, "Mercado", TransacaoCategorizada.CategoriaDeEntrada)).Should().Be("Supermercado");
     }
 }

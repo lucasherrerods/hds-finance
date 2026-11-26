@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, CreditCard } from 'lucide-react'
 import { useId, useState } from 'react'
-import { formatarData, formatarMes, formatarMesCurto, formatarMoeda, formatarMoedaCompacta, IconeDoBanco, type NomeDoBanco } from '../../shared'
+import { formatarData, formatarMes, formatarMesCurto, formatarMoeda, IconeDoBanco, type NomeDoBanco } from '../../shared'
 import { Cartao } from './Cartao'
 import { DetalheDaFatura } from './DetalheDaFatura'
 import { bancoDaFatura, chaveDaFatura, janelaDeFaturas, mesDaFatura, ultimaDeCadaBanco, valorDaFatura, type Fatura } from './faturas'
@@ -135,7 +135,7 @@ function GraficoDeFaturas({ faturas, bancos, aberta, aoAbrir }: GraficoProps) {
                 className="group flex w-full flex-col items-center gap-2 rounded-xl py-2"
               >
                 <span className="flex h-48 w-full flex-col items-center justify-end gap-2">
-                  <span className="hidden text-sm whitespace-nowrap text-texto-suave tabular-nums sm:inline">{formatarMoedaCompacta(valorDaFatura(f))}</span>
+                  <span className="hidden text-sm whitespace-nowrap text-texto-suave tabular-nums md:inline">{formatarMoeda(valorDaFatura(f))}</span>
                   <span
                     className={`w-full max-w-20 rounded-lg transition-colors ${
                       chave === aberta || f === doBanco[0] ? 'bg-primaria' : 'bg-primaria/25 group-hover:bg-primaria/50'

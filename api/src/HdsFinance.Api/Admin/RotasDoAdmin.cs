@@ -12,7 +12,7 @@ namespace HdsFinance.Api.Admin;
 /// <summary>Categorias são as que dá para escolher ao corrigir uma transação.</summary>
 public sealed record HistoricoJson(
     IReadOnlyList<MesJson> Meses, PainelJson? Painel, IReadOnlyList<TransacaoJson> Transacoes, IReadOnlyList<string> Categorias,
-    SaldoJson? Saldo, IReadOnlyList<FaturaJson> Faturas);
+    SaldoJson? Saldo, IReadOnlyList<FaturaJson> Faturas, IReadOnlyList<GrupoDeCategoria> Grupos);
 
 public sealed record FaturaJson(DateOnly Vencimento, decimal? Total, decimal Gasto, bool? Paga, IReadOnlyList<TransacaoJson> Compras, string Banco,
     IReadOnlyList<GastoJson> GastosPorCategoria);
@@ -167,7 +167,8 @@ public static class RotasDoAdmin
             categorizador.Categorias,
             historico.Saldo is { } s ? new SaldoJson(s.Valor, s.Em, s.Informado, s.AntesDoHistorico) : null,
             historico.Faturas.Select(f => new FaturaJson(f.Vencimento, f.Total, f.Gasto, f.Paga, f.Compras.Select(JsonDoResumo.De).ToList(), f.Banco.ToString(),
-                f.GastosPorCategoria.Select(g => new GastoJson(g.Categoria, g.Valor)).ToList())).ToList()));
+                f.GastosPorCategoria.Select(GastoJson.De).ToList())).ToList(),
+            GruposDeCategoria.Todos));
     }
 
     private static async Task<IResult> CorrigirCategoriaAsync(CorrecaoJson correcao, CorrigirCategoria corrigir, CancellationToken cancelamento) =>

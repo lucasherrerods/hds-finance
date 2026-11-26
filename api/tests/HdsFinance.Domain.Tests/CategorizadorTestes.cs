@@ -39,8 +39,8 @@ public class CategorizadorTestes
     [Fact]
     public void As_regras_padrao_cobrem_gastos_comuns()
     {
-        Categorizador.Padrao.Categorizar(Gasto("Pag*Ifood Restaurante")).Should().Be("Alimentação");
-        Categorizador.Padrao.Categorizar(Gasto("Drogaria Exemplo")).Should().Be("Saúde");
+        Categorizador.Padrao.Categorizar(Gasto("Pag*Ifood Restaurante")).Should().Be("Delivery de alimentos");
+        Categorizador.Padrao.Categorizar(Gasto("Drogaria Exemplo")).Should().Be("Farmácia");
     }
 
     [Theory]
@@ -53,17 +53,17 @@ public class CategorizadorTestes
     }
 
     [Theory]
-    [InlineData("Compra no debito Netflix.com", "Assinaturas")]
-    [InlineData("Compra no debito Amazon Prime Video", "Assinaturas")]
-    [InlineData("MERCADOLIVRE*LOJAFICTICIA", "Compras")]
-    [InlineData("Compra no debito Assai Atacadista", "Alimentação")]
-    [InlineData("Pagamento efetuado Sabesp", "Moradia")]
-    [InlineData("Compra no debito Drogasil", "Saúde")]
-    [InlineData("Compra no debito Sympla Ingresso", "Lazer")]
-    [InlineData("Compra no debito Udemy Curso", "Educação")]
-    [InlineData("Compra no debito Petz Loja", "Pets")]
-    [InlineData("Tarifa IOF compra internacional", "Tarifas e impostos")]
-    [InlineData("Pagamento IPVA 2026", "Tarifas e impostos")]
+    [InlineData("Compra no debito Netflix.com", "Streaming de vídeo")]
+    [InlineData("Compra no debito Amazon Prime Video", "Streaming de vídeo")]
+    [InlineData("MERCADOLIVRE*LOJAFICTICIA", "Compras online")]
+    [InlineData("Compra no debito Assai Atacadista", "Supermercado")]
+    [InlineData("Pagamento efetuado Sabesp", "Contas da casa")]
+    [InlineData("Compra no debito Drogasil", "Farmácia")]
+    [InlineData("Compra no debito Sympla Ingresso", "Cinema e eventos")]
+    [InlineData("Compra no debito Udemy Curso", "Cursos")]
+    [InlineData("Compra no debito Petz Loja", "Pet shop e veterinário")]
+    [InlineData("Tarifa IOF compra internacional", "Tarifas bancárias")]
+    [InlineData("Pagamento IPVA 2026", "Impostos")]
     public void As_regras_padrao_reconhecem_os_nomes_mais_comuns(string descricao, string esperada)
     {
         Categorizador.Padrao.Categorizar(Gasto(descricao)).Should().Be(esperada);

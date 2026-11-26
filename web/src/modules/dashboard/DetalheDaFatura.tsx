@@ -40,7 +40,7 @@ export function DetalheDaFatura({ fatura, aoFechar }: { fatura: Fatura; aoFechar
               <li key={g.categoria} className="flex flex-col gap-1">
                 <span className="flex items-center justify-between gap-4">
                   <span className="flex min-w-0 items-center gap-2">
-                    <IconeDaCategoria categoria={g.categoria} className="size-4 shrink-0 opacity-70" />
+                    <IconeDaCategoria categoria={g.categoria} grupo={g.grupo} className="size-4 shrink-0 opacity-70" />
                     <span className="truncate">{g.categoria}</span>
                   </span>
                   <span className="font-semibold tabular-nums">{formatarMoeda(g.valor)}</span>
@@ -63,7 +63,7 @@ export function DetalheDaFatura({ fatura, aoFechar }: { fatura: Fatura; aoFechar
             <li key={c.chave ?? i} className="flex items-center justify-between gap-4 border-t border-borda py-3">
               <span className="flex min-w-0 items-center gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-fundo">
-                  <IconeDaCategoria categoria={c.categoria} className="size-4 opacity-70" />
+                  <IconeDaCategoria categoria={c.categoria} grupo={c.grupo} className="size-4 opacity-70" />
                 </span>
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate">{c.descricao}</span>

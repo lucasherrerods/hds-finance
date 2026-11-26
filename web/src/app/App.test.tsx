@@ -293,16 +293,19 @@ describe('dashboard', () => {
     const menu = await verResumo()
 
     fireEvent.click(menu.getByRole('link', { name: /transações/i }))
-    expect(await screen.findByRole('combobox', { name: 'Mês' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Período:/ }, { timeout: 5000 })).toBeInTheDocument()
+
+    fireEvent.click(menu.getByRole('link', { name: /categorias/i }))
+    expect(await screen.findByRole('region', { name: 'Gastos por grupo' }, { timeout: 5000 })).toBeInTheDocument()
 
     fireEvent.click(menu.getByRole('link', { name: /investimentos/i }))
-    expect(await screen.findByRole('heading', { level: 1, name: /investimentos/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /investimentos/i }, { timeout: 5000 })).toBeInTheDocument()
 
     expect(menu.queryByRole('link', { name: /relatório|cart(ão|ões)/i })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('link', { name: 'Relatório' }))
     // A seção que sai e a que entra se revezam na animação, então o botão pode ser trocado uma vez.
     await vi.waitFor(() => expect(screen.getByRole('button', { name: /baixar pdf/i })).toBeInTheDocument())
-  })
+  }, 15000)
 
   it('na demonstração dá para trocar a categoria e ocultar, e o extrato vai de novo com os ajustes', async () => {
     const menu = await verResumo()

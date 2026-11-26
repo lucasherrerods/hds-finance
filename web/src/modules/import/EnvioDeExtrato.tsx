@@ -13,7 +13,7 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
   const [erro, setErro] = useState<string | null>(null)
   const [demorando, setDemorando] = useState(false)
 
-  // A api gratuita dorme quando fica parada; a primeira requisição pode levar quase um minuto.
+  // A api dorme quando fica parada; a primeira requisição pode levar quase um minuto.
   useEffect(() => {
     if (!enviando) return
     const relogio = setTimeout(() => setDemorando(true), 4000)
@@ -117,7 +117,7 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
       </div>
       {demorando && (
         <p role="status" className="text-texto-suave">
-          O servidor gratuito pode estar acordando. Na primeira vez do dia isso leva até um minuto.
+          O servidor pode estar acordando. Na primeira vez do dia isso leva até um minuto.
         </p>
       )}
       {erro && (

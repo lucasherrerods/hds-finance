@@ -39,7 +39,7 @@ export function Destaque({ painel }: Props) {
         <Indicador rotulo="Maior categoria">
           {maior ? (
             <span className="flex min-w-0 items-center gap-2">
-              <IconeDaCategoria categoria={maior.categoria} className="size-5 shrink-0 opacity-70" />
+              <IconeDaCategoria categoria={maior.categoria} grupo={maior.grupo} className="size-5 shrink-0 opacity-70" />
               <span className="truncate">{maior.categoria}</span>
             </span>
           ) : (

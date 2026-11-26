@@ -9,7 +9,8 @@ public sealed record ResumoDoExtratoJson(
     IReadOnlyList<MesJson> Meses,
     PainelJson? Painel,
     IReadOnlyList<TransacaoJson> Transacoes,
-    IReadOnlyList<string> Categorias);
+    IReadOnlyList<string> Categorias,
+    IReadOnlyList<GrupoDeCategoria> Grupos);
 
 public sealed record MesJson(
     int Ano,
@@ -27,7 +28,11 @@ public sealed record MesJson(
 /// <summary>Aplicado e resgatado no mês e o aplicado líquido desde o início do histórico, sem rendimentos.</summary>
 public sealed record InvestimentosJson(decimal Aplicado, decimal Resgatado, decimal AplicadoAcumulado);
 
-public sealed record GastoJson(string Categoria, decimal Valor);
+/// <summary>Grupo é o conjunto da categoria (Supermercado fica em Alimentação).</summary>
+public sealed record GastoJson(string Categoria, decimal Valor, string Grupo)
+{
+    public static GastoJson De(GastoPorCategoria g) => new(g.Categoria, g.Valor, GruposDeCategoria.GrupoDe(g.Categoria));
+}
 
 public sealed record PainelJson(
     int Ano,
@@ -47,9 +52,9 @@ public sealed record PontoDoRitmoJson(int Dia, decimal? AcumuladoAtual, decimal?
 /// <summary>DiaDaSemana vai de 0 (domingo) a 6 (sábado).</summary>
 public sealed record GastoDoDiaJson(int Dia, int DiaDaSemana, int Semana, decimal Valor);
 
-public sealed record CategoriaComparadaJson(string Categoria, decimal Atual, decimal? Anterior, decimal? VariacaoPercentual);
+public sealed record CategoriaComparadaJson(string Categoria, decimal Atual, decimal? Anterior, decimal? VariacaoPercentual, string Grupo);
 
-public sealed record TransacaoJson(DateOnly Data, string Descricao, string Categoria, decimal Valor, bool NoCartao, string Chave, bool Oculta, string Banco);
+public sealed record TransacaoJson(DateOnly Data, string Descricao, string Categoria, decimal Valor, bool NoCartao, string Chave, bool Oculta, string Banco, string Grupo);
 
 public static class JsonDoResumo
 {
@@ -59,12 +64,13 @@ public static class JsonDoResumo
         resumido.Meses.Select(De).ToList(),
         resumido.Painel is null ? null : De(resumido.Painel),
         resumido.Transacoes.Select(De).ToList(),
-        resumido.Categorias);
+        resumido.Categorias,
+        GruposDeCategoria.Todos);
 
     internal static MesJson De(ResumoMensal m) => new(
         m.Mes.Ano, m.Mes.Mes, m.Entradas, m.Saidas, m.Resultado,
         m.InvestimentosETransferencias, m.SaldoInicial, m.SaldoFinal,
-        m.GastosPorCategoria.Select(g => new GastoJson(g.Categoria, g.Valor)).ToList(),
+        m.GastosPorCategoria.Select(GastoJson.De).ToList(),
         new InvestimentosJson(m.Investimentos.Aplicado, m.Investimentos.Resgatado, m.Investimentos.AplicadoAcumulado),
         m.Emprestimos);
 
@@ -78,10 +84,10 @@ public static class JsonDoResumo
         p.MaiorGasto is null ? null : De(p.MaiorGasto),
         p.Ritmo.Select(r => new PontoDoRitmoJson(r.Dia, r.AcumuladoAtual, r.AcumuladoAnterior)).ToList(),
         p.MapaDeCalor.Select(De).ToList(),
-        p.PrincipaisCategorias.Select(c => new CategoriaComparadaJson(c.Categoria, c.Atual, c.Anterior, c.VariacaoPercentual)).ToList(),
+        p.PrincipaisCategorias.Select(c => new CategoriaComparadaJson(c.Categoria, c.Atual, c.Anterior, c.VariacaoPercentual, GruposDeCategoria.GrupoDe(c.Categoria))).ToList(),
         p.TransacoesRecentes.Select(De).ToList());
 
-    internal static TransacaoJson De(TransacaoCategorizada t) => new(t.Data, t.Descricao, t.Categoria, t.Valor, t.NoCartao, t.Chave, t.Oculta, t.Banco.ToString());
+    internal static TransacaoJson De(TransacaoCategorizada t) => new(t.Data, t.Descricao, t.Categoria, t.Valor, t.NoCartao, t.Chave, t.Oculta, t.Banco.ToString(), GruposDeCategoria.GrupoDe(t.Categoria));
 
     private static GastoDoDiaJson De(GastoDoDia d) => new(d.Dia, (int)d.DiaDaSemana, d.Semana, d.Valor);
 }

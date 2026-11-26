@@ -14,14 +14,14 @@ public static class GruposDeCategoria
 
     public static IReadOnlyList<GrupoDeCategoria> Todos { get; } =
     [
-        new("Alimentação", ["Restaurantes, bares e lanchonetes", "Supermercado", "Delivery de alimentos", "Alimentos e bebidas"]),
+        new("Alimentação", ["Restaurantes, bares e lanchonetes", "Supermercado", "Delivery de alimentos", "Alimentos e bebidas", "Lanches e guloseimas"]),
         new("Transporte", ["Transporte público", "Táxi e transporte privado urbano", "Combustível", "Pedágios e pagamentos no veículo"]),
         new("Moradia", ["Aluguel e condomínio", "Contas da casa", "Internet e telefone"]),
-        new("Saúde", ["Farmácia", "Consultas e planos de saúde", "Academia"]),
+        new("Saúde", ["Farmácia", "Consultas e planos de saúde", "Academia", "Bem-estar"]),
         new("Serviços digitais", ["Streaming de vídeo", "Streaming de música", "Serviços digitais"]),
-        new("Compras", ["Compras online", "Lojas"]),
+        new("Compras", ["Compras", "Compras online", "Lojas", "Vestuário"]),
         new("Lazer", ["Cinema e eventos", "Jogos"]),
-        new("Educação", ["Cursos", "Livros"]),
+        new("Educação", ["Cursos", "Livros", "Universidade"]),
         new("Pets", ["Pet shop e veterinário"]),
         new("Finanças", ["Tarifas bancárias", "Juros e IOF", "Impostos", Emprestimo.Categoria]),
         new(Outros, [Categorizador.SemCategoria]),

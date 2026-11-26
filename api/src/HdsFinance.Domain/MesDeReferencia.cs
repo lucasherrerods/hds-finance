@@ -11,6 +11,8 @@ public readonly record struct MesDeReferencia(int Ano, int Mes)
     /// <summary>O mês está completo quando algum extrato importado cobre até o último dia dele.</summary>
     public bool EstaCompleto(DateOnly? cobertoAte) => cobertoAte >= UltimoDia;
 
+    public bool AntesDe(MesDeReferencia outro) => (Ano, Mes).CompareTo((outro.Ano, outro.Mes)) < 0;
+
     public static MesDeReferencia De(DateOnly data) => new(data.Year, data.Month);
 
     /// <summary>O mês mais recente que a cobertura dos extratos já fechou.</summary>

@@ -1,6 +1,8 @@
 using FluentAssertions;
 using HdsFinance.Application.Extratos;
 using HdsFinance.Application.Admin;
+using HdsFinance.Application.Assistente;
+using HdsFinance.Application.Tests.Assistente;
 using HdsFinance.Application.Relatorios;
 using HdsFinance.Domain;
 using Microsoft.Extensions.Time.Testing;
@@ -130,6 +132,29 @@ public class FecharMesTestes
 
         resultado.Should().Be(new ResultadoDoFechamento.FalhaNoEnvio(Outubro, "Serviço de e-mail fora do ar."));
         _registro.Enviados.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Com_telegram_o_fechamento_vai_com_a_analise_e_basta_um_canal_entregar()
+    {
+        await _registro.RegistrarExtratoAsync(new DateOnly(2026, 10, 31), null);
+        _notificador.EnviarAsync(Arg.Any<MesDeReferencia>(), Arg.Any<byte[]>(), Arg.Any<CancellationToken>())
+            .Returns(new ResultadoDoEnvio.Falha("E-mail não configurado."));
+        var mensageiro = Substitute.For<IMensageiro>();
+        mensageiro.Configurado.Returns(true);
+        mensageiro.EnviarTextoAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(true);
+        mensageiro.EnviarArquivoAsync(Arg.Any<string>(), Arg.Any<byte[]>(), Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(true);
+        var tempo = new FakeTimeProvider(new DateTimeOffset(2026, 11, 9, 10, 0, 0, TimeSpan.Zero));
+        var gerador = Substitute.For<IGeradorDeRelatorio>();
+        gerador.Gerar(Arg.Any<Relatorio>()).Returns([1, 2, 3]);
+        var fechar = new FecharMes(_transacoes, _registro, new GerarRelatorio(gerador, tempo), _notificador, tempo,
+            analisar: new AnalisarMes(new AssistenteFalso("Mês tranquilo."), new MemoriaDoAssistente()), mensageiro: mensageiro);
+
+        var resultado = await fechar.EnviarAsync(Outubro);
+
+        resultado.Should().Be(new ResultadoDoFechamento.Enviado(Outubro));
+        await mensageiro.Received(1).EnviarTextoAsync(Arg.Is<string>(t => t.Contains("Mês tranquilo.")), Arg.Any<CancellationToken>());
+        await mensageiro.Received(1).EnviarArquivoAsync("fechamento-2026-10.pdf", Arg.Any<byte[]>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

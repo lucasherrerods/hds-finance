@@ -56,6 +56,7 @@ app.MapearDemonstracao();
 if (comAdmin)
 {
     app.MapearAdmin();
+    app.MapearTelegram();
 }
 
 app.Run();

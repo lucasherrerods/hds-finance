@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using HdsFinance.Application.Assistente;
 using HdsFinance.Application.Categorias;
 using HdsFinance.Application.Acesso;
 using HdsFinance.Application.Extratos;
@@ -6,6 +7,7 @@ using HdsFinance.Application.Admin;
 using HdsFinance.Application.Relatorios;
 using HdsFinance.Domain;
 using HdsFinance.Infrastructure.Acesso;
+using HdsFinance.Infrastructure.Assistente;
 using HdsFinance.Infrastructure.Extratos;
 using HdsFinance.Infrastructure.Notificacoes;
 using HdsFinance.Infrastructure.Relatorios;
@@ -90,6 +92,27 @@ public static class Composicao
                 .Select(c => new CategoriaAprendida(c.Descricao, c.Categoria))
                 .ToList()));
         services.AddScoped<CorrigirCategoria>();
+
+        // IA e Telegram só no admin. Sem chave ou token, os adaptadores ficam mudos e o resto funciona igual.
+        services.Configure<OpcoesDoAssistente>(configuracao.GetSection(OpcoesDoAssistente.Secao));
+        services.AddHttpClient<IAssistente, AssistenteGemini>(cliente =>
+        {
+            cliente.BaseAddress = new Uri(configuracao[$"{OpcoesDoAssistente.Secao}:Endereco"] ?? OpcoesDoAssistente.EnderecoPadrao);
+            cliente.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddSingleton<MemoriaDoAssistente>();
+        services.AddScoped<AnalisarMes>();
+        services.AddScoped<SugerirCategorias>();
+        services.AddScoped<ResponderPergunta>();
+        services.AddScoped<ConversaDoBot>();
+
+        services.Configure<OpcoesDoTelegram>(configuracao.GetSection(OpcoesDoTelegram.Secao));
+        // O token vai na URL da Bot API: sem os loggers do HttpClient, ele nunca chega ao log.
+        services.AddHttpClient<IMensageiro, MensageiroTelegram>(cliente =>
+        {
+            cliente.BaseAddress = new Uri(configuracao[$"{OpcoesDoTelegram.Secao}:Endereco"] ?? OpcoesDoTelegram.EnderecoPadrao);
+            cliente.Timeout = TimeSpan.FromSeconds(30);
+        }).RemoveAllLoggers();
 
         // Sem chave configurada, uma aleatória vale até a api reiniciar: o admin entra de novo depois disso.
         var chave = configuracao["Admin:ChaveDeAssinatura"] is { Length: > 0 } definida

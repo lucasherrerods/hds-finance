@@ -2,6 +2,7 @@ using System.Threading.RateLimiting;
 using HdsFinance.Api.Demonstracao;
 using HdsFinance.Application.Acesso;
 using HdsFinance.Application.Admin;
+using HdsFinance.Application.Assistente;
 using HdsFinance.Application.Categorias;
 using HdsFinance.Application.Extratos;
 using HdsFinance.Domain;
@@ -32,6 +33,15 @@ public sealed record CategoriaDaTransacaoJson(string Chave, string? Categoria);
 public sealed record OcultaJson(string Chave, bool Oculta);
 
 public sealed record RemocaoJson(int Apagadas);
+
+public sealed record AlertaJson(string Tipo, string Assunto, decimal Valor, decimal? Referencia, string Texto);
+
+/// <summary>Comentário nulo quando a IA não está configurada ou não respondeu; os alertas vêm sempre.</summary>
+public sealed record AnaliseJson(int Ano, int Mes, string? Comentario, IReadOnlyList<AlertaJson> Alertas);
+
+public sealed record PerguntaJson(string Pergunta);
+
+public sealed record RespostaJson(string Resposta);
 
 public sealed record TransacaoParaApagarJson(DateOnly Data, decimal Valor, string Descricao);
 
@@ -76,6 +86,11 @@ public static class RotasDoAdmin
         protegidas.MapGet("/relatorio", RelatorioAsync);
         protegidas.MapPost("/fechamento", EnviarFechamentoAsync);
         protegidas.MapPut("/categorias", CorrigirCategoriaAsync);
+
+        var assistente = protegidas.MapGroup("/assistente");
+        assistente.MapGet("/analise", AnaliseAsync);
+        assistente.MapGet("/sugestoes", SugestoesAsync);
+        assistente.MapPost("/pergunta", PerguntaAsync);
     }
 
     private static async ValueTask<object?> ExigirCabecalhoAsync(EndpointFilterInvocationContext contexto, EndpointFilterDelegate proximo) =>
@@ -250,6 +265,26 @@ public static class RotasDoAdmin
             ? RespostasHttp.De(await fechar.EnviarAsync(escolhido, forcar ?? false, cancelamento))
             : RespostasHttp.De(new ResultadoDoFechamento.SemDados(default));
     }
+
+    private static async Task<IResult> AnaliseAsync(FecharMes fechar, string? mes, CancellationToken cancelamento)
+    {
+        if (LerMes(mes) is not (true, var pedido))
+        {
+            return RespostasHttp.MesInvalido();
+        }
+
+        return await fechar.AnalisarAsync(pedido, cancelamento) is { } analise
+            ? Results.Ok(new AnaliseJson(analise.Mes.Ano, analise.Mes.Mes, analise.Comentario,
+                analise.Alertas.Select(a => new AlertaJson(a.Tipo.ToString(), a.Assunto, a.Valor, a.Referencia, a.Texto)).ToList()))
+            : Results.NoContent();
+    }
+
+    /// <summary>Aceitar uma sugestão é o mesmo PUT /categorias de quando o admin corrige na mão.</summary>
+    private static async Task<IResult> SugestoesAsync(FecharMes fechar, SugerirCategorias sugerir, CancellationToken cancelamento) =>
+        Results.Ok(await sugerir.ExecutarAsync(await fechar.TransacoesAsync(cancelamento), cancelamento));
+
+    private static async Task<IResult> PerguntaAsync(PerguntaJson pedido, FecharMes fechar, ResponderPergunta responder, CancellationToken cancelamento) =>
+        Results.Ok(new RespostaJson(await responder.ExecutarAsync(await fechar.MesesAsync(cancelamento), pedido.Pergunta ?? string.Empty, cancelamento)));
 
     private static (bool Valido, MesDeReferencia? Mes) LerMes(string? texto) =>
         texto is null ? (true, null) : MesDeReferencia.TentarLer(texto) is { } mes ? (true, mes) : (false, null);

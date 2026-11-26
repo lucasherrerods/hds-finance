@@ -87,7 +87,7 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
           <span className="text-xl font-semibold tracking-tight">Arrasta o arquivo pra cá</span>
         )}
         <span className="text-texto-suave">
-          {arquivo ? 'Clique para trocar de arquivo.' : 'Ou clique para escolher. Extrato do Inter (.ofx ou .csv), até 2 MB.'}
+          {arquivo ? 'Clique para trocar de arquivo.' : 'Ou clique para escolher. Extrato do Inter (.ofx ou .csv) ou do Nubank (.csv), até 2 MB.'}
         </span>
         <input
           id="extrato"

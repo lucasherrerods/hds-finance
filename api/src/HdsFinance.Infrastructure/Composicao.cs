@@ -28,7 +28,8 @@ public static class Composicao
     public static IServiceCollection AdicionarNucleo(this IServiceCollection services, IConfiguration configuracao)
     {
         services.AddSingleton<ILeitorDeExtrato, LeitorOfx>();
-        services.AddSingleton<ILeitorDeExtrato, LeitorCsvInter>();
+        // O CSV pode ser da conta do Inter ou do Nubank: o cabeçalho diz qual.
+        services.AddSingleton<ILeitorDeExtrato, LeitorCsvPorBanco>();
         services.AddSingleton(new ClassificadorDeTipo(configuracao.GetSection("TermosDeTransferenciaPropria").Get<string[]>()));
         services.AddSingleton(RegrasDaConfiguracao(configuracao));
         services.AddSingleton(TimeProvider.System);

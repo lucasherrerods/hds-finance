@@ -52,7 +52,7 @@ export function Inicio() {
             transition={{ delay: 0.3, duration: 0.6 }}
             className="max-w-[48ch] text-lg leading-relaxed text-texto-suave"
           >
-            Manda o extrato do Inter e descobre. Sem cadastro, sem senha do banco e sem montar planilha.
+            Manda o extrato do Inter ou do Nubank e descobre. Sem cadastro, sem senha do banco e sem montar planilha.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}

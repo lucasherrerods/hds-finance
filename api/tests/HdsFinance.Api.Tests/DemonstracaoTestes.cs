@@ -27,6 +27,16 @@ public class DemonstracaoTestes(WebApplicationFactory<Program> fabrica) : IClass
         fabrica.WithWebHostBuilder(b => b.UseSetting("Demonstracao:LimiteDeRequisicoesPorMinuto", limitePorMinuto.ToString()))
             .CreateClient();
 
+    [Fact]
+    public async Task Le_o_extrato_da_conta_do_nubank()
+    {
+        var resposta = await ClienteCom().PostAsync(Rota, Arquivo(Amostra("nubank-conta.csv"), "NU_2023.csv"));
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.OK);
+        var corpo = await resposta.Content.ReadAsStringAsync();
+        corpo.Should().Contain("\"banco\":\"Nubank\"").And.Contain("\"ano\":2023");
+    }
+
     [Theory]
     [InlineData("inter-extrato.ofx")]
     [InlineData("inter-extrato.csv")]

@@ -12,7 +12,7 @@ const garantias = [
   },
   {
     titulo: 'Sua senha é sua',
-    texto: 'Você manda o arquivo que o próprio Inter te dá. Login e senha do banco ficam com você.',
+    texto: 'Você manda o arquivo que o próprio banco te dá. Login e senha do banco ficam com você.',
   },
 ]
 

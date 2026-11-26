@@ -4,14 +4,27 @@ import { formatarMes } from '../../shared'
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
 import { atalhosDePeriodo, hojeEmIso, intervaloDoMes, mesDoIntervalo, totaisDoIntervalo, transacoesNoIntervalo } from './intervalo'
 import { ListaDeTransacoes, type EdicaoDoHistorico } from './ListaDeTransacoes'
+import type { Filtros } from './periodos'
 import { ResumoDoMes } from './ResumoDoMes'
 import { SeletorDePeriodo, type Escolha } from './SeletorDePeriodo'
 
-type Props = { meses: ResumoMensal[]; transacoes: TransacaoCategorizada[]; edicao?: EdicaoDoHistorico; hoje?: string }
+type Props = {
+  meses: ResumoMensal[]
+  transacoes: TransacaoCategorizada[]
+  edicao?: EdicaoDoHistorico
+  hoje?: string
+  /** O mês em que a lista abre; sem ele, o mais recente do extrato. */
+  mesInicial?: { ano: number; mes: number }
+  filtroInicial?: Partial<Filtros>
+}
 
 /** Abre no mês mais recente do extrato. O período pode ser um atalho ou qualquer intervalo do calendário. */
-export function TransacoesPorMes({ meses, transacoes, edicao, hoje = hojeEmIso() }: Props) {
-  const [escolhida, setEscolhida] = useState<Escolha | null>(null)
+export function TransacoesPorMes({ meses, transacoes, edicao, hoje = hojeEmIso(), mesInicial, filtroInicial }: Props) {
+  const [escolhida, setEscolhida] = useState<Escolha | null>(() =>
+    mesInicial && meses.some((m) => m.ano === mesInicial.ano && m.mes === mesInicial.mes)
+      ? { intervalo: intervaloDoMes(mesInicial.ano, mesInicial.mes), rotulo: formatarMes(mesInicial.ano, mesInicial.mes) }
+      : null,
+  )
   const ultimo = meses.at(-1)
   if (!ultimo) return null
 
@@ -45,6 +58,7 @@ export function TransacoesPorMes({ meses, transacoes, edicao, hoje = hojeEmIso()
           sufixo={umMes ? 'do mês' : 'no período'}
           periodo={<SeletorDePeriodo escolha={escolha} atalhos={atalhos} aoAplicar={setEscolhida} />}
           edicao={edicao}
+          filtroInicial={filtroInicial}
         />
         {resumoDoMes && <ResumoDoMes mes={resumoDoMes} />}
       </motion.div>

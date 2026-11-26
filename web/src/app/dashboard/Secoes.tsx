@@ -1,6 +1,7 @@
-import { ArrowDownLeft, ArrowUpRight, Equal, HandCoins, Sigma, Trash2, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Equal, HandCoins, Lightbulb, Sigma, Trash2, Wallet, type LucideIcon } from 'lucide-react'
 import { useId, useState } from 'react'
-import { AssistenteDoMes, EnviarFechamento } from '../../modules/admin'
+import { useNavigate, useSearchParams } from 'react-router'
+import { AssistenteDoMes, EnviarFechamento, SugestoesDeCategoria } from '../../modules/admin'
 import {
   Abas,
   CategoriasDoMes,
@@ -42,7 +43,7 @@ const corDo = ({ tipo }: Indicador) => (tipo === 'entrada' ? 'text-entrada' : ti
 
 export function VisaoGeral() {
   const resumo = useResumo()
-  const { arquivos, aoHistoricoMudar } = useDashboard()
+  const { arquivos } = useDashboard()
   const ultimo = resumo.meses.at(-1)!
 
   return (
@@ -73,7 +74,7 @@ export function VisaoGeral() {
         </p>
       ) : null}
       {resumo.painel && <PainelDoMes painel={resumo.painel} />}
-      {!arquivos && <AssistenteDoMes mes={ultimo} aoAceitar={aoHistoricoMudar} />}
+      {!arquivos && <AssistenteDoMes mes={ultimo} />}
     </>
   )
 }
@@ -163,8 +164,13 @@ function TabelaDosMeses({ meses, edicao }: { meses: ResumoMensal[]; edicao?: Edi
   )
 }
 
+/** Lê `?categoria=`, `?grupo=` e `?mes=AAAA-MM` da URL, que a aba Categorias manda ao clicar. */
 export function Transacoes() {
   const { dados: resumo, edicao } = useDashboard()
+  const [parametros] = useSearchParams()
+  const [ano, mes] = (parametros.get('mes') ?? '').split('-').map(Number)
+  const mesInicial = ano && mes ? { ano, mes } : undefined
+  const filtroInicial = { categoria: parametros.get('categoria') ?? '', grupo: parametros.get('grupo') ?? '' }
 
   return (
     <>
@@ -177,7 +183,14 @@ export function Transacoes() {
             : 'Escolha o período para ver cada lançamento. Troque a categoria ou use o olho para tirar um lançamento das somas. As mudanças somem ao fechar a aba.'
         }
       />
-      <TransacoesPorMes meses={resumo.meses} transacoes={resumo.transacoes} edicao={edicao} />
+      <TransacoesPorMes
+        key={parametros.toString()}
+        meses={resumo.meses}
+        transacoes={resumo.transacoes}
+        edicao={edicao}
+        mesInicial={mesInicial}
+        filtroInicial={filtroInicial}
+      />
     </>
   )
 }
@@ -203,16 +216,44 @@ export function Investimentos() {
 }
 
 export function Categorias() {
-  const resumo = useResumo()
+  const { dados: resumo, arquivos, edicao, aoHistoricoMudar } = useDashboard()
+  const navegar = useNavigate()
+  const [sugerindo, setSugerindo] = useState(false)
 
   return (
     <>
       <CabecalhoDaSecao
         sobretitulo={periodoDosMeses(resumo.meses)}
         titulo="Categorias"
-        descricao="Os gastos do mês por grupo. Abra um grupo para ver as categorias dele."
+        descricao="Os gastos do mês por grupo. Clique numa categoria para ver as transações dela."
+        acoes={
+          !arquivos && (
+            <button
+              type="button"
+              onClick={() => setSugerindo(true)}
+              aria-label="Sugerir categorias com IA"
+              title="Sugerir categorias com IA"
+              className="grid size-11 place-items-center rounded-full border border-borda bg-superficie text-primaria transition-colors hover:border-primaria"
+            >
+              <Lightbulb aria-hidden className="size-5" />
+            </button>
+          )
+        }
       />
-      <CategoriasDoMes meses={resumo.meses} />
+      <CategoriasDoMes
+        meses={resumo.meses}
+        aoEscolher={(filtro, { ano, mes }) =>
+          navegar(`../transacoes?${new URLSearchParams({ ...filtro, mes: `${ano}-${String(mes).padStart(2, '0')}` })}`, { relative: 'path' })
+        }
+      />
+      {sugerindo && (
+        <SugestoesDeCategoria
+          categorias={edicao?.categorias ?? []}
+          grupos={edicao?.grupos}
+          aoAceitar={aoHistoricoMudar}
+          aoFechar={() => setSugerindo(false)}
+        />
+      )}
     </>
   )
 }

@@ -42,7 +42,7 @@ export function bancosDe(transacoes: TransacaoCategorizada[]): string[] {
 
 export type Ordem = 'recentes' | 'antigas' | 'maior' | 'menor'
 
-export type Filtros = { busca: string; categoria: string; ordem: Ordem; banco?: string; tipo?: TipoDeFiltro; comOcultas?: boolean }
+export type Filtros = { busca: string; categoria: string; ordem: Ordem; banco?: string; tipo?: TipoDeFiltro; comOcultas?: boolean; grupo?: string }
 
 export type TipoDeFiltro = '' | 'entradas' | 'saidas' | 'cartao'
 
@@ -74,6 +74,7 @@ export function filtrarTransacoes(transacoes: TransacaoCategorizada[], filtros: 
       doTipo(t, filtros.tipo) &&
       (!busca || semAcento(t.descricao).includes(busca)) &&
       (!filtros.categoria || t.categoria === filtros.categoria) &&
+      (!filtros.grupo || (t.grupo ?? t.categoria) === filtros.grupo) &&
       (!filtros.banco || bancoDa(t) === filtros.banco),
   )
 

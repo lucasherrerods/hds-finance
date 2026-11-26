@@ -55,6 +55,16 @@ describe('filtrarTransacoes', () => {
     expect(filtrarTransacoes(lista, { ...padrao, categoria: 'Transporte' })).toHaveLength(1)
   })
 
+  it('filtra pelo grupo, e sem grupo informado vale a própria categoria', () => {
+    const comGrupo = [
+      { data: '2026-11-01', descricao: 'Mercado', categoria: 'Supermercado', grupo: 'Alimentação', valor: -10 },
+      { data: '2026-11-02', descricao: 'Ifood', categoria: 'Delivery de alimentos', grupo: 'Alimentação', valor: -20 },
+      { data: '2026-11-03', descricao: 'Uber', categoria: 'Transporte', valor: -5 },
+    ]
+    expect(filtrarTransacoes(comGrupo, { ...padrao, grupo: 'Alimentação' })).toHaveLength(2)
+    expect(filtrarTransacoes(comGrupo, { ...padrao, grupo: 'Transporte' })).toHaveLength(1)
+  })
+
   it('ordena por data ou pelo tamanho do valor', () => {
     expect(filtrarTransacoes(lista, { ...padrao, ordem: 'antigas' })[0].data).toBe('2026-10-30')
     expect(filtrarTransacoes(lista, { ...padrao, ordem: 'maior' })[0].valor).toBe(3000)

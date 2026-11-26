@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AssistenteDoMes } from './AssistenteDoMes'
 
-vi.mock('./api', () => ({ buscarAnalise: vi.fn(), buscarSugestoes: vi.fn(), perguntar: vi.fn(), corrigirCategoria: vi.fn() }))
+vi.mock('./api', () => ({ buscarAnalise: vi.fn(), perguntar: vi.fn() }))
 const api = await import('./api')
 
 const outubro = { ano: 2026, mes: 10 }
@@ -48,19 +48,13 @@ describe('AssistenteDoMes', () => {
     expect(api.perguntar).toHaveBeenCalledWith('quanto gastei com comida?')
   })
 
-  it('aceitar a sugestão guarda a categoria e avisa o painel', async () => {
-    vi.mocked(api.buscarSugestoes).mockResolvedValue({
-      ok: true,
-      sugestoes: [{ descricao: 'Pagamento XPTO', categoria: 'Jogos', quantidade: 1, valor: 30 }],
-    })
-    vi.mocked(api.corrigirCategoria).mockResolvedValue({ ok: true })
-    const aoAceitar = vi.fn()
-    render(<AssistenteDoMes mes={outubro} aoAceitar={aoAceitar} />)
+  it('a pergunta pronta pergunta com um clique', async () => {
+    vi.mocked(api.perguntar).mockResolvedValue({ ok: true, resposta: 'Onde mais saiu dinheiro…' })
+    render(<AssistenteDoMes mes={outubro} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sugerir categorias' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Aceitar Jogos para Pagamento XPTO' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Onde mais gastei nos últimos 3 meses?' }))
 
-    await vi.waitFor(() => expect(aoAceitar).toHaveBeenCalled())
-    expect(api.corrigirCategoria).toHaveBeenCalledWith('Pagamento XPTO', 'Jogos')
+    expect(await screen.findByText('Onde mais saiu dinheiro…')).toBeInTheDocument()
+    expect(api.perguntar).toHaveBeenCalledWith('Onde mais gastei nos últimos 3 meses?')
   })
 })

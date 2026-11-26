@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, CreditCard, Equal, Eye, EyeOff, Hash, Search, Trash2, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, CreditCard, Equal, Eye, EyeOff, Hash, Search, Trash2, X, type LucideIcon } from 'lucide-react'
 import { useId, useState, type ReactNode } from 'react'
 import { formatarData, formatarMoeda, formatarMoedaComSinal, IconeDoBanco } from '../../shared'
 import type { GrupoDeCategoria, TransacaoCategorizada } from '../import'
@@ -21,6 +21,8 @@ export type EdicaoDoHistorico = {
 
 type Props = {
   transacoes: TransacaoCategorizada[]
+  /** Vindo de outra aba, como Categorias: a lista já abre filtrada. */
+  filtroInicial?: Partial<Filtros>
   /** Os números do período, que vêm do fechamento da api quando o período é de meses inteiros. */
   totais: Totais
   /** "do mês" ou "no período". */
@@ -53,8 +55,8 @@ const tipos: { valor: TipoDeFiltro; rotulo: string }[] = [
 const linha = 'grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 gap-y-1 border-b border-borda py-3 last:border-0 md:table-row md:py-0'
 const celula = 'md:border-b md:border-borda md:py-3 md:pr-4 md:group-last:border-0'
 
-export function ListaDeTransacoes({ transacoes, totais, sufixo = 'do mês', periodo, edicao }: Props) {
-  const [filtros, setFiltros] = useState<Filtros>({ busca: '', categoria: '', ordem: 'recentes', banco: '', tipo: '', comOcultas: false })
+export function ListaDeTransacoes({ transacoes, totais, sufixo = 'do mês', periodo, edicao, filtroInicial }: Props) {
+  const [filtros, setFiltros] = useState<Filtros>({ busca: '', categoria: '', ordem: 'recentes', banco: '', tipo: '', comOcultas: false, ...filtroInicial })
   const mudar = (parte: Partial<Filtros>) => setFiltros({ ...filtros, ...parte })
   const bancos = bancosDe(transacoes)
   const ocultas = transacoes.filter((t) => t.oculta).length
@@ -96,6 +98,17 @@ export function ListaDeTransacoes({ transacoes, totais, sufixo = 'do mês', peri
             <option key={c}>{c}</option>
           ))}
         </Filtro>
+        {filtros.grupo && (
+          <button
+            type="button"
+            onClick={() => mudar({ grupo: '' })}
+            aria-label={`Tirar o filtro do grupo ${filtros.grupo}`}
+            className="flex h-10 items-center gap-2 rounded-full border border-borda bg-superficie px-4 text-sm hover:border-primaria"
+          >
+            Grupo: {filtros.grupo}
+            <X aria-hidden className="size-4 opacity-70" />
+          </button>
+        )}
         {ocultas > 0 && (
           <button
             type="button"

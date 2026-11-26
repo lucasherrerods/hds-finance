@@ -15,7 +15,7 @@ describe('baixarRelatorio', () => {
     vi.stubGlobal('fetch', fetchFalso)
     const arquivo = new File(['conteudo'], 'extrato.ofx')
 
-    const resultado = await baixarRelatorio(arquivo, { ano: 2026, mes: 10 })
+    const resultado = await baixarRelatorio([arquivo], { ano: 2026, mes: 10 })
 
     expect(resultado.ok).toBe(true)
     if (resultado.ok) expect(resultado.pdf.size).toBe(5)
@@ -30,13 +30,13 @@ describe('baixarRelatorio', () => {
       vi.fn().mockResolvedValue(new Response(JSON.stringify({ title: 'Mês sem dados', detail: 'Sem transações.' }), { status: 404 })),
     )
 
-    expect(await baixarRelatorio(new File([''], 'extrato.ofx'))).toEqual({ ok: false, mensagem: 'Sem transações.' })
+    expect(await baixarRelatorio([new File([''], 'extrato.ofx')])).toEqual({ ok: false, mensagem: 'Sem transações.' })
   })
 
   it('avisa quando não consegue falar com o servidor', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('falhou')))
 
-    const resultado = await baixarRelatorio(new File([''], 'extrato.ofx'))
+    const resultado = await baixarRelatorio([new File([''], 'extrato.ofx')])
 
     expect(resultado).toEqual({ ok: false, mensagem: 'Não foi possível falar com o servidor. Tente de novo.' })
   })

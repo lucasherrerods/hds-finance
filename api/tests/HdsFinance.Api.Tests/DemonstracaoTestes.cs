@@ -37,6 +37,19 @@ public class DemonstracaoTestes(WebApplicationFactory<Program> fabrica) : IClass
         corpo.Should().Contain("\"banco\":\"Nubank\"").And.Contain("\"ano\":2023");
     }
 
+    [Fact]
+    public async Task Junta_varios_extratos_num_resumo_so()
+    {
+        var formulario = Arquivo(Amostra("inter-extrato.ofx"), "inter-extrato.ofx");
+        formulario.Add(new ByteArrayContent(Amostra("nubank-conta.csv")), "arquivo", "NU_2023.csv");
+
+        var resposta = await ClienteCom().PostAsync(Rota, formulario);
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.OK);
+        var corpo = await resposta.Content.ReadAsStringAsync();
+        corpo.Should().Contain("\"banco\":\"Nubank\"").And.Contain("\"banco\":\"Inter\"");
+    }
+
     [Theory]
     [InlineData("inter-extrato.ofx")]
     [InlineData("inter-extrato.csv")]

@@ -67,21 +67,21 @@ function DashboardDaDemonstracao() {
   const pedido = useRef(0)
   if (!resultado) return <Navigate to="/testar" replace />
 
-  const { resumo, arquivo, ajustes } = resultado
+  const { resumo, arquivos, ajustes } = resultado
 
   async function ajustar(transacoes: TransacaoCategorizada[], mudanca: Omit<Ajuste, 'chave'>, depois: Aviso) {
     const novos = comAjuste(ajustesAtuais.current, transacoes.map((t) => t.chave ?? ''), mudanca)
     ajustesAtuais.current = novos
     const meu = ++pedido.current
     setAviso({ texto: 'Refazendo as contas…' })
-    const resposta = await enviarExtrato(arquivo, novos)
+    const resposta = await enviarExtrato(arquivos, novos)
     if (meu !== pedido.current) return
     if (!resposta.ok) {
       ajustesAtuais.current = confirmados.current
       return setAviso({ texto: resposta.mensagem })
     }
     confirmados.current = novos
-    definir({ resumo: resposta.resumo, arquivo, ajustes: novos })
+    definir({ resumo: resposta.resumo, arquivos, ajustes: novos })
     setAviso(depois)
   }
 
@@ -115,12 +115,12 @@ function DashboardDaDemonstracao() {
     <Moldura
       base="/dashboard"
       dados={{ ...resumo, quantidade: resumo.transacoesNovas }}
-      arquivo={arquivo}
+      arquivos={arquivos}
       ajustes={ajustes}
       edicao={{ categorias: resumo.categorias ?? [], grupos: resumo.grupos, aoMudar, aoOcultar }}
       aviso={aviso}
       fecharAviso={() => setAviso(null)}
-      origem={{ icone: FileText, nome: arquivo.name }}
+      origem={{ icone: FileText, nome: arquivos.map((a) => a.name).join(', ') }}
       acao={
         <button type="button" onClick={trocarExtrato} className={`flex items-center gap-2 ${acaoDoTopo}`}>
           <Upload aria-hidden className="size-4" />
@@ -240,7 +240,7 @@ function DashboardDoAdmin() {
     <Moldura
       base="/admin"
       dados={{ ...historico, quantidade: historico.transacoes.length }}
-      arquivo={null}
+      arquivos={null}
       edicao={{
         categorias: historico.categorias,
         grupos: historico.grupos,
@@ -274,7 +274,7 @@ function TelaCheia({ children }: { children: ReactNode }) {
 type MolduraProps = {
   base: '/dashboard' | '/admin'
   dados: DadosDoDashboard
-  arquivo: File | null
+  arquivos: File[] | null
   ajustes?: Ajuste[]
   edicao?: EdicaoDoHistorico
   origem: { icone: LucideIcon; nome: string }
@@ -286,12 +286,12 @@ type MolduraProps = {
 }
 
 /** Cabeçalho no topo, abas centralizadas e a seção da rota abaixo. */
-function Moldura({ base, dados, arquivo, ajustes, edicao, origem, acao, sair, rodape, aviso, fecharAviso }: MolduraProps) {
+function Moldura({ base, dados, arquivos, ajustes, edicao, origem, acao, sair, rodape, aviso, fecharAviso }: MolduraProps) {
   const { pathname } = useLocation()
   const IconeDaOrigem = origem.icone
 
   return (
-    <ContextoDoDashboard.Provider value={{ dados, arquivo, ajustes, edicao }}>
+    <ContextoDoDashboard.Provider value={{ dados, arquivos, ajustes, edicao }}>
       <div className="relative isolate min-h-svh">
         <div
           aria-hidden

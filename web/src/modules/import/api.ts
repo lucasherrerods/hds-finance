@@ -43,8 +43,8 @@ export type ResumoDoExtrato = {
 export type ResultadoDoEnvio = { ok: true; resumo: ResumoDoExtrato } | { ok: false; mensagem: string }
 
 /** Com ajustes, a api refaz todas as contas: o front nunca soma nada. */
-export async function enviarExtrato(arquivo: File, ajustes: Ajuste[] = []): Promise<ResultadoDoEnvio> {
-  const corpo = formularioDoExtrato(arquivo, ajustes)
+export async function enviarExtrato(arquivos: File[], ajustes: Ajuste[] = []): Promise<ResultadoDoEnvio> {
+  const corpo = formularioDoExtrato(arquivos, ajustes)
 
   let resposta: Response
   try {

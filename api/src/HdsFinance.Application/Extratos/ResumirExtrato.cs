@@ -31,14 +31,29 @@ public sealed class ResumirExtrato(
     IRepositorioDeTransacoes repositorio,
     Categorizador? categorizador = null)
 {
+    public Task<ResultadoDoResumo> ExecutarAsync(
+        Stream conteudo, FormatoDeExtrato formato, IReadOnlyList<AjusteDoExtrato>? ajustes = null, CancellationToken cancelamento = default) =>
+        ExecutarAsync([(conteudo, formato)], ajustes, cancelamento);
+
+    /// <summary>Vários extratos somam no mesmo repositório; um que não dá para ler recusa o pedido inteiro.</summary>
     public async Task<ResultadoDoResumo> ExecutarAsync(
-        Stream conteudo, FormatoDeExtrato formato, IReadOnlyList<AjusteDoExtrato>? ajustes = null, CancellationToken cancelamento = default)
+        IReadOnlyList<(Stream Conteudo, FormatoDeExtrato Formato)> extratos,
+        IReadOnlyList<AjusteDoExtrato>? ajustes = null,
+        CancellationToken cancelamento = default)
     {
-        var importacao = await importar.ExecutarAsync(conteudo, formato, cancelamento);
-        if (importacao is not ResultadoDaImportacao.Importado importado)
+        var importados = new List<ResultadoDaImportacao.Importado>();
+        foreach (var (conteudo, formato) in extratos)
         {
-            return new ResultadoDoResumo.NaoImportado(importacao);
+            var importacao = await importar.ExecutarAsync(conteudo, formato, cancelamento);
+            if (importacao is not ResultadoDaImportacao.Importado um)
+            {
+                return new ResultadoDoResumo.NaoImportado(importacao);
+            }
+
+            importados.Add(um);
         }
+
+        var importado = Juntar(importados);
 
         var regras = categorizador ?? Categorizador.Padrao;
         if (!await AplicarAsync(ajustes ?? [], new AjustarTransacao(repositorio, regras), cancelamento))
@@ -54,6 +69,20 @@ public sealed class ResumirExtrato(
             TransacaoCategorizada.Listar(transacoes, regras))
         {
             Categorias = regras.Categorias,
+        };
+    }
+
+    /// <summary>O saldo final é o do extrato com saldo que vai mais longe no tempo.</summary>
+    private static ResultadoDaImportacao.Importado Juntar(IReadOnlyList<ResultadoDaImportacao.Importado> importados)
+    {
+        var comSaldo = importados.Where(i => i.SaldoFinal is not null).MaxBy(i => i.CobertoAte ?? DateOnly.MinValue);
+        return new ResultadoDaImportacao.Importado(
+            importados.Sum(i => i.Novas),
+            importados.Sum(i => i.Duplicadas),
+            comSaldo?.SaldoFinal,
+            importados.Max(i => i.CobertoAte))
+        {
+            Banco = (comSaldo ?? importados[0]).Banco,
         };
     }
 

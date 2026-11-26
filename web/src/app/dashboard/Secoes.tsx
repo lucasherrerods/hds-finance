@@ -236,7 +236,7 @@ export function CartaoDeCredito() {
 }
 
 export function Relatorio() {
-  const { dados, arquivo, ajustes } = useDashboard()
+  const { dados, arquivos, ajustes } = useDashboard()
   const ultimo = dados.meses.at(-1)!
 
   return (
@@ -250,16 +250,16 @@ export function Relatorio() {
         <section aria-label="PDF do fechamento" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
           <h2 className="text-xl font-semibold tracking-tight">Baixar o PDF</h2>
           <p className="text-texto-suave">
-            {arquivo ? 'O arquivo é montado na hora e não fica salvo no servidor.' : 'Montado a partir do seu histórico guardado.'}
+            {arquivos ? 'O arquivo é montado na hora e não fica salvo no servidor.' : 'Montado a partir do seu histórico guardado.'}
           </p>
-          <BaixarRelatorio arquivo={arquivo ?? undefined} ajustes={ajustes} mes={ultimo} />
+          <BaixarRelatorio arquivos={arquivos ?? undefined} ajustes={ajustes} mes={ultimo} />
         </section>
         <section aria-label="Compartilhar" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
           <h2 className="text-xl font-semibold tracking-tight">Compartilhar</h2>
           <p className="text-texto-suave">Abre o menu do seu aparelho. Onde ele não existe, o arquivo é baixado.</p>
-          <CompartilharMes arquivo={arquivo ?? undefined} ajustes={ajustes} mes={ultimo} />
+          <CompartilharMes arquivos={arquivos ?? undefined} ajustes={ajustes} mes={ultimo} />
         </section>
-        {!arquivo && (
+        {!arquivos && (
           <section aria-label="Enviar o fechamento" className="flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6">
             <h2 className="text-xl font-semibold tracking-tight">Enviar por e-mail</h2>
             <p className="text-texto-suave">Vai para o seu e-mail. Um mês já enviado só sai de novo se você pedir.</p>

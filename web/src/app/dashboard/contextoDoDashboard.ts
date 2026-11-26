@@ -15,8 +15,8 @@ export type DadosDoDashboard = {
 
 export type ValorDoDashboard = {
   dados: DadosDoDashboard
-  /** Só na demonstração: o arquivo é reenviado para gerar o PDF. Na área admin, tudo sai do histórico. */
-  arquivo: File | null
+  /** Só na demonstração: os arquivos são reenviados para gerar o PDF. Na área admin, tudo sai do histórico. */
+  arquivos: File[] | null
   /** Só na demonstração: o que a pessoa mudou, para o PDF sair igual à tela. */
   ajustes?: Ajuste[]
   /** Trocar categorias e ocultar; apagar, só na área admin. */

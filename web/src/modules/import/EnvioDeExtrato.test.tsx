@@ -20,7 +20,7 @@ describe('EnvioDeExtrato', () => {
 
     escolherArquivo()
 
-    await vi.waitFor(() => expect(aoResumir).toHaveBeenCalledWith(resumo, expect.any(File)))
+    await vi.waitFor(() => expect(aoResumir).toHaveBeenCalledWith(resumo, [expect.any(File)]))
   })
 
   it('mostra o erro devolvido pela api', async () => {
@@ -40,7 +40,7 @@ describe('EnvioDeExtrato', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /dados fictícios/i }))
 
-    await vi.waitFor(() => expect(aoResumir).toHaveBeenCalledWith(resumo, expect.objectContaining({ name: 'extrato-de-exemplo.csv' })))
+    await vi.waitFor(() => expect(aoResumir).toHaveBeenCalledWith(resumo, [expect.objectContaining({ name: 'extrato-de-exemplo.csv' })]))
   })
 
   it('só libera o envio depois de escolher um arquivo', () => {
@@ -58,6 +58,21 @@ describe('EnvioDeExtrato', () => {
 
     expect(screen.getByText('outubro.ofx')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /ver resumo/i })).toBeEnabled()
+  })
+
+  it('envia vários arquivos de uma vez', async () => {
+    const resumo = { transacoesNovas: 2, duplicadas: 0, meses: [], painel: null, transacoes: [], categorias: [] }
+    vi.mocked(enviarExtrato).mockResolvedValue({ ok: true, resumo })
+    const aoResumir = vi.fn()
+    render(<EnvioDeExtrato aoResumir={aoResumir} />)
+    const arquivos = [new File(['x'], 'inter.ofx'), new File(['y'], 'nubank.csv')]
+
+    fireEvent.drop(screen.getByTestId('area-do-arquivo'), { dataTransfer: { files: arquivos } })
+    expect(screen.getByText('inter.ofx, nubank.csv')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /ver resumo/i }))
+
+    await vi.waitFor(() => expect(aoResumir).toHaveBeenCalledWith(resumo, arquivos))
+    expect(enviarExtrato).toHaveBeenCalledWith(arquivos)
   })
 
   it('se a api demora, avisa que o servidor pode estar acordando', async () => {

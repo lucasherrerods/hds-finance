@@ -5,16 +5,16 @@ import type { MesDoRelatorio } from './api'
 import { gerarPdf, nomeDoPdf, salvar } from './arquivos'
 
 /** Com arquivo, reenvia o extrato (demonstração); sem arquivo, usa o histórico guardado (área admin). */
-type Props = { arquivo?: File; ajustes?: Ajuste[]; mes: MesDoRelatorio }
+type Props = { arquivos?: File[]; ajustes?: Ajuste[]; mes: MesDoRelatorio }
 
-export function BaixarRelatorio({ arquivo, ajustes, mes }: Props) {
+export function BaixarRelatorio({ arquivos, ajustes, mes }: Props) {
   const [gerando, setGerando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
   async function baixar() {
     setGerando(true)
     setErro(null)
-    const resultado = await gerarPdf(mes, arquivo, ajustes)
+    const resultado = await gerarPdf(mes, arquivos, ajustes)
     setGerando(false)
 
     if (resultado.ok) salvar(resultado.pdf, nomeDoPdf(mes))

@@ -55,8 +55,8 @@ public static class RotasDaDemonstracao
 
     private static async Task<IResult> ResumirAsync(HttpRequest requisicao, ResumirExtrato resumir, CancellationToken cancelamento)
     {
-        var (arquivo, erro) = await LerArquivoAsync(requisicao, cancelamento);
-        if (arquivo is null)
+        var (arquivos, erro) = await LerArquivosAsync(requisicao, cancelamento);
+        if (arquivos is null)
         {
             return erro!;
         }
@@ -66,8 +66,7 @@ public static class RotasDaDemonstracao
             return RespostasHttp.AjusteInvalido();
         }
 
-        await using var conteudo = arquivo.Value.Conteudo.OpenReadStream();
-        return RespostasHttp.De(await resumir.ExecutarAsync(conteudo, arquivo.Value.Formato, ajustes, cancelamento));
+        return RespostasHttp.De(await ResumirArquivosAsync(resumir, arquivos, ajustes, cancelamento));
     }
 
     private static async Task<IResult> RelatorioAsync(
@@ -79,8 +78,8 @@ public static class RotasDaDemonstracao
             return RespostasHttp.MesInvalido();
         }
 
-        var (arquivo, erro) = await LerArquivoAsync(requisicao, cancelamento);
-        if (arquivo is null)
+        var (arquivos, erro) = await LerArquivosAsync(requisicao, cancelamento);
+        if (arquivos is null)
         {
             return erro!;
         }
@@ -90,11 +89,68 @@ public static class RotasDaDemonstracao
             return RespostasHttp.AjusteInvalido();
         }
 
-        await using var conteudo = arquivo.Value.Conteudo.OpenReadStream();
-        var resumo = await resumir.ExecutarAsync(conteudo, arquivo.Value.Formato, ajustes, cancelamento);
+        var resumo = await ResumirArquivosAsync(resumir, arquivos, ajustes, cancelamento);
         return resumo is ResultadoDoResumo.Resumido resumido
             ? RespostasHttp.De(gerar.Executar(resumido.Meses, pedido))
             : RespostasHttp.De(resumo);
+    }
+
+    private static async Task<ResultadoDoResumo> ResumirArquivosAsync(
+        ResumirExtrato resumir,
+        IReadOnlyList<(IFormFile Conteudo, FormatoDeExtrato Formato)> arquivos,
+        IReadOnlyList<AjusteDoExtrato> ajustes,
+        CancellationToken cancelamento)
+    {
+        var abertos = arquivos.Select(a => (Conteudo: a.Conteudo.OpenReadStream(), a.Formato)).ToList();
+        try
+        {
+            return await resumir.ExecutarAsync(abertos, ajustes, cancelamento);
+        }
+        finally
+        {
+            foreach (var (conteudo, _) in abertos)
+            {
+                await conteudo.DisposeAsync();
+            }
+        }
+    }
+
+    /// <summary>Todos os campos "arquivo" do formulário: juntos cabem no limite, e cada um tem formato conhecido.</summary>
+    private static async Task<(IReadOnlyList<(IFormFile Conteudo, FormatoDeExtrato Formato)>? Arquivos, IResult? Erro)> LerArquivosAsync(
+        HttpRequest requisicao, CancellationToken cancelamento)
+    {
+        IReadOnlyList<IFormFile> enviados;
+        try
+        {
+            enviados = (await requisicao.ReadFormAsync(cancelamento)).Files.GetFiles("arquivo");
+        }
+        catch (InvalidDataException)
+        {
+            return (null, RespostasHttp.ArquivoGrandeDemais());
+        }
+
+        if (enviados.Count == 0)
+        {
+            return (null, RespostasHttp.ArquivoAusente());
+        }
+
+        if (enviados.Sum(a => a.Length) > TamanhoMaximoDoArquivo)
+        {
+            return (null, RespostasHttp.ArquivoGrandeDemais());
+        }
+
+        var lidos = new List<(IFormFile Conteudo, FormatoDeExtrato Formato)>();
+        foreach (var arquivo in enviados)
+        {
+            if (FormatosDeExtrato.PeloNomeDoArquivo(arquivo.FileName) is not { } formato)
+            {
+                return (null, RespostasHttp.FormatoNaoSuportado());
+            }
+
+            lidos.Add((arquivo, formato));
+        }
+
+        return (lidos, null);
     }
 
     /// <summary>O campo "ajustes" é opcional. Nulo quando veio e não dá para ler. Só depois de o formulário ter sido lido.</summary>

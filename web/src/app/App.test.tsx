@@ -17,14 +17,14 @@ describe('rotas', () => {
     abrir('/')
 
     expect(screen.getByRole('heading', { level: 1, name: /pra onde foi o seu dinheiro/i })).toBeInTheDocument()
-    expect(screen.queryByLabelText(/extrato do inter/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/extratos do inter/i)).not.toBeInTheDocument()
   })
 
   it('a página de teste tem o envio do extrato e o aviso de privacidade', () => {
     abrir('/testar')
 
     expect(screen.getByRole('heading', { level: 1, name: /solta o extrato aqui/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/extrato do inter/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/extratos do inter/i)).toBeInTheDocument()
     expect(screen.getByText(/nada é armazenado/i)).toBeInTheDocument()
   })
 

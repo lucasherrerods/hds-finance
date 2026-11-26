@@ -4,10 +4,10 @@ import { useEffect, useState, type DragEvent, type FormEvent } from 'react'
 import { enviarExtrato, type ResumoDoExtrato } from './api'
 import { extratoDeExemplo } from './extratoDeExemplo'
 
-type Props = { aoResumir: (resumo: ResumoDoExtrato, arquivo: File) => void }
+type Props = { aoResumir: (resumo: ResumoDoExtrato, arquivos: File[]) => void }
 
 export function EnvioDeExtrato({ aoResumir }: Props) {
-  const [arquivo, setArquivo] = useState<File | null>(null)
+  const [arquivos, setArquivos] = useState<File[]>([])
   const [arrastando, setArrastando] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
@@ -23,33 +23,34 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
     }
   }, [enviando])
 
-  function escolher(novo: File | null) {
-    setArquivo(novo)
+  function escolher(novos: FileList | null | undefined) {
+    setArquivos(Array.from(novos ?? []))
     setErro(null)
   }
 
   function soltar(evento: DragEvent) {
     evento.preventDefault()
     setArrastando(false)
-    escolher(evento.dataTransfer.files[0] ?? null)
+    escolher(evento.dataTransfer.files)
   }
 
   function enviar(evento: FormEvent) {
     evento.preventDefault()
-    if (arquivo) void resumir(arquivo)
+    if (arquivos.length > 0) void resumir(arquivos)
   }
 
-  async function resumir(arquivo: File) {
+  async function resumir(escolhidos: File[]) {
     setEnviando(true)
     setErro(null)
-    const resultado = await enviarExtrato(arquivo)
+    const resultado = await enviarExtrato(escolhidos)
     setEnviando(false)
 
-    if (resultado.ok) aoResumir(resultado.resumo, arquivo)
+    if (resultado.ok) aoResumir(resultado.resumo, escolhidos)
     else setErro(resultado.mensagem)
   }
 
-  const Icone = arquivo ? FileCheck2 : FileUp
+  const temArquivo = arquivos.length > 0
+  const Icone = temArquivo ? FileCheck2 : FileUp
 
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
@@ -73,7 +74,7 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
           className="pointer-events-none absolute -top-24 left-1/2 -z-10 size-72 -translate-x-1/2 rounded-full bg-brilho blur-3xl"
         />
         <motion.span
-          key={arquivo ? 'escolhido' : 'vazio'}
+          key={temArquivo ? 'escolhido' : 'vazio'}
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 20 }}
@@ -81,26 +82,27 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
         >
           <Icone aria-hidden className="size-7" />
         </motion.span>
-        {arquivo ? (
-          <span className="text-xl font-semibold tracking-tight">{arquivo.name}</span>
+        {temArquivo ? (
+          <span className="text-xl font-semibold tracking-tight break-all">{arquivos.map((a) => a.name).join(', ')}</span>
         ) : (
-          <span className="text-xl font-semibold tracking-tight">Arrasta o arquivo pra cá</span>
+          <span className="text-xl font-semibold tracking-tight">Arrasta os arquivos pra cá</span>
         )}
         <span className="text-texto-suave">
-          {arquivo ? 'Clique para trocar de arquivo.' : 'Ou clique para escolher. Extrato do Inter (.ofx ou .csv) ou do Nubank (.csv), até 2 MB.'}
+          {temArquivo ? 'Clique para trocar os arquivos.' : 'Ou clique para escolher um ou mais. Extratos do Inter (.ofx ou .csv) e do Nubank (.csv), até 2 MB no total.'}
         </span>
         <input
           id="extrato"
           type="file"
           accept=".ofx,.csv"
-          onChange={(e) => escolher(e.target.files?.[0] ?? null)}
+          multiple
+          onChange={(e) => escolher(e.target.files)}
           className="sr-only"
         />
       </motion.label>
       <div className="flex flex-wrap gap-4">
         <button
           type="submit"
-          disabled={!arquivo || enviando}
+          disabled={!temArquivo || enviando}
           className="rounded-full bg-primaria px-6 py-3 font-semibold text-primaria-texto transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
         >
           {enviando ? 'Fazendo as contas…' : 'Ver resumo'}
@@ -108,7 +110,7 @@ export function EnvioDeExtrato({ aoResumir }: Props) {
         <button
           type="button"
           disabled={enviando}
-          onClick={() => void resumir(extratoDeExemplo(new Date()))}
+          onClick={() => void resumir([extratoDeExemplo(new Date())])}
           className="flex items-center gap-2 rounded-full border border-borda bg-superficie px-6 py-3 font-medium transition-colors hover:border-primaria disabled:opacity-50"
         >
           <FlaskConical aria-hidden className="size-4 opacity-70" />

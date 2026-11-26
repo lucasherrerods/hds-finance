@@ -33,8 +33,8 @@ export function PaginaDeTeste() {
         transition={{ duration: 0.7, delay: 0.15, ease: SUAVE }}
       >
         <EnvioDeExtrato
-          aoResumir={(resumo, arquivo) => {
-            definir({ resumo, arquivo, ajustes: [] })
+          aoResumir={(resumo, arquivos) => {
+            definir({ resumo, arquivos, ajustes: [] })
             navegar('/dashboard')
           }}
         />

@@ -19,7 +19,7 @@ describe('ajustes', () => {
 
   it('só manda o campo de ajustes quando há algum', () => {
     const arquivo = new File(['x'], 'e.csv')
-    expect(formularioDoExtrato(arquivo).get('ajustes')).toBeNull()
-    expect(formularioDoExtrato(arquivo, [{ chave: 'a', oculta: true }]).get('ajustes')).toBe('[{"chave":"a","oculta":true}]')
+    expect(formularioDoExtrato([arquivo]).get('ajustes')).toBeNull()
+    expect(formularioDoExtrato([arquivo], [{ chave: 'a', oculta: true }]).get('ajustes')).toBe('[{"chave":"a","oculta":true}]')
   })
 })

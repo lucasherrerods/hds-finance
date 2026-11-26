@@ -24,7 +24,7 @@ describe('enviarExtrato', () => {
     const fetchFalso = responderCom(200, resumo)
     const arquivo = new File(['conteudo'], 'extrato.ofx')
 
-    const resultado = await enviarExtrato(arquivo)
+    const resultado = await enviarExtrato([arquivo])
 
     expect(resultado).toEqual({ ok: true, resumo })
     const [url, opcoes] = fetchFalso.mock.calls[0]
@@ -35,7 +35,7 @@ describe('enviarExtrato', () => {
   it('devolve a mensagem e a linha quando a api recusa o arquivo', async () => {
     responderCom(422, { title: 'Arquivo inválido', detail: 'Valor da transação inválido.', linha: 4 })
 
-    const resultado = await enviarExtrato(new File([''], 'extrato.csv'))
+    const resultado = await enviarExtrato([new File([''], 'extrato.csv')])
 
     expect(resultado).toEqual({ ok: false, mensagem: 'Valor da transação inválido. (linha 4)' })
   })
@@ -43,7 +43,7 @@ describe('enviarExtrato', () => {
   it('avisa quando a api não responde', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('falhou')))
 
-    const resultado = await enviarExtrato(new File([''], 'extrato.csv'))
+    const resultado = await enviarExtrato([new File([''], 'extrato.csv')])
 
     expect(resultado).toEqual({ ok: false, mensagem: 'Não foi possível falar com o servidor. Tente de novo.' })
   })

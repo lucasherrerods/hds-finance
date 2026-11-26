@@ -4,7 +4,7 @@ import type { Ajuste, ResumoMensal } from '../import'
 import { entregar, gerarPdf, nomeDaImagem, nomeDoPdf } from './arquivos'
 import { conteudoDaImagem, desenharImagem } from './imagemDoMes'
 
-type Props = { arquivo?: File; ajustes?: Ajuste[]; mes: ResumoMensal }
+type Props = { arquivos?: File[]; ajustes?: Ajuste[]; mes: ResumoMensal }
 
 const botao =
   'flex items-center gap-2 rounded-full border border-borda bg-superficie px-6 py-3 font-medium transition-colors hover:border-primaria disabled:opacity-50'
@@ -12,7 +12,7 @@ const botao =
 const avisos = { compartilhado: null, cancelado: null, baixado: 'Arquivo baixado.', 'precisa-de-toque': null }
 
 /** A imagem sai do navegador; o PDF, da api. Nenhum dos dois fica guardado. */
-export function CompartilharMes({ arquivo, ajustes, mes }: Props) {
+export function CompartilharMes({ arquivos, ajustes, mes }: Props) {
   const [esconder, setEsconder] = useState(true)
   const [ocupado, setOcupado] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -36,7 +36,7 @@ export function CompartilharMes({ arquivo, ajustes, mes }: Props) {
   }
 
   async function pdf() {
-    const resultado = await gerarPdf(mes, arquivo, ajustes)
+    const resultado = await gerarPdf(mes, arquivos, ajustes)
     return resultado.ok ? new File([resultado.pdf], nomeDoPdf(mes), { type: 'application/pdf' }) : resultado.mensagem
   }
 

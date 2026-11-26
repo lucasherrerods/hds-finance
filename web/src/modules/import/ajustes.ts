@@ -15,9 +15,9 @@ export function iguaisA(transacao: TransacaoCategorizada, todas: TransacaoCatego
   return todas.filter((t) => t.descricao === transacao.descricao && t.valor > 0 === transacao.valor > 0)
 }
 
-export function formularioDoExtrato(arquivo: File, ajustes: Ajuste[] = []): FormData {
+export function formularioDoExtrato(arquivos: File[], ajustes: Ajuste[] = []): FormData {
   const corpo = new FormData()
-  corpo.append('arquivo', arquivo)
+  for (const arquivo of arquivos) corpo.append('arquivo', arquivo)
   if (ajustes.length > 0) corpo.append('ajustes', JSON.stringify(ajustes))
   return corpo
 }

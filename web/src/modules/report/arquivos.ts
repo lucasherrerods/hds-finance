@@ -6,8 +6,8 @@ const sufixo = ({ ano, mes }: MesDoRelatorio) => `${ano}-${String(mes).padStart(
 export const nomeDoPdf = (mes: MesDoRelatorio) => `fechamento-${sufixo(mes)}.pdf`
 export const nomeDaImagem = (mes: MesDoRelatorio) => `resumo-${sufixo(mes)}.png`
 
-export function gerarPdf(mes: MesDoRelatorio, arquivo?: File, ajustes: Ajuste[] = []) {
-  return arquivo ? baixarRelatorio(arquivo, mes, ajustes) : baixarRelatorioDoHistorico(mes)
+export function gerarPdf(mes: MesDoRelatorio, arquivos?: File[], ajustes: Ajuste[] = []) {
+  return arquivos ? baixarRelatorio(arquivos, mes, ajustes) : baixarRelatorioDoHistorico(mes)
 }
 
 export function salvar(conteudo: Blob, nome: string) {

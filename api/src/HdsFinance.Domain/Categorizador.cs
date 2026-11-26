@@ -85,8 +85,19 @@ public sealed class Categorizador
         _aprendidas = aprendidas;
     }
 
-    /// <summary>As categorias que as regras conhecem, na ordem delas, e "Empréstimos" e "Sem categoria" no fim.</summary>
-    public IReadOnlyList<string> Categorias => [.. _regras.Select(r => r.Categoria).Append(Emprestimo.Categoria).Distinct(), SemCategoria];
+    /// <summary>
+    /// As categorias que as regras conhecem, na ordem delas, depois as dos grupos que não têm regra
+    /// (dá para escolher mesmo sem reconhecimento automático), e "Sem categoria" no fim.
+    /// </summary>
+    public IReadOnlyList<string> Categorias =>
+    [
+        .. _regras.Select(r => r.Categoria)
+            .Append(Emprestimo.Categoria)
+            .Concat(GruposDeCategoria.Todos.SelectMany(g => g.Categorias))
+            .Where(c => c != SemCategoria)
+            .Distinct(),
+        SemCategoria,
+    ];
 
     /// <summary>A forma da descrição usada para lembrar uma correção: sem acento, caixa nem pontuação.</summary>
     public static string ChaveDaDescricao(string descricao) => TextoNormalizado.ParaComparar(descricao);

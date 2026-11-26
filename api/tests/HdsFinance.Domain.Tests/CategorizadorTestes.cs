@@ -89,6 +89,14 @@ public class CategorizadorTestes
     [Fact]
     public void Lista_as_categorias_possiveis_para_escolher()
     {
-        _categorizador.Categorias.Should().Equal("Alimentação", "Transporte", Emprestimo.Categoria, Categorizador.SemCategoria);
+        _categorizador.Categorias.Should().StartWith(["Alimentação", "Transporte", Emprestimo.Categoria]);
+        _categorizador.Categorias.Should().EndWith(Categorizador.SemCategoria);
+        _categorizador.Categorias.Should().OnlyHaveUniqueItems();
+    }
+
+    [Fact]
+    public void Toda_categoria_dos_grupos_pode_ser_escolhida_mesmo_sem_regra()
+    {
+        _categorizador.Categorias.Should().Contain(GruposDeCategoria.Todos.SelectMany(g => g.Categorias));
     }
 }

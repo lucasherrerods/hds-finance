@@ -6,6 +6,11 @@ public class GruposDeCategoriaTestes
 {
     [Theory]
     [InlineData("Supermercado", "Alimentação")]
+    [InlineData("Lanches e guloseimas", "Alimentação")]
+    [InlineData("Compras", "Compras")]
+    [InlineData("Vestuário", "Compras")]
+    [InlineData("Universidade", "Educação")]
+    [InlineData("Bem-estar", "Saúde")]
     [InlineData("Táxi e transporte privado urbano", "Transporte")]
     [InlineData("Empréstimos", "Finanças")]
     [InlineData("Sem categoria", "Outros")]

@@ -142,3 +142,40 @@ async function ajustar(caminho: string, corpo: unknown, padrao: string): Promise
 export async function corrigirCategoria(descricao: string, categoria: string): Promise<{ ok: true } | Falha> {
   return ajustar('/categorias', { descricao, categoria }, 'Não foi possível trocar a categoria.')
 }
+
+export type Alerta = { tipo: string; assunto: string; valor: number; referencia: number | null; texto: string }
+
+/** Comentário nulo quando a IA não está configurada ou não respondeu; os alertas vêm sempre. */
+export type Analise = { ano: number; mes: number; comentario: string | null; alertas: Alerta[] }
+
+export async function buscarAnalise(mes: MesDoFechamento): Promise<{ ok: true; analise: Analise | null } | Falha> {
+  const resposta = await chamarAdmin(`/assistente/analise?mes=${mes.ano}-${String(mes.mes).padStart(2, '0')}`)
+  if (!resposta) return falhaSemServidor
+  if (resposta.status === 204) return { ok: true, analise: null }
+  if (resposta.ok) {
+    // Resposta fora do formato vale como sem análise: o painel nunca quebra por causa do assistente.
+    const corpo = (await resposta.json().catch(() => null)) as Analise | null
+    return { ok: true, analise: Array.isArray(corpo?.alertas) ? corpo : null }
+  }
+  return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível analisar o mês.') }
+}
+
+export type SugestaoDeCategoria = { descricao: string; categoria: string; quantidade: number; valor: number }
+
+export async function buscarSugestoes(): Promise<{ ok: true; sugestoes: SugestaoDeCategoria[] } | Falha> {
+  const resposta = await chamarAdmin('/assistente/sugestoes')
+  if (!resposta) return falhaSemServidor
+  if (resposta.ok) {
+    const corpo: unknown = await resposta.json().catch(() => null)
+    return { ok: true, sugestoes: Array.isArray(corpo) ? (corpo as SugestaoDeCategoria[]) : [] }
+  }
+  return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível buscar as sugestões.') }
+}
+
+/** A pergunta vai no corpo, nunca na URL. */
+export async function perguntar(pergunta: string): Promise<{ ok: true; resposta: string } | Falha> {
+  const resposta = await chamarAdmin('/assistente/pergunta', { method: 'POST', ...json({ pergunta }) })
+  if (!resposta) return falhaSemServidor
+  if (resposta.ok) return { ok: true, resposta: ((await resposta.json()) as { resposta: string }).resposta }
+  return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível responder.') }
+}

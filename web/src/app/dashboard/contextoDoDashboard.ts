@@ -21,6 +21,8 @@ export type ValorDoDashboard = {
   ajustes?: Ajuste[]
   /** Trocar categorias e ocultar; apagar, só na área admin. */
   edicao?: EdicaoDoHistorico
+  /** Só na área admin: avisa e busca o histórico de novo depois de uma mudança feita fora da lista de transações. */
+  aoHistoricoMudar?: (mensagem: string) => void
 }
 
 export const ContextoDoDashboard = createContext<ValorDoDashboard | null>(null)

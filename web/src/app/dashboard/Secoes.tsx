@@ -1,6 +1,6 @@
 import { ArrowDownLeft, ArrowUpRight, Equal, HandCoins, Sigma, Trash2, Wallet, type LucideIcon } from 'lucide-react'
 import { useId, useState } from 'react'
-import { EnviarFechamento } from '../../modules/admin'
+import { AssistenteDoMes, EnviarFechamento } from '../../modules/admin'
 import {
   Abas,
   CategoriasDoMes,
@@ -42,6 +42,7 @@ const corDo = ({ tipo }: Indicador) => (tipo === 'entrada' ? 'text-entrada' : ti
 
 export function VisaoGeral() {
   const resumo = useResumo()
+  const { arquivos, aoHistoricoMudar } = useDashboard()
   const ultimo = resumo.meses.at(-1)!
 
   return (
@@ -72,6 +73,7 @@ export function VisaoGeral() {
         </p>
       ) : null}
       {resumo.painel && <PainelDoMes painel={resumo.painel} />}
+      {!arquivos && <AssistenteDoMes mes={ultimo} aoAceitar={aoHistoricoMudar} />}
     </>
   )
 }

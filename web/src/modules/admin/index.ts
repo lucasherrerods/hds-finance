@@ -12,4 +12,5 @@ export {
   sessaoAberta,
   type Historico,
 } from './api'
+export { AssistenteDoMes } from './AssistenteDoMes'
 export { EnviarFechamento } from './EnviarFechamento'

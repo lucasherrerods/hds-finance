@@ -241,6 +241,7 @@ function DashboardDoAdmin() {
       base="/admin"
       dados={{ ...historico, quantidade: historico.transacoes.length }}
       arquivos={null}
+      aoHistoricoMudar={mudou}
       edicao={{
         categorias: historico.categorias,
         grupos: historico.grupos,
@@ -277,6 +278,7 @@ type MolduraProps = {
   arquivos: File[] | null
   ajustes?: Ajuste[]
   edicao?: EdicaoDoHistorico
+  aoHistoricoMudar?: (mensagem: string) => void
   origem: { icone: LucideIcon; nome: string }
   acao: ReactNode
   sair?: ReactNode
@@ -286,12 +288,12 @@ type MolduraProps = {
 }
 
 /** Cabeçalho no topo, abas centralizadas e a seção da rota abaixo. */
-function Moldura({ base, dados, arquivos, ajustes, edicao, origem, acao, sair, rodape, aviso, fecharAviso }: MolduraProps) {
+function Moldura({ base, dados, arquivos, ajustes, edicao, aoHistoricoMudar, origem, acao, sair, rodape, aviso, fecharAviso }: MolduraProps) {
   const { pathname } = useLocation()
   const IconeDaOrigem = origem.icone
 
   return (
-    <ContextoDoDashboard.Provider value={{ dados, arquivos, ajustes, edicao }}>
+    <ContextoDoDashboard.Provider value={{ dados, arquivos, ajustes, edicao, aoHistoricoMudar }}>
       <div className="relative isolate min-h-svh">
         <div
           aria-hidden

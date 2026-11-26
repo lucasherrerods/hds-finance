@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 import { formatarMes, formatarMoeda } from '../../shared'
@@ -13,7 +13,16 @@ const CORES = ['var(--color-grafico-1)', 'var(--color-grafico-2)', 'var(--color-
 const SUAVE = [0.22, 1, 0.36, 1] as const
 
 /** Os gastos de um mês, por grupo, com as categorias de cada grupo abaixo dele. */
-export function CategoriasDoMes({ meses }: { meses: ResumoMensal[] }) {
+/** O filtro que a aba Transações aplica ao abrir: uma categoria ou um grupo inteiro. */
+export type FiltroDaCategoria = { categoria: string } | { grupo: string }
+
+type Props = {
+  meses: ResumoMensal[]
+  /** Clique numa categoria ou no atalho do grupo; sem ele, as linhas não são clicáveis. */
+  aoEscolher?: (filtro: FiltroDaCategoria, mes: { ano: number; mes: number }) => void
+}
+
+export function CategoriasDoMes({ meses, aoEscolher }: Props) {
   const [indice, setIndice] = useState(meses.length - 1)
   const mes = meses[Math.min(indice, meses.length - 1)]
   if (!mes) return null
@@ -53,7 +62,7 @@ export function CategoriasDoMes({ meses }: { meses: ResumoMensal[] }) {
           ) : (
             <ul>
               {grupos.map((g, i) => (
-                <Grupo key={g.grupo} grupo={g} cor={CORES[i % CORES.length]} maior={maior} />
+                <Grupo key={g.grupo} grupo={g} cor={CORES[i % CORES.length]} maior={maior} aoEscolher={aoEscolher && ((filtro) => aoEscolher(filtro, mes))} />
               ))}
             </ul>
           )}
@@ -77,15 +86,18 @@ function Barra({ valor, maior, cor }: { valor: number; maior: number; cor: strin
   )
 }
 
-function Grupo({ grupo: g, cor, maior }: { grupo: GrupoDoMes; cor: string; maior: number }) {
+type GrupoProps = { grupo: GrupoDoMes; cor: string; maior: number; aoEscolher?: (filtro: FiltroDaCategoria) => void }
+
+function Grupo({ grupo: g, cor, maior, aoEscolher }: GrupoProps) {
   const [aberto, setAberto] = useState(true)
   return (
     <li className="border-b border-borda last:border-0">
+      <div className="flex items-center">
       <button
         type="button"
         aria-expanded={aberto}
         onClick={() => setAberto(!aberto)}
-        className="flex w-full items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-fundo/50 sm:px-6"
+        className="flex min-w-0 flex-1 items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-fundo/50 sm:px-6"
       >
         <ChevronDown aria-hidden className={`size-4 shrink-0 text-texto-suave transition-transform ${aberto ? '' : '-rotate-90'}`} />
         <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${tomDaCategoria(g.grupo, g.grupo)}`}>
@@ -98,6 +110,18 @@ function Grupo({ grupo: g, cor, maior }: { grupo: GrupoDoMes; cor: string; maior
         <span className="font-semibold whitespace-nowrap tabular-nums">{formatarMoeda(g.total)}</span>
         <Barra valor={g.total} maior={maior} cor={cor} />
       </button>
+      {aoEscolher && (
+        <button
+          type="button"
+          onClick={() => aoEscolher({ grupo: g.grupo })}
+          aria-label={`Ver transações de ${g.grupo}`}
+          title="Ver transações"
+          className="mr-2 grid size-9 shrink-0 place-items-center rounded-full text-texto-suave transition-colors hover:bg-fundo hover:text-texto sm:mr-4"
+        >
+          <ArrowRight aria-hidden className="size-4" />
+        </button>
+      )}
+      </div>
       <AnimatePresence initial={false}>
         {aberto && (
           <motion.ul
@@ -108,13 +132,32 @@ function Grupo({ grupo: g, cor, maior }: { grupo: GrupoDoMes; cor: string; maior
             transition={{ duration: 0.25, ease: SUAVE }}
             className="overflow-hidden"
           >
-            {g.categorias.map((c) => (
-              <li key={c.categoria} className="flex items-center gap-4 py-3 pr-4 pl-12 sm:pr-6 sm:pl-16">
-                <span className="min-w-0 flex-1 border-l border-borda pl-4 text-texto-suave">{c.categoria}</span>
-                <span className="whitespace-nowrap text-texto-suave tabular-nums">{formatarMoeda(c.valor)}</span>
-                <Barra valor={c.valor} maior={maior} cor={cor} />
-              </li>
-            ))}
+            {g.categorias.map((c) => {
+              const conteudo = (
+                <>
+                  <span className="min-w-0 flex-1 border-l border-borda pl-4 text-texto-suave">{c.categoria}</span>
+                  <span className="whitespace-nowrap text-texto-suave tabular-nums">{formatarMoeda(c.valor)}</span>
+                  <Barra valor={c.valor} maior={maior} cor={cor} />
+                </>
+              )
+              const linha = 'flex w-full items-center gap-4 py-3 pr-4 pl-12 text-left sm:pr-6 sm:pl-16'
+              return (
+                <li key={c.categoria}>
+                  {aoEscolher ? (
+                    <button
+                      type="button"
+                      onClick={() => aoEscolher({ categoria: c.categoria })}
+                      aria-label={`Ver transações de ${c.categoria}`}
+                      className={`${linha} transition-colors hover:bg-fundo/50`}
+                    >
+                      {conteudo}
+                    </button>
+                  ) : (
+                    <div className={linha}>{conteudo}</div>
+                  )}
+                </li>
+              )
+            })}
           </motion.ul>
         )}
       </AnimatePresence>

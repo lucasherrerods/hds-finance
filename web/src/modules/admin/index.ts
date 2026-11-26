@@ -14,3 +14,4 @@ export {
 } from './api'
 export { AssistenteDoMes } from './AssistenteDoMes'
 export { EnviarFechamento } from './EnviarFechamento'
+export { SugestoesDeCategoria } from './SugestoesDeCategoria'

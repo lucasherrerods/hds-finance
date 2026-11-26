@@ -24,7 +24,6 @@ export function indicadoresDoMes(meses: ResumoMensal[]): Indicador[] {
     { rotulo: 'Entrou', valor: atual.entradas, tipo: 'entrada', variacao: variacao(atual.entradas, anterior?.entradas) },
     { rotulo: 'Saiu', valor: atual.saidas, tipo: 'saida', variacao: variacao(atual.saidas, anterior?.saidas) },
     { rotulo: 'Sobrou', valor: atual.resultado, tipo: 'neutro', variacao: variacao(atual.resultado, anterior?.resultado) },
-    { rotulo: 'Saldo final', valor: atual.saldoFinal, tipo: 'neutro', variacao: variacao(atual.saldoFinal, anterior?.saldoFinal) },
   ]
 }
 

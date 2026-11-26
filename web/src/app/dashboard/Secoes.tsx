@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Equal, HandCoins, Lightbulb, Sigma, Trash2, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Equal, HandCoins, Lightbulb, Sigma, Trash2, type LucideIcon } from 'lucide-react'
 import { useId, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { AssistenteDoMes, EnviarFechamento, SugestoesDeCategoria } from '../../modules/admin'
@@ -31,7 +31,6 @@ const iconeDoIndicador: Record<string, LucideIcon> = {
   Entrou: ArrowDownLeft,
   Saiu: ArrowUpRight,
   Sobrou: Equal,
-  'Saldo final': Wallet,
 }
 
 function textoDo({ valor, tipo }: Indicador) {
@@ -54,7 +53,7 @@ export function VisaoGeral() {
         descricao="O mês mais recente do extrato, comparado com o anterior."
       />
       {resumo.saldo && <SaldoDaConta saldo={resumo.saldo} />}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {indicadoresDoMes(resumo.meses).map((indicador) => (
           <CartaoDeNumero
             key={indicador.rotulo}

@@ -19,20 +19,15 @@ function mes(numero: number, entradas: number, saidas: number, saldoFinal: numbe
 
 describe('indicadoresDoMes', () => {
   it('mostra o último mês e quanto cada valor mudou em relação ao anterior', () => {
-    const [entrou, saiu, sobrou, saldo] = indicadoresDoMes([mes(9, 8000, 4000, 3000), mes(10, 8000, 5000, 4000)])
+    const [entrou, saiu, sobrou] = indicadoresDoMes([mes(9, 8000, 4000, 3000), mes(10, 8000, 5000, 4000)])
 
     expect(entrou).toEqual({ rotulo: 'Entrou', valor: 8000, tipo: 'entrada', variacao: 0 })
     expect(saiu).toEqual({ rotulo: 'Saiu', valor: 5000, tipo: 'saida', variacao: 25 })
     expect(sobrou).toEqual({ rotulo: 'Sobrou', valor: 3000, tipo: 'neutro', variacao: -25 })
-    expect(saldo).toEqual({ rotulo: 'Saldo final', valor: 4000, tipo: 'neutro', variacao: 33.33333333333333 })
   })
 
   it('com um mês só, não há variação', () => {
-    expect(indicadoresDoMes([mes(10, 8000, 5000, null)]).map((i) => i.variacao)).toEqual([null, null, null, null])
-  })
-
-  it('saldo não informado fica nulo', () => {
-    expect(indicadoresDoMes([mes(10, 1, 1, null)])[3].valor).toBeNull()
+    expect(indicadoresDoMes([mes(10, 8000, 5000, null)]).map((i) => i.variacao)).toEqual([null, null, null])
   })
 
   it('sem meses não há indicador', () => {

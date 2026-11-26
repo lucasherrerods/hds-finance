@@ -5,6 +5,7 @@ export {
   buscarHistorico,
   confirmarCodigo,
   corrigirCategoria,
+  esquecerAnalises,
   mudarCategoria,
   ocultarTransacao,
   pedirCodigo,

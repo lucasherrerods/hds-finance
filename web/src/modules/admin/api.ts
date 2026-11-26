@@ -148,14 +148,28 @@ export type Alerta = { tipo: string; assunto: string; valor: number; referencia:
 /** Comentário nulo quando a IA não está configurada ou não respondeu; os alertas vêm sempre. */
 export type Analise = { ano: number; mes: number; comentario: string | null; alertas: Alerta[] }
 
+/** As análises já buscadas nesta aba, por mês: voltar à Visão geral não pede de novo. */
+const analises = new Map<string, Analise>()
+
+/** Esquece as análises guardadas: o histórico mudou, então o próximo pedido vai à api. */
+export function esquecerAnalises() {
+  analises.clear()
+}
+
 export async function buscarAnalise(mes: MesDoFechamento): Promise<{ ok: true; analise: Analise | null } | Falha> {
-  const resposta = await chamarAdmin(`/assistente/analise?mes=${mes.ano}-${String(mes.mes).padStart(2, '0')}`)
+  const chave = `${mes.ano}-${String(mes.mes).padStart(2, '0')}`
+  const guardada = analises.get(chave)
+  if (guardada) return { ok: true, analise: guardada }
+  const resposta = await chamarAdmin(`/assistente/analise?mes=${chave}`)
   if (!resposta) return falhaSemServidor
   if (resposta.status === 204) return { ok: true, analise: null }
   if (resposta.ok) {
     // Resposta fora do formato vale como sem análise: o painel nunca quebra por causa do assistente.
     const corpo = (await resposta.json().catch(() => null)) as Analise | null
-    return { ok: true, analise: Array.isArray(corpo?.alertas) ? corpo : null }
+    const analise = Array.isArray(corpo?.alertas) ? corpo : null
+    // Sem comentário da IA (chave ausente ou Gemini fora do ar) não guarda: a próxima visita tenta de novo.
+    if (analise?.comentario) analises.set(chave, analise)
+    return { ok: true, analise }
   }
   return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível analisar o mês.') }
 }

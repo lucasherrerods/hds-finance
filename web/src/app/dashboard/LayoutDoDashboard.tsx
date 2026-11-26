@@ -24,6 +24,7 @@ import {
   apagarTransacao,
   buscarHistorico,
   corrigirCategoria,
+  esquecerAnalises,
   mudarCategoria,
   ocultarTransacao,
   sair,
@@ -166,6 +167,7 @@ function DashboardDoAdmin() {
 
   function mudou(mensagem: string, acao?: Aviso['acao']) {
     mostrar(mensagem, acao)
+    esquecerAnalises()
     setVersao((v) => v + 1)
   }
 

@@ -22,7 +22,12 @@ export type Investimentos = { aplicado: number; resgatado: number; aplicadoAcumu
 export type GastoPorCategoria = {
   categoria: string
   valor: number
+  /** O conjunto da categoria: Supermercado fica em Alimentação. */
+  grupo?: string
 }
+
+/** Os grupos e as categorias de cada um, na ordem de escolha. */
+export type GrupoDeCategoria = { nome: string; categorias: string[] }
 
 export type ResumoDoExtrato = {
   transacoesNovas: number
@@ -32,6 +37,7 @@ export type ResumoDoExtrato = {
   transacoes: TransacaoCategorizada[]
   /** As que dá para escolher numa transação. */
   categorias: string[]
+  grupos?: GrupoDeCategoria[]
 }
 
 export type ResultadoDoEnvio = { ok: true; resumo: ResumoDoExtrato } | { ok: false; mensagem: string }
@@ -64,9 +70,10 @@ export type CategoriaComparada = {
   atual: number
   anterior: number | null
   variacaoPercentual: number | null
+  grupo?: string
 }
 
-export type TransacaoCategorizada = { data: string; descricao: string; categoria: string; valor: number; noCartao?: boolean; chave?: string; oculta?: boolean; banco?: 'Inter' | 'Nubank' }
+export type TransacaoCategorizada = { data: string; descricao: string; categoria: string; valor: number; noCartao?: boolean; chave?: string; oculta?: boolean; banco?: 'Inter' | 'Nubank'; grupo?: string }
 
 export type Painel = {
   ano: number

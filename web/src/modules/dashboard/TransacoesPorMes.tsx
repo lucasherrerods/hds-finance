@@ -1,74 +1,53 @@
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { formatarMes } from '../../shared'
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
+import { atalhosDePeriodo, hojeEmIso, intervaloDoMes, mesDoIntervalo, totaisDoIntervalo, transacoesNoIntervalo } from './intervalo'
 import { ListaDeTransacoes, type EdicaoDoHistorico } from './ListaDeTransacoes'
-import { agruparMesesPorAno, transacoesDoMes } from './periodos'
 import { ResumoDoMes } from './ResumoDoMes'
-import { Seletor } from './Seletor'
-import { Seta } from './Seta'
+import { SeletorDePeriodo, type Escolha } from './SeletorDePeriodo'
 
-type Props = { meses: ResumoMensal[]; transacoes: TransacaoCategorizada[]; edicao?: EdicaoDoHistorico }
+type Props = { meses: ResumoMensal[]; transacoes: TransacaoCategorizada[]; edicao?: EdicaoDoHistorico; hoje?: string }
 
-const chaveDo = (mes: ResumoMensal) => `${mes.ano}-${mes.mes}`
+/** Abre no mês mais recente do extrato. O período pode ser um atalho ou qualquer intervalo do calendário. */
+export function TransacoesPorMes({ meses, transacoes, edicao, hoje = hojeEmIso() }: Props) {
+  const [escolhida, setEscolhida] = useState<Escolha | null>(null)
+  const ultimo = meses.at(-1)
+  if (!ultimo) return null
 
-/** Um mês por vez: o seletor pula para qualquer um, e as setas andam de um em um. */
-export function TransacoesPorMes({ meses, transacoes, edicao }: Props) {
-  const [chave, setChave] = useState('')
-  const idDoMes = useId()
-  const achado = meses.findIndex((m) => chaveDo(m) === chave)
-  // Se o mês escolhido sumir (foi apagado), volta para o mais novo.
-  const indice = achado >= 0 ? achado : meses.length - 1
-  const selecionado = meses[indice]
-  if (!selecionado) return null
-  const ir = (destino: number) => setChave(chaveDo(meses[destino]))
+  const datas = transacoes.map((t) => t.data).sort()
+  const atalhos = atalhosDePeriodo(hoje, datas[0] ?? intervaloDoMes(meses[0].ano, meses[0].mes).inicio, datas.at(-1) ?? hoje)
+  const padrao = intervaloDoMes(ultimo.ano, ultimo.mes)
+  const esteMes = atalhos.find((a) => a.chave === 'mes')!
+  const escolha = escolhida ?? {
+    intervalo: padrao,
+    rotulo: esteMes.intervalo.inicio === padrao.inicio ? esteMes.rotulo : formatarMes(ultimo.ano, ultimo.mes),
+  }
+
+  const doPeriodo = transacoesNoIntervalo(transacoes, escolha.intervalo)
+  const umMes = mesDoIntervalo(escolha.intervalo)
+  const resumoDoMes = umMes && meses.find((m) => m.ano === umMes.ano && m.mes === umMes.mes)
+  const chave = `${escolha.intervalo.inicio}_${escolha.intervalo.fim}`
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-1 self-start">
-        <Seta rotulo="Mês anterior" icone={ChevronLeft} ativa={indice > 0} aoClicar={() => ir(indice - 1)} />
-        <label htmlFor={idDoMes} className="sr-only">
-          Mês
-        </label>
-        <Seletor
-          id={idDoMes}
-          value={chaveDo(selecionado)}
-          icone={<CalendarDays aria-hidden className="size-4" />}
-          onChange={(e) => setChave(e.target.value)}
-        >
-          {agruparMesesPorAno(meses)
-            .toReversed()
-            .map(({ ano, meses: doAno }) => (
-              <optgroup key={ano} label={String(ano)}>
-                {doAno.toReversed().map((m) => (
-                  <option key={m.mes} value={chaveDo(m)}>
-                    {formatarMes(m.ano, m.mes)}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-        </Seletor>
-        <Seta rotulo="Mês seguinte" icone={ChevronRight} ativa={indice < meses.length - 1} aoClicar={() => ir(indice + 1)} />
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={chaveDo(selecionado)}
-          className="flex flex-col gap-4"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <ListaDeTransacoes
-            mes={selecionado}
-            transacoes={transacoesDoMes(transacoes, selecionado.ano, selecionado.mes)}
-            edicao={edicao}
-          />
-          <ResumoDoMes mes={selecionado} />
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={chave}
+        className="flex flex-col gap-4"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <ListaDeTransacoes
+          transacoes={doPeriodo}
+          totais={totaisDoIntervalo(meses, transacoes, escolha.intervalo)}
+          sufixo={umMes ? 'do mês' : 'no período'}
+          periodo={<SeletorDePeriodo escolha={escolha} atalhos={atalhos} aoAplicar={setEscolhida} />}
+          edicao={edicao}
+        />
+        {resumoDoMes && <ResumoDoMes mes={resumoDoMes} />}
+      </motion.div>
+    </AnimatePresence>
   )
 }

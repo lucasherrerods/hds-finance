@@ -1,8 +1,10 @@
-import { ArrowDownLeft, ArrowUpRight, Equal, HandCoins, PiggyBank, Sigma, Trash2, Undo2, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Equal, HandCoins, Sigma, Trash2, Wallet, type LucideIcon } from 'lucide-react'
 import { useId, useState } from 'react'
 import { EnviarFechamento } from '../../modules/admin'
 import {
   Abas,
+  CategoriasDoMes,
+  InvestimentosDoPeriodo,
   FaturasDoCartao,
   GraficosDoPeriodo,
   indicadoresDoMes,
@@ -169,8 +171,8 @@ export function Transacoes() {
         titulo="Transações"
         descricao={
           edicao?.aoApagar
-            ? 'Escolha o mês para ver cada lançamento. Troque a categoria, use o olho para tirar um lançamento das somas ou a lixeira para apagar.'
-            : 'Escolha o mês para ver cada lançamento. Troque a categoria ou use o olho para tirar um lançamento das somas. As mudanças somem ao fechar a aba.'
+            ? 'Escolha o período para ver cada lançamento. Troque a categoria, use o olho para tirar um lançamento das somas ou a lixeira para apagar.'
+            : 'Escolha o período para ver cada lançamento. Troque a categoria ou use o olho para tirar um lançamento das somas. As mudanças somem ao fechar a aba.'
         }
       />
       <TransacoesPorMes meses={resumo.meses} transacoes={resumo.transacoes} edicao={edicao} />
@@ -180,8 +182,7 @@ export function Transacoes() {
 
 export function Investimentos() {
   const resumo = useResumo()
-  const totais = totaisDoPeriodo(resumo.meses)
-  const comMovimento = resumo.meses.filter((m) => m.investimentos.aplicado > 0 || m.investimentos.resgatado > 0)
+  const comMovimento = resumo.meses.some((m) => m.investimentos.aplicado > 0 || m.investimentos.resgatado > 0)
 
   return (
     <>
@@ -190,39 +191,26 @@ export function Investimentos() {
         titulo="Investimentos"
         descricao="O que saiu da conta para investir e o que voltou. O extrato da conta não traz rendimentos."
       />
-      {comMovimento.length === 0 ? (
-        <SemDados>Nenhuma aplicação ou resgate neste extrato.</SemDados>
+      {comMovimento ? (
+        <InvestimentosDoPeriodo meses={resumo.meses} transacoes={resumo.transacoes} />
       ) : (
-        <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <CartaoDeNumero rotulo="Aplicado no período" icone={PiggyBank} valor={formatarMoeda(totais.aplicado)} />
-            <CartaoDeNumero rotulo="Resgatado no período" icone={Undo2} valor={formatarMoeda(totais.resgatado)} />
-            <CartaoDeNumero rotulo="Aplicado líquido" icone={Sigma} valor={formatarMoeda(totais.aplicadoAcumulado)} />
-          </div>
-          <section aria-label="Investimentos por mês" className="overflow-x-auto rounded-2xl border border-borda bg-superficie p-6">
-            <table className="w-full min-w-[28rem] text-left tabular-nums">
-              <thead className="text-sm text-texto-suave">
-                <tr>
-                  <th className="pb-3 font-medium">Mês</th>
-                  <th className="pb-3 text-right font-medium">Aplicado</th>
-                  <th className="pb-3 text-right font-medium">Resgatado</th>
-                  <th className="pb-3 text-right font-medium">Acumulado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resumo.meses.toReversed().map((m) => (
-                  <tr key={`${m.ano}-${m.mes}`} className="border-t border-borda">
-                    <td className="py-3">{formatarMesCurto(m.ano, m.mes)}</td>
-                    <td className="py-3 text-right">{formatarMoeda(m.investimentos.aplicado)}</td>
-                    <td className="py-3 text-right">{formatarMoeda(m.investimentos.resgatado)}</td>
-                    <td className="py-3 text-right">{formatarMoeda(m.investimentos.aplicadoAcumulado)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-        </>
+        <SemDados>Nenhuma aplicação ou resgate neste extrato.</SemDados>
       )}
+    </>
+  )
+}
+
+export function Categorias() {
+  const resumo = useResumo()
+
+  return (
+    <>
+      <CabecalhoDaSecao
+        sobretitulo={periodoDosMeses(resumo.meses)}
+        titulo="Categorias"
+        descricao="Os gastos do mês por grupo. Abra um grupo para ver as categorias dele."
+      />
+      <CategoriasDoMes meses={resumo.meses} />
     </>
   )
 }

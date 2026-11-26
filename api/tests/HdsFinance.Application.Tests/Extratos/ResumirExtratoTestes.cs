@@ -129,6 +129,6 @@ public class ResumirExtratoTransacoesTestes
 
         ((ResultadoDoResumo.Resumido)resultado).Transacoes.Select(t => (t.Data.Month, t.Categoria)).Should().Equal(
             (11, TransacaoCategorizada.CategoriaDeEntrada),
-            (10, "Alimentação"));
+            (10, "Supermercado"));
     }
 }

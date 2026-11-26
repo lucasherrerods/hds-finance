@@ -29,34 +29,50 @@ const transacoes: TransacaoCategorizada[] = [
 const meses = [mes(2025, 11), mes(2025, 12), mes(2026, 1, { entradas: 1630, saidas: 1741.63, resultado: -111.63 })]
 
 describe('TransacoesPorMes', () => {
-  const seletor = () => screen.getByRole('combobox', { name: 'Mês' })
+  const periodo = () => screen.getByRole('button', { name: /^Período:/ })
+  const tabela = () => screen.getByRole('table', { name: 'Transações' })
 
-  it('abre no último mês e lista todos, agrupados por ano, do mais novo ao mais antigo', () => {
-    render(<TransacoesPorMes meses={meses} transacoes={transacoes} />)
+  it('abre no último mês do extrato, com os números do fechamento', () => {
+    render(<TransacoesPorMes meses={meses} transacoes={transacoes} hoje="2026-03-10" />)
 
-    expect(seletor()).toHaveValue('2026-1')
-    expect(within(seletor()).getAllByRole('group').map((g) => g.getAttribute('label'))).toEqual(['2026', '2025'])
-    expect(within(seletor()).getAllByRole('option').map((o) => o.textContent)).toEqual(['janeiro de 2026', 'dezembro de 2025', 'novembro de 2025'])
-    expect(screen.getByRole('button', { name: 'Mês seguinte' })).toBeDisabled()
+    expect(periodo()).toHaveTextContent('janeiro de 2026')
+    expect(tabela()).toHaveTextContent('Uber Viagem')
+    expect(screen.queryByText(/mercado exemplo/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Resultado do mês' })).toHaveTextContent('-R$ 111,63')
   })
 
-  it('mostra só as transações do mês escolhido', async () => {
-    render(<TransacoesPorMes meses={meses} transacoes={transacoes} />)
-
-    expect(screen.getByRole('table', { name: 'Transações' })).toHaveTextContent('Uber Viagem')
-    fireEvent.change(seletor(), { target: { value: '2025-12' } })
-
-    expect(await screen.findByText(/mercado exemplo/i)).toBeInTheDocument()
-    expect(screen.queryByText('Uber Viagem')).not.toBeInTheDocument()
+  it('chama o mês de "Este mês" quando ele é o atual', () => {
+    render(<TransacoesPorMes meses={meses} transacoes={transacoes} hoje="2026-01-25" />)
+    expect(periodo()).toHaveTextContent('Este mês')
   })
 
-  it('as setas andam de um em um', async () => {
-    render(<TransacoesPorMes meses={meses} transacoes={transacoes} />)
+  it('um atalho só vale depois de Aplicar', async () => {
+    render(<TransacoesPorMes meses={meses} transacoes={transacoes} hoje="2026-01-25" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mês anterior' }))
+    fireEvent.click(periodo())
+    const painel = within(screen.getByRole('dialog', { name: 'Escolher período' }))
+    fireEvent.click(painel.getByRole('button', { name: 'Todo período' }))
+    expect(screen.queryByText(/mercado exemplo/i)).not.toBeInTheDocument()
 
-    expect(seletor()).toHaveValue('2025-12')
+    fireEvent.click(painel.getByRole('button', { name: 'Aplicar' }))
+
     expect(await screen.findByText(/mercado exemplo/i)).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Receitas no período' })).toBeInTheDocument()
+  })
+
+  it('no calendário, dois cliques fazem o intervalo', async () => {
+    render(<TransacoesPorMes meses={meses} transacoes={transacoes} hoje="2026-01-25" />)
+
+    fireEvent.click(periodo())
+    const painel = within(screen.getByRole('dialog', { name: 'Escolher período' }))
+    fireEvent.click(painel.getByRole('button', { name: '15/01/2026' }))
+    expect(painel.getByRole('button', { name: 'Aplicar' })).toBeDisabled()
+    fireEvent.click(painel.getByRole('button', { name: '25/01/2026' }))
+    fireEvent.click(painel.getByRole('button', { name: 'Aplicar' }))
+
+    expect(await screen.findByRole('button', { name: 'Período: 15/01/2026 – 25/01/2026' })).toBeInTheDocument()
+    expect(tabela()).toHaveTextContent('Uber Viagem')
+    expect(tabela()).not.toHaveTextContent('Cliente')
   })
 })
 
@@ -65,7 +81,7 @@ describe('ListaDeTransacoes', () => {
   const janeiro = meses[2]
 
   it('os indicadores vêm do resumo do mês que a api calculou', () => {
-    render(<ListaDeTransacoes transacoes={doMes} mes={janeiro} />)
+    render(<ListaDeTransacoes transacoes={doMes} totais={janeiro} />)
 
     expect(screen.getByRole('group', { name: 'Total' })).toHaveTextContent('2')
     expect(screen.getByRole('group', { name: 'Despesas do mês' })).toHaveTextContent('−R$ 1.741,63')
@@ -74,7 +90,7 @@ describe('ListaDeTransacoes', () => {
   })
 
   it('busca, filtra por categoria e avisa quando não encontra nada', () => {
-    render(<ListaDeTransacoes transacoes={doMes} mes={janeiro} />)
+    render(<ListaDeTransacoes transacoes={doMes} totais={janeiro} />)
 
     fireEvent.change(screen.getByRole('searchbox', { name: 'Buscar transações' }), { target: { value: 'uber' } })
     expect(within(screen.getByRole('table', { name: 'Transações' })).getAllByRole('row')).toHaveLength(2)
@@ -85,7 +101,7 @@ describe('ListaDeTransacoes', () => {
   })
 
   it('ordena pelo maior valor', () => {
-    render(<ListaDeTransacoes transacoes={doMes} mes={janeiro} />)
+    render(<ListaDeTransacoes transacoes={doMes} totais={janeiro} />)
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Ordenar por' }), { target: { value: 'maior' } })
 

@@ -69,6 +69,7 @@ describe('rodapé', () => {
     expect(screen.getByRole('link', { name: /github/i })).toHaveAttribute('href', 'https://github.com/lucasherrerods/hds-finance')
     expect(screen.getByRole('link', { name: /linkedin/i })).toHaveAttribute('href', 'https://www.linkedin.com/in/lucasherrero/')
     expect(screen.getByText(/© 2026 hds finance/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Política de Privacidade' })).toHaveAttribute('href', '/privacidade')
   })
 })
 

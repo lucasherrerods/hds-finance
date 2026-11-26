@@ -1,7 +1,8 @@
 import { ArrowDownLeft, ArrowUpRight, CreditCard, Equal, Eye, EyeOff, Hash, Search, Trash2, type LucideIcon } from 'lucide-react'
 import { useId, useState, type ReactNode } from 'react'
 import { formatarData, formatarMoeda, formatarMoedaComSinal, IconeDoBanco } from '../../shared'
-import type { ResumoMensal, TransacaoCategorizada } from '../import'
+import type { GrupoDeCategoria, TransacaoCategorizada } from '../import'
+import type { Totais } from './intervalo'
 import { IconeDaCategoria } from './IconeDaCategoria'
 import { tomDaCategoria } from './iconesDeCategoria'
 import { Seletor } from './Seletor'
@@ -10,13 +11,24 @@ import { bancosDe, categoriasDe, filtrarTransacoes, type Filtros, type Ordem, ty
 /** Trocar a categoria e ocultar. Apagar só existe na área admin, onde há histórico guardado. */
 export type EdicaoDoHistorico = {
   categorias: string[]
+  /** Com os grupos, a lista de categorias vem separada por grupo. */
+  grupos?: GrupoDeCategoria[]
   aoMudar: (transacao: TransacaoCategorizada, categoria: string) => void
   aoOcultar: (transacao: TransacaoCategorizada, oculta: boolean) => void
   aoApagar?: (transacao: TransacaoCategorizada) => void
   aoApagarMes?: (mes: { ano: number; mes: number }) => void
 }
 
-type Props = { transacoes: TransacaoCategorizada[]; mes: ResumoMensal; edicao?: EdicaoDoHistorico }
+type Props = {
+  transacoes: TransacaoCategorizada[]
+  /** Os números do período, que vêm do fechamento da api quando o período é de meses inteiros. */
+  totais: Totais
+  /** "do mês" ou "no período". */
+  sufixo?: string
+  /** O seletor de período, que entra na mesma linha dos filtros. */
+  periodo?: ReactNode
+  edicao?: EdicaoDoHistorico
+}
 
 // Aplicações, resgates e transferências entre contas próprias não são gasto, então não têm categoria para trocar.
 const MOVIMENTACAO_INTERNA = 'Investimentos e transferências'
@@ -31,7 +43,7 @@ const ordens: { valor: Ordem; rotulo: string }[] = [
 ]
 
 const tipos: { valor: TipoDeFiltro; rotulo: string }[] = [
-  { valor: '', rotulo: 'Entradas e saídas' },
+  { valor: '', rotulo: 'Todas as transações' },
   { valor: 'entradas', rotulo: 'Só entradas' },
   { valor: 'saidas', rotulo: 'Só saídas' },
   { valor: 'cartao', rotulo: 'Só no cartão' },
@@ -41,7 +53,7 @@ const tipos: { valor: TipoDeFiltro; rotulo: string }[] = [
 const linha = 'grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 gap-y-1 border-b border-borda py-3 last:border-0 md:table-row md:py-0'
 const celula = 'md:border-b md:border-borda md:py-3 md:pr-4 md:group-last:border-0'
 
-export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
+export function ListaDeTransacoes({ transacoes, totais, sufixo = 'do mês', periodo, edicao }: Props) {
   const [filtros, setFiltros] = useState<Filtros>({ busca: '', categoria: '', ordem: 'recentes', banco: '', tipo: '', comOcultas: false })
   const mudar = (parte: Partial<Filtros>) => setFiltros({ ...filtros, ...parte })
   const bancos = bancosDe(transacoes)
@@ -53,9 +65,10 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
   return (
     <>
       <div className="grid grid-cols-2 gap-3 lg:flex lg:flex-wrap lg:items-center">
+        {periodo}
         {bancos.length > 1 && (
           <Filtro rotulo="Banco" valor={filtros.banco ?? ''} aoMudar={(banco) => mudar({ banco })}>
-            <option value="">Contas</option>
+            <option value="">Todas as contas</option>
             {bancos.map((b) => (
               <option key={b}>{b}</option>
             ))}
@@ -78,7 +91,7 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
           ))}
         </Filtro>
         <Filtro rotulo="Categoria" valor={filtros.categoria} aoMudar={(categoria) => mudar({ categoria })}>
-          <option value="">Categorias</option>
+          <option value="">Todas as categorias</option>
           {categoriasDe(transacoes).map((c) => (
             <option key={c}>{c}</option>
           ))}
@@ -103,14 +116,15 @@ export function ListaDeTransacoes({ transacoes, mes, edicao }: Props) {
         <Indicador rotulo="Total" icone={Hash}>
           {visiveis.length}
         </Indicador>
-        <Indicador rotulo="Despesas do mês" icone={ArrowUpRight} cor="text-saida">
-          {formatarMoedaComSinal(mes.saidas, 'saida')}
+        <Indicador rotulo={`Receitas ${sufixo}`} icone={ArrowDownLeft} cor="text-entrada">
+          {formatarMoedaComSinal(totais.entradas, 'entrada')}
         </Indicador>
-        <Indicador rotulo="Receitas do mês" icone={ArrowDownLeft} cor="text-entrada">
-          {formatarMoedaComSinal(mes.entradas, 'entrada')}
+        <Indicador rotulo={`Despesas ${sufixo}`} icone={ArrowUpRight} cor="text-saida">
+          {formatarMoedaComSinal(totais.saidas, 'saida')}
         </Indicador>
-        <Indicador rotulo="Resultado do mês" icone={Equal}>
-          {formatarMoeda(mes.resultado)}
+        {/* A cor segue o que venceu: sobrou é verde como as receitas, faltou é vermelho como as despesas. */}
+        <Indicador rotulo={`Resultado ${sufixo}`} icone={Equal} cor={totais.resultado > 0 ? 'text-entrada' : totais.resultado < 0 ? 'text-saida' : ''}>
+          {formatarMoeda(totais.resultado)}
         </Indicador>
       </div>
 
@@ -173,8 +187,8 @@ function Linha({ transacao: t, edicao }: { transacao: TransacaoCategorizada; edi
     <tr role="row" className={`group ${linha}`}>
       <td role="cell" className={`min-w-0 md:max-w-0 ${celula}`}>
         <span className="flex items-center gap-3">
-          <span className={`hidden size-9 shrink-0 place-items-center rounded-lg sm:grid ${tomDaCategoria(t.categoria)}`}>
-            <IconeDaCategoria categoria={t.categoria} className="size-4 opacity-70" />
+          <span className={`hidden size-9 shrink-0 place-items-center rounded-lg sm:grid ${tomDaCategoria(t.categoria, t.grupo)}`}>
+            <IconeDaCategoria categoria={t.categoria} grupo={t.grupo} className="size-4 opacity-70" />
           </span>
           <span className="flex min-w-0 flex-col">
             <span className="line-clamp-2 md:line-clamp-none md:truncate" title={t.descricao}>
@@ -252,18 +266,32 @@ function Categoria({ transacao: t, edicao }: { transacao: TransacaoCategorizada;
   const ehEntrada = t.valor > 0 && !t.noCartao
   // Numa entrada, as duas que mudam a conta vêm primeiro: receita ou dinheiro emprestado.
   const opcoes = new Set([...(ehEntrada ? [ENTRADA, EMPRESTIMOS] : []), ...edicao.categorias, t.categoria])
+  const grupos = (edicao.grupos ?? [])
+    .map((g) => ({ nome: g.nome, categorias: g.categorias.filter((c) => opcoes.has(c)) }))
+    .filter((g) => g.categorias.length > 0)
+  const agrupadas = new Set(grupos.flatMap((g) => g.categorias))
+  const soltas = [...opcoes].filter((c) => !agrupadas.has(c))
   return (
     <Seletor
       compacto
-      fundo={tomDaCategoria(t.categoria)}
+      fundo={tomDaCategoria(t.categoria, t.grupo)}
       aria-label={`Categoria de ${t.descricao}`}
       value={t.categoria}
       onChange={(e) => edicao.aoMudar(t, e.target.value)}
     >
-      {[...opcoes].map((c) => (
+      {soltas.map((c) => (
         <option key={c} value={c}>
           {c}
         </option>
+      ))}
+      {grupos.map((g) => (
+        <optgroup key={g.nome} label={g.nome}>
+          {g.categorias.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </optgroup>
       ))}
     </Seletor>
   )

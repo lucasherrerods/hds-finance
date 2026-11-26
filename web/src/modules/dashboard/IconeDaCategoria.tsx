@@ -1,8 +1,8 @@
 import { createElement } from 'react'
 import { iconeDaCategoria } from './iconesDeCategoria'
 
-type Props = { categoria: string; className?: string }
+type Props = { categoria: string; grupo?: string; className?: string }
 
-export function IconeDaCategoria({ categoria, className }: Props) {
-  return createElement(iconeDaCategoria(categoria), { 'aria-hidden': true, className })
+export function IconeDaCategoria({ categoria, grupo, className }: Props) {
+  return createElement(iconeDaCategoria(categoria, grupo), { 'aria-hidden': true, className })
 }

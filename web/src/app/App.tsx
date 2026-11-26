@@ -3,7 +3,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import { Cabecalho, Rodape } from '../modules/landing'
 import { PoliticaDePrivacidade } from '../modules/privacy'
 import { LayoutDoDashboard } from './dashboard/LayoutDoDashboard'
-import { CartaoDeCredito, Evolucao, Investimentos, Relatorio, Transacoes, VisaoGeral } from './dashboard/Secoes'
+import { CartaoDeCredito, Categorias, Evolucao, Investimentos, Relatorio, Transacoes, VisaoGeral } from './dashboard/Secoes'
 import { PaginaDeEntrada } from './PaginaDeEntrada'
 import { PaginaDeTeste } from './PaginaDeTeste'
 import { PaginaInicial } from './PaginaInicial'
@@ -39,6 +39,7 @@ const secoes = (
     <Route index element={<VisaoGeral />} />
     <Route path="evolucao" element={<Evolucao />} />
     <Route path="transacoes" element={<Transacoes />} />
+    <Route path="categorias" element={<Categorias />} />
     <Route path="investimentos" element={<Investimentos />} />
     <Route path="relatorio" element={<Relatorio />} />
   </>

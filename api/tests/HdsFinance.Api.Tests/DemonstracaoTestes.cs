@@ -37,7 +37,7 @@ public class DemonstracaoTestes(WebApplicationFactory<Program> fabrica) : IClass
         resposta.StatusCode.Should().Be(HttpStatusCode.OK);
         var corpo = await resposta.Content.ReadFromJsonAsync<ResumoDoExtratoJson>();
         corpo!.TransacoesNovas.Should().Be(3);
-        corpo.Meses.Should().ContainSingle().Which.Should().BeEquivalentTo(new MesJson(2026, 10, 3500m, 123.45m, 3376.55m, -1000m, 0m, 2376.55m, [new GastoJson("Alimentação", 123.45m)]));
+        corpo.Meses.Should().ContainSingle().Which.Should().BeEquivalentTo(new MesJson(2026, 10, 3500m, 123.45m, 3376.55m, -1000m, 0m, 2376.55m, [new GastoJson("Supermercado", 123.45m, "Alimentação")]));
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class DemonstracaoTestes(WebApplicationFactory<Program> fabrica) : IClass
         decimal InvestimentosETransferencias, decimal? SaldoInicial, decimal? SaldoFinal,
         IReadOnlyList<GastoJson> GastosPorCategoria);
 
-    private sealed record GastoJson(string Categoria, decimal Valor);
+    private sealed record GastoJson(string Categoria, decimal Valor, string Grupo);
 }
 
 public class DemonstracaoCategoriasTestes(WebApplicationFactory<Program> fabrica) : IClassFixture<WebApplicationFactory<Program>>
@@ -127,7 +127,7 @@ public class DemonstracaoPainelTestes(WebApplicationFactory<Program> fabrica) : 
         painel.GetProperty("gastoNoMesAnterior").ValueKind.Should().Be(System.Text.Json.JsonValueKind.Null);
         painel.GetProperty("ritmo").GetArrayLength().Should().Be(31);
         painel.GetProperty("mapaDeCalor")[0].GetProperty("diaDaSemana").GetInt32().Should().Be(4);
-        painel.GetProperty("principaisCategorias")[0].GetProperty("categoria").GetString().Should().Be("Alimentação");
+        painel.GetProperty("principaisCategorias")[0].GetProperty("categoria").GetString().Should().Be("Supermercado");
         painel.GetProperty("transacoesRecentes")[0].GetProperty("data").GetString().Should().Be("2026-10-10");
         painel.GetProperty("transacoesRecentes")[0].GetProperty("categoria").GetString().Should().Be("Investimentos e transferências");
     }
@@ -165,7 +165,7 @@ public class DemonstracaoTransacoesTestes(WebApplicationFactory<Program> fabrica
         var transacoes = json.RootElement.GetProperty("transacoes");
         transacoes.GetArrayLength().Should().Be(3);
         transacoes[1].GetProperty("data").GetString().Should().Be("2026-10-05");
-        transacoes[1].GetProperty("categoria").GetString().Should().Be("Alimentação");
+        transacoes[1].GetProperty("categoria").GetString().Should().Be("Supermercado");
         transacoes[1].GetProperty("valor").GetDecimal().Should().Be(-123.45m);
     }
 }
@@ -245,7 +245,7 @@ public class DemonstracaoAjustesTestes(WebApplicationFactory<Program> fabrica) :
     public async Task Categoria_inventada_e_recusada_e_transacao_desconhecida_e_ignorada()
     {
         (await EnviarAsync(Json(new { chave = await ChaveAsync("Mercado"), categoria = "Inventada" }))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await EnviarAsync(Json(new { chave = "não existe", categoria = "Lazer" }))).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await EnviarAsync(Json(new { chave = "não existe", categoria = "Jogos" }))).StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]

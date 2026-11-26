@@ -29,7 +29,7 @@ export function PrincipaisCategorias({ categorias }: Props) {
                 <td className="w-full">
                   <span className="flex flex-col gap-2">
                     <span className="flex items-center gap-2">
-                      <IconeDaCategoria categoria={c.categoria} className="size-4 shrink-0 opacity-70" />
+                      <IconeDaCategoria categoria={c.categoria} grupo={c.grupo} className="size-4 shrink-0 opacity-70" />
                       {c.categoria}
                     </span>
                     <span aria-hidden className="block h-2 overflow-hidden rounded-full bg-fundo">

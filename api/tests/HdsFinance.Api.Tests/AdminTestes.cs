@@ -262,7 +262,7 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
         var cliente = await ClienteLogadoAsync();
         await cliente.PostAsync("/admin/extratos", Amostra());
 
-        var resposta = await cliente.PutAsJsonAsync("/admin/categorias", new { descricao = "Compra no debito Mercado Exemplo", categoria = "Lazer" });
+        var resposta = await cliente.PutAsJsonAsync("/admin/categorias", new { descricao = "Compra no debito Mercado Exemplo", categoria = "Jogos" });
         var invalida = await cliente.PutAsJsonAsync("/admin/categorias", new { descricao = "Compra no debito Mercado Exemplo", categoria = "Inventada" });
 
         resposta.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -270,7 +270,7 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
         using var json = JsonDocument.Parse(await cliente.GetStringAsync("/admin/historico"));
         json.RootElement.GetProperty("transacoes").EnumerateArray()
             .Single(t => t.GetProperty("descricao").GetString() == "Compra no debito Mercado Exemplo")
-            .GetProperty("categoria").GetString().Should().Be("Lazer");
+            .GetProperty("categoria").GetString().Should().Be("Jogos");
     }
 
     [Fact]
@@ -354,13 +354,13 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
             .GetProperty("transacoes").EnumerateArray().Single(t => t.GetProperty("valor").GetDecimal() == -123.45m);
         var chave = (await CompraAsync()).GetProperty("chave").GetString();
 
-        (await cliente.PutAsJsonAsync("/admin/transacoes/categoria", new { chave, categoria = "Lazer" })).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await cliente.PutAsJsonAsync("/admin/transacoes/categoria", new { chave, categoria = "Jogos" })).StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await cliente.PutAsJsonAsync("/admin/transacoes/oculta", new { chave, oculta = true })).StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await cliente.PutAsJsonAsync("/admin/transacoes/categoria", new { chave, categoria = "Inventada" })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await cliente.PutAsJsonAsync("/admin/transacoes/oculta", new { chave = "x", oculta = true })).StatusCode.Should().Be(HttpStatusCode.NotFound);
 
         var compra = await CompraAsync();
-        compra.GetProperty("categoria").GetString().Should().Be("Lazer");
+        compra.GetProperty("categoria").GetString().Should().Be("Jogos");
         compra.GetProperty("oculta").GetBoolean().Should().BeTrue();
         using var json = JsonDocument.Parse(await cliente.GetStringAsync("/admin/historico"));
         json.RootElement.GetProperty("meses")[0].GetProperty("saidas").GetDecimal().Should().Be(0m);

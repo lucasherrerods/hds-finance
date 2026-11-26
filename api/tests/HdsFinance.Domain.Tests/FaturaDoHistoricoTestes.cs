@@ -63,9 +63,9 @@ public class FaturaDoHistoricoTestes
         var transacoes = fatura.ParaTransacoes().ToList();
 
         Listar(transacoes).Single().GastosPorCategoria.Should().Equal(
-            new GastoPorCategoria("Compras", 130m), new GastoPorCategoria("Transporte", 20m));
+            new GastoPorCategoria("Lojas", 130m), new GastoPorCategoria("Táxi e transporte privado urbano", 20m));
         Listar(transacoes.Select(t => t with { Oculta = t.Descricao == "LOJA" })).Single().GastosPorCategoria.Should().Equal(
-            new GastoPorCategoria("Transporte", 20m));
+            new GastoPorCategoria("Táxi e transporte privado urbano", 20m));
     }
 
     [Fact]

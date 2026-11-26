@@ -22,7 +22,7 @@ export function Rodape() {
       <span>© {anoAtual} hds finance · cada centavo no seu lugar</span>
       <nav aria-label="Rodapé" className="flex items-center gap-6">
         <Link to="/privacidade" className="transition-colors hover:text-texto">
-          Privacidade
+          Política de Privacidade
         </Link>
         {links.map(({ href, rotulo, Icone }) => (
           <a

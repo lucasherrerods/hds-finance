@@ -5,6 +5,7 @@ export type {
   CategoriaComparada,
   GastoDoDia,
   GastoPorCategoria,
+  GrupoDeCategoria,
   Investimentos,
   Painel,
   PontoDoRitmo,

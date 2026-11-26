@@ -1,4 +1,5 @@
 import { ShieldCheck } from 'lucide-react'
+import { motion } from 'motion/react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { Dialogo } from '../../shared'
@@ -26,11 +27,17 @@ export function AvisoDePrivacidade() {
           cabecalho={<h2 className="text-2xl leading-tight font-bold tracking-[-0.02em]">Seus dados, do começo ao fim</h2>}
         >
           <dl className="flex flex-col gap-4">
-            {pontos.map((p) => (
-              <div key={p.titulo} className="flex flex-col gap-1">
+            {pontos.map((p, i) => (
+              <motion.div
+                key={p.titulo}
+                className="flex flex-col gap-1"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.05 + i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+              >
                 <dt className="font-semibold">{p.titulo}</dt>
                 <dd className="text-texto-suave">{p.texto}</dd>
-              </div>
+              </motion.div>
             ))}
           </dl>
           <Link to="/privacidade" className={ligacao}>

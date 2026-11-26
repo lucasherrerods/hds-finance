@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using HdsFinance.Application.Assistente;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace HdsFinance.Infrastructure.Assistente;
@@ -26,7 +27,7 @@ public sealed class OpcoesDoAssistente
 /// Google Gemini pela API REST, no plano gratuito do AI Studio. Sem chave, falha de rede, cota estourada ou
 /// resposta estranha, devolve nulo e o resto do sistema segue sem o texto. Nada do pedido vai para o log.
 /// </summary>
-public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssistente> opcoes) : IAssistente
+public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssistente> opcoes, ILogger<AssistenteGemini>? log = null) : IAssistente
 {
     private sealed record Parte([property: JsonPropertyName("text")] string Texto);
 
@@ -48,6 +49,7 @@ public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssist
         var configuracao = opcoes.Value;
         if (!configuracao.Configurado)
         {
+            log?.LogWarning("Assistente sem chave: defina Assistente:ChaveDaApi.");
             return null;
         }
 
@@ -68,6 +70,8 @@ public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssist
             using var resposta = await cliente.SendAsync(requisicao, cancelamento);
             if (!resposta.IsSuccessStatusCode)
             {
+                // Só o código e o status do Google (ex.: PERMISSION_DENIED, RESOURCE_EXHAUSTED), nunca o pedido.
+                log?.LogWarning("O Gemini recusou o pedido: {Codigo} {Status}", (int)resposta.StatusCode, await StatusDoErroAsync(resposta, cancelamento));
                 return null;
             }
 
@@ -76,7 +80,23 @@ public sealed class AssistenteGemini(HttpClient cliente, IOptions<OpcoesDoAssist
         }
         catch (Exception erro) when (erro is HttpRequestException or JsonException or TaskCanceledException)
         {
+            log?.LogWarning("Não foi possível falar com o Gemini: {Erro}", erro.GetType().Name);
             return null;
+        }
+    }
+
+    private static async Task<string> StatusDoErroAsync(HttpResponseMessage resposta, CancellationToken cancelamento)
+    {
+        try
+        {
+            using var documento = await JsonDocument.ParseAsync(await resposta.Content.ReadAsStreamAsync(cancelamento), cancellationToken: cancelamento);
+            return documento.RootElement.TryGetProperty("error", out var erro) && erro.TryGetProperty("status", out var status)
+                ? status.GetString() ?? "?"
+                : "?";
+        }
+        catch (JsonException)
+        {
+            return "?";
         }
     }
 

@@ -261,7 +261,7 @@ function DashboardDoAdmin() {
           <LogOut aria-hidden className="size-5" />
         </button>
       }
-      rodape="Área admin: só você entra, e só os seus dados ficam guardados."
+      rodape={`© ${new Date().getFullYear()} hds finance · admin`}
       aviso={aviso}
       fecharAviso={() => setAviso(null)}
     />

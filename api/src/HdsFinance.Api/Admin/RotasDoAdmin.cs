@@ -90,6 +90,7 @@ public static class RotasDoAdmin
         var assistente = protegidas.MapGroup("/assistente");
         assistente.MapGet("/analise", AnaliseAsync);
         assistente.MapGet("/sugestoes", SugestoesAsync);
+        assistente.MapGet("/sugestoes/meses", MesesSemCategoriaAsync);
         assistente.MapPost("/pergunta", PerguntaAsync);
     }
 
@@ -280,8 +281,16 @@ public static class RotasDoAdmin
     }
 
     /// <summary>Aceitar uma sugestão é o mesmo PUT /categorias de quando o admin corrige na mão.</summary>
-    private static async Task<IResult> SugestoesAsync(FecharMes fechar, SugerirCategorias sugerir, CancellationToken cancelamento) =>
-        Results.Ok(await sugerir.ExecutarAsync(await fechar.TransacoesAsync(cancelamento), cancelamento));
+    private static async Task<IResult> SugestoesAsync(string? mes, FecharMes fechar, SugerirCategorias sugerir, CancellationToken cancelamento)
+    {
+        var (valido, escolhido) = LerMes(mes);
+        return valido
+            ? Results.Ok(await sugerir.ExecutarAsync(await fechar.TransacoesAsync(cancelamento), escolhido, cancelamento))
+            : Results.Problem(title: "Mês inválido", detail: "Use o formato AAAA-MM.", statusCode: StatusCodes.Status400BadRequest);
+    }
+
+    private static async Task<IResult> MesesSemCategoriaAsync(FecharMes fechar, SugerirCategorias sugerir, CancellationToken cancelamento) =>
+        Results.Ok(sugerir.MesesSemCategoria(await fechar.TransacoesAsync(cancelamento)));
 
     private static async Task<IResult> PerguntaAsync(PerguntaJson pedido, FecharMes fechar, ResponderPergunta responder, CancellationToken cancelamento) =>
         Results.Ok(new RespostaJson(await responder.ExecutarAsync(await fechar.MesesAsync(cancelamento), pedido.Pergunta ?? string.Empty, cancelamento)));

@@ -6,6 +6,9 @@ namespace HdsFinance.Application.Assistente;
 
 public sealed record SugestaoDeCategoria(string Descricao, string Categoria, int Quantidade, decimal Valor);
 
+/// <summary>Quantos gastos sem categoria o mês tem, para o admin escolher o que mandar para a IA.</summary>
+public sealed record MesSemCategoria(int Ano, int Mes, int Quantidade);
+
 /// <summary>
 /// Pede à IA uma categoria para os gastos que as regras não reconheceram. Só sugere: o admin aceita no painel,
 /// e o aceite vira categoria aprendida, então a mesma descrição não volta para a IA.
@@ -21,10 +24,19 @@ public sealed class SugerirCategorias(IAssistente assistente, MemoriaDoAssistent
         "categoria da lista dada, ou deixe de fora se não tiver segurança. Responda só com JSON no formato " +
         "{\"sugestoes\":[{\"descricao\":\"...\",\"categoria\":\"...\"}]}, copiando a descrição como veio.";
 
-    public async Task<IReadOnlyList<SugestaoDeCategoria>> ExecutarAsync(IEnumerable<Transacao> transacoes, CancellationToken cancelamento = default)
+    /// <summary>Não chama a IA: só conta o que ela receberia em cada mês.</summary>
+    public IReadOnlyList<MesSemCategoria> MesesSemCategoria(IEnumerable<Transacao> transacoes) =>
+        SemCategoria(transacoes)
+            .GroupBy(t => (t.Data.Year, t.Data.Month))
+            .OrderByDescending(g => g.Key)
+            .Select(g => new MesSemCategoria(g.Key.Year, g.Key.Month, g.Count()))
+            .ToList();
+
+    /// <summary>Sem mês, vão todos os meses.</summary>
+    public async Task<IReadOnlyList<SugestaoDeCategoria>> ExecutarAsync(IEnumerable<Transacao> transacoes, MesDeReferencia? mes = null, CancellationToken cancelamento = default)
     {
-        var semCategoria = transacoes
-            .Where(t => t.EhGasto && categorizador.Categorizar(t) == Categorizador.SemCategoria)
+        var semCategoria = SemCategoria(transacoes)
+            .Where(t => mes is not { } escolhido || escolhido.Contem(t.Data))
             .GroupBy(t => t.Descricao.Trim())
             .Select(g => new SugestaoDeCategoria(g.Key, string.Empty, g.Count(), -g.Sum(t => t.Valor)))
             .OrderByDescending(s => s.Valor)
@@ -51,6 +63,9 @@ public sealed class SugerirCategorias(IAssistente assistente, MemoriaDoAssistent
             .OrderByDescending(s => s.Valor)
             .ToList();
     }
+
+    private IEnumerable<Transacao> SemCategoria(IEnumerable<Transacao> transacoes) =>
+        transacoes.Where(t => t.EhGasto && categorizador.Categorizar(t) == Categorizador.SemCategoria);
 
     /// <summary>Resposta fora do formato vira lista vazia: a IA nunca derruba o painel.</summary>
     private static IEnumerable<(string Descricao, string Categoria)> Ler(string? resposta)

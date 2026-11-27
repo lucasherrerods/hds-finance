@@ -22,7 +22,9 @@ export function recortesDaEvolucao(meses: ResumoMensal[]): Recorte[] {
   const recentes = { chave: 'recentes', rotulo: 'Últimos 12 meses', meses: meses.slice(-MESES_RECENTES) }
   const anos = agruparMesesPorAno(meses)
   if (anos.length < 2) return [recentes]
-  return [recentes, ...anos.toReversed().map((a) => ({ chave: String(a.ano), rotulo: String(a.ano), meses: a.meses }))]
+  // Até 12 meses, todo o período é igual aos últimos 12 e só repetiria a aba.
+  const todos = meses.length > MESES_RECENTES ? [{ chave: 'todos', rotulo: 'Todo o período', meses }] : []
+  return [recentes, ...todos, ...anos.toReversed().map((a) => ({ chave: String(a.ano), rotulo: String(a.ano), meses: a.meses }))]
 }
 
 export function transacoesDoMes(transacoes: TransacaoCategorizada[], ano: number, mes: number): TransacaoCategorizada[] {
@@ -46,7 +48,7 @@ export type Filtros = { busca: string; categoria: string; ordem: Ordem; banco?: 
 
 export type TipoDeFiltro = '' | 'entradas' | 'saidas' | 'cartao'
 
-const semAcento = (texto: string) =>
+export const semAcento = (texto: string) =>
   texto
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')

@@ -1,13 +1,18 @@
-import { ArrowDownLeft, ArrowUpRight, CalendarCheck, PiggyBank, Trophy, Undo2, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Flame, PiggyBank, Trophy, Undo2, type LucideIcon } from 'lucide-react'
+import { motion } from 'motion/react'
 import { lazy, Suspense, useState } from 'react'
 import { formatarData, formatarMesCurto, formatarMoeda, formatarMoedaComSinal } from '../../shared'
 import type { ResumoMensal, TransacaoCategorizada } from '../import'
-import { movimentacoesDeInvestimento, resumoDosInvestimentos } from './investimentos'
+import { META_MENSAL, movimentacoesDeInvestimento, resumoDosInvestimentos, sequenciaDeAplicacao } from './investimentos'
 
 // O Recharts só baixa quando há gráfico para mostrar.
 const GraficoDeInvestimentos = lazy(() => import('./GraficoDeInvestimentos').then((m) => ({ default: m.GraficoDeInvestimentos })))
 
+const GraficoDaMeta = lazy(() => import('./GraficoDaMeta').then((m) => ({ default: m.GraficoDaMeta })))
+
 const POR_VEZ = 8
+
+const Espera = ({ altura }: { altura: string }) => <div aria-hidden className={`${altura} rounded-2xl border border-borda bg-superficie opacity-50 motion-safe:animate-pulse`} />
 
 type Props = { meses: ResumoMensal[]; transacoes: TransacaoCategorizada[] }
 
@@ -40,7 +45,7 @@ export function InvestimentosDoPeriodo({ meses, transacoes }: Props) {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Numero rotulo="Aplicado" icone={ArrowUpRight} valor={formatarMoeda(resumo.aplicado)} />
         <Numero rotulo="Resgatado" icone={Undo2} valor={formatarMoeda(resumo.resgatado)} />
-        <Numero rotulo="Meses com aplicação" icone={CalendarCheck} valor={`${resumo.mesesComAplicacao} de ${meses.length}`} />
+        <SequenciaDeAplicacao meses={meses} />
         <Numero
           rotulo="Maior aplicação"
           icone={Trophy}
@@ -50,9 +55,14 @@ export function InvestimentosDoPeriodo({ meses, transacoes }: Props) {
       </div>
 
       {meses.length > 1 && (
-        <Suspense fallback={<div aria-hidden className="h-[352px] rounded-2xl border border-borda bg-superficie opacity-50 motion-safe:animate-pulse" />}>
-          <GraficoDeInvestimentos meses={meses} />
-        </Suspense>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Suspense fallback={<Espera altura="h-[352px]" />}>
+            <GraficoDeInvestimentos meses={meses} />
+          </Suspense>
+          <Suspense fallback={<Espera altura="h-[352px]" />}>
+            <GraficoDaMeta meses={meses} />
+          </Suspense>
+        </div>
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -122,6 +132,32 @@ function Movimentacao({ transacao: t }: { transacao: TransacaoCategorizada }) {
         {formatarMoedaComSinal(t.valor, voltou ? 'entrada' : 'saida')}
       </span>
     </li>
+  )
+}
+
+function SequenciaDeAplicacao({ meses }: { meses: ResumoMensal[] }) {
+  const { atual, recorde } = sequenciaDeAplicacao(meses)
+  const acesa = atual > 0
+  return (
+    <div role="group" aria-label="Sequência de aplicação" className="flex min-w-0 flex-col gap-2 rounded-2xl border border-borda bg-superficie p-4 sm:p-6">
+      <span className="flex items-center gap-2 text-sm text-texto-suave">
+        <motion.span
+          aria-hidden
+          className={`inline-flex ${acesa ? 'text-calor-4' : 'opacity-40'}`}
+          animate={acesa ? { scale: [1, 1.15, 1], rotate: [0, -6, 4, 0] } : undefined}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <Flame className="size-4" />
+        </motion.span>
+        Sequência
+      </span>
+      <span className="text-lg font-semibold tracking-tight tabular-nums sm:text-2xl">
+        {atual} {atual === 1 ? 'mês' : 'meses'}
+      </span>
+      <span className="text-sm text-texto-suave">
+        seguidos aplicando {formatarMoeda(META_MENSAL)}+{recorde > atual && ` · recorde ${recorde}`}
+      </span>
+    </div>
   )
 }
 

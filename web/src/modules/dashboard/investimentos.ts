@@ -48,3 +48,40 @@ const MOVIMENTACAO_INTERNA = 'Investimentos e transferências'
 export function movimentacoesDeInvestimento(transacoes: TransacaoCategorizada[]): TransacaoCategorizada[] {
   return transacoes.filter((t) => t.categoria === MOVIMENTACAO_INTERNA && !t.noCartao).toSorted((a, b) => b.data.localeCompare(a.data))
 }
+
+/** Quanto aplicar por mês para a sequência contar. */
+export const META_MENSAL = 1500
+
+const liquidoDo = (m: ResumoMensal) => centavos(m.investimentos.aplicado - m.investimentos.resgatado)
+
+export type Sequencia = { atual: number; recorde: number }
+
+/**
+ * Meses seguidos com aplicado líquido na meta. O último mês sem nenhuma aplicação fica de fora:
+ * costuma ser o mês em andamento, e ainda dá tempo de aplicar.
+ */
+export function sequenciaDeAplicacao(meses: ResumoMensal[], meta = META_MENSAL): Sequencia {
+  const ultimo = meses.at(-1)
+  const contados = ultimo && ultimo.investimentos.aplicado === 0 ? meses.slice(0, -1) : meses
+  let atual = 0
+  let recorde = 0
+  for (const m of contados) {
+    atual = liquidoDo(m) >= meta ? atual + 1 : 0
+    recorde = Math.max(recorde, atual)
+  }
+  return { atual, recorde }
+}
+
+export type PontoDaMeta = { rotulo: string; liquido: number; taxa: number | null; bateu: boolean }
+
+export function dadosDaMeta(meses: ResumoMensal[], meta = META_MENSAL): PontoDaMeta[] {
+  return meses.map((m) => {
+    const liquido = liquidoDo(m)
+    return {
+      rotulo: formatarMesCurto(m.ano, m.mes),
+      liquido,
+      taxa: m.entradas > 0 ? Math.round((liquido / m.entradas) * 1000) / 10 : null,
+      bateu: liquido >= meta,
+    }
+  })
+}

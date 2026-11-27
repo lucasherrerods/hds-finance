@@ -54,6 +54,19 @@ public class ImportarExtratoTestes
     }
 
     [Fact]
+    public async Task Duas_cobrancas_iguais_no_mesmo_dia_sem_id_entram_as_duas()
+    {
+        var pedagio = new Transacao(new DateOnly(2026, 11, 22), -3.65m, "Compra no débito Rodoanel Pedagio", TipoDeTransacao.Comum);
+        var casoDeUso = CasoDeUsoQueLe(new ResultadoDaLeitura.Sucesso([pedagio, pedagio]));
+
+        var resultado = await casoDeUso.ExecutarAsync(Stream.Null, FormatoDeExtrato.Ofx);
+        var reimportado = await casoDeUso.ExecutarAsync(Stream.Null, FormatoDeExtrato.Ofx);
+
+        resultado.Should().BeEquivalentTo(new { Novas = 2, Duplicadas = 0 });
+        reimportado.Should().BeEquivalentTo(new { Novas = 0, Duplicadas = 2 });
+    }
+
+    [Fact]
     public async Task Arquivo_invalido_nao_grava_nada()
     {
         var casoDeUso = CasoDeUsoQueLe(new ResultadoDaLeitura.Falha(7, "Valor da transação inválido."));

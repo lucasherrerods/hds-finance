@@ -1,11 +1,13 @@
 import { ArrowDownLeft, ArrowUpRight, CreditCard, Equal, Eye, EyeOff, Hash, Search, Trash2, X, type LucideIcon } from 'lucide-react'
-import { useId, useState, type ReactNode } from 'react'
+import { useId, useState, type MouseEvent, type ReactNode } from 'react'
 import { formatarData, formatarMoeda, formatarMoedaComSinal, IconeDoBanco } from '../../shared'
 import type { GrupoDeCategoria, TransacaoCategorizada } from '../import'
 import type { Totais } from './intervalo'
 import { IconeDaCategoria } from './IconeDaCategoria'
 import { tomDaCategoria } from './iconesDeCategoria'
 import { Seletor } from './Seletor'
+import { Etiqueta } from './CategoriaDaTransacao'
+import { DetalheDaTransacao } from './DetalheDaTransacao'
 import { bancosDe, categoriasDe, filtrarTransacoes, type Filtros, type Ordem, type TipoDeFiltro } from './periodos'
 
 /** Trocar a categoria e ocultar. Apagar só existe na área admin, onde há histórico guardado. */
@@ -30,12 +32,9 @@ type Props = {
   /** O seletor de período, que entra na mesma linha dos filtros. */
   periodo?: ReactNode
   edicao?: EdicaoDoHistorico
+  /** Onde procurar as transações semelhantes nos detalhes; sem ele, só no período. */
+  historico?: TransacaoCategorizada[]
 }
-
-// Aplicações, resgates e transferências entre contas próprias não são gasto, então não têm categoria para trocar.
-const MOVIMENTACAO_INTERNA = 'Investimentos e transferências'
-const ENTRADA = 'Entrada'
-const EMPRESTIMOS = 'Empréstimos'
 
 const ordens: { valor: Ordem; rotulo: string }[] = [
   { valor: 'recentes', rotulo: 'Mais recentes' },
@@ -55,7 +54,8 @@ const tipos: { valor: TipoDeFiltro; rotulo: string }[] = [
 const linha = 'grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 gap-y-1 border-b border-borda py-3 last:border-0 md:table-row md:py-0'
 const celula = 'md:border-b md:border-borda md:py-3 md:pr-4 md:group-last:border-0'
 
-export function ListaDeTransacoes({ transacoes, totais, sufixo = 'do mês', periodo, edicao, filtroInicial }: Props) {
+export function ListaDeTransacoes({ transacoes, totais, sufixo = 'do mês', periodo, edicao, filtroInicial, historico = transacoes }: Props) {
+  const [aberta, setAberta] = useState<TransacaoCategorizada | null>(null)
   const [filtros, setFiltros] = useState<Filtros>({ busca: '', categoria: '', ordem: 'recentes', banco: '', tipo: '', comOcultas: false, ...filtroInicial })
   const mudar = (parte: Partial<Filtros>) => setFiltros({ ...filtros, ...parte })
   const bancos = bancosDe(transacoes)
@@ -175,12 +175,14 @@ export function ListaDeTransacoes({ transacoes, totais, sufixo = 'do mês', peri
             </thead>
             <tbody role="rowgroup" className="block md:table-row-group">
               {visiveis.map((t, i) => (
-                <Linha key={t.chave ?? `${t.data}-${t.descricao}-${i}`} transacao={t} edicao={edicao} />
+                <Linha key={t.chave ?? `${t.data}-${t.descricao}-${i}`} transacao={t} edicao={edicao} aoAbrir={() => setAberta(t)} />
               ))}
             </tbody>
           </table>
         )}
       </section>
+
+      {aberta && <DetalheDaTransacao transacao={aberta} historico={historico} edicao={edicao} aoEscolher={setAberta} aoFechar={() => setAberta(null)} />}
     </>
   )
 }
@@ -193,20 +195,32 @@ function Coluna({ children, className = '' }: { children: ReactNode; className?:
   )
 }
 
-function Linha({ transacao: t, edicao }: { transacao: TransacaoCategorizada; edicao?: EdicaoDoHistorico }) {
+type LinhaProps = { transacao: TransacaoCategorizada; edicao?: EdicaoDoHistorico; aoAbrir: () => void }
+
+function Linha({ transacao: t, edicao, aoAbrir }: LinhaProps) {
   const entrada = t.valor > 0
   const banco = t.banco ?? 'Inter'
+  // A linha toda abre os detalhes, menos os controles que já têm ação própria.
+  const abrir = (e: MouseEvent) => {
+    if (!(e.target as HTMLElement).closest('button, select, a')) aoAbrir()
+  }
   return (
-    <tr role="row" className={`group ${linha}`}>
+    <tr role="row" onClick={abrir} className={`group cursor-pointer transition-colors md:hover:bg-fundo/60 ${linha}`}>
       <td role="cell" className={`min-w-0 md:max-w-0 ${celula}`}>
         <span className="flex items-center gap-3">
           <span className={`hidden size-9 shrink-0 place-items-center rounded-lg sm:grid ${tomDaCategoria(t.categoria, t.grupo)}`}>
             <IconeDaCategoria categoria={t.categoria} grupo={t.grupo} className="size-4 opacity-70" />
           </span>
           <span className="flex min-w-0 flex-col">
-            <span className="line-clamp-2 md:line-clamp-none md:truncate" title={t.descricao}>
+            <button
+              type="button"
+              onClick={aoAbrir}
+              aria-label={`Detalhes de ${t.descricao}`}
+              title={t.descricao}
+              className="line-clamp-2 text-left outline-none focus-visible:underline md:line-clamp-none md:truncate"
+            >
               {t.descricao}
-            </span>
+            </button>
             {t.oculta && (
               <span className="flex items-center gap-1 text-sm text-texto-suave">
                 <EyeOff aria-hidden className="size-3.5 opacity-70" />
@@ -217,7 +231,7 @@ function Linha({ transacao: t, edicao }: { transacao: TransacaoCategorizada; edi
         </span>
       </td>
       <td role="cell" className={`order-3 min-w-0 ${celula}`}>
-        {edicao ? <Categoria transacao={t} edicao={edicao} /> : <Etiqueta categoria={t.categoria} />}
+        <Etiqueta categoria={t.categoria} grupo={t.grupo} />
       </td>
       <td role="cell" className={`order-5 hidden whitespace-nowrap text-texto-suave lg:table-cell ${celula}`}>
         <span className="flex items-center gap-2">
@@ -267,46 +281,6 @@ function Linha({ transacao: t, edicao }: { transacao: TransacaoCategorizada; edi
         </td>
       )}
     </tr>
-  )
-}
-
-function Etiqueta({ categoria }: { categoria: string }) {
-  return <span className={`inline-block max-w-full truncate rounded-full px-2 py-1 align-middle text-sm whitespace-nowrap ${tomDaCategoria(categoria)}`}>{categoria}</span>
-}
-
-function Categoria({ transacao: t, edicao }: { transacao: TransacaoCategorizada; edicao: EdicaoDoHistorico }) {
-  if (t.categoria === MOVIMENTACAO_INTERNA) return <Etiqueta categoria={t.categoria} />
-  const ehEntrada = t.valor > 0 && !t.noCartao
-  // Numa entrada, as duas que mudam a conta vêm primeiro: receita ou dinheiro emprestado.
-  const opcoes = new Set([...(ehEntrada ? [ENTRADA, EMPRESTIMOS] : []), ...edicao.categorias, t.categoria])
-  const grupos = (edicao.grupos ?? [])
-    .map((g) => ({ nome: g.nome, categorias: g.categorias.filter((c) => opcoes.has(c)) }))
-    .filter((g) => g.categorias.length > 0)
-  const agrupadas = new Set(grupos.flatMap((g) => g.categorias))
-  const soltas = [...opcoes].filter((c) => !agrupadas.has(c))
-  return (
-    <Seletor
-      compacto
-      fundo={tomDaCategoria(t.categoria, t.grupo)}
-      aria-label={`Categoria de ${t.descricao}`}
-      value={t.categoria}
-      onChange={(e) => edicao.aoMudar(t, e.target.value)}
-    >
-      {soltas.map((c) => (
-        <option key={c} value={c}>
-          {c}
-        </option>
-      ))}
-      {grupos.map((g) => (
-        <optgroup key={g.nome} label={g.nome}>
-          {g.categorias.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </optgroup>
-      ))}
-    </Seletor>
   )
 }
 

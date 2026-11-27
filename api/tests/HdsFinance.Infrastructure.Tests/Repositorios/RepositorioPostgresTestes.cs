@@ -39,6 +39,21 @@ public sealed class RepositorioPostgresTestes : IDisposable
     }
 
     [Fact]
+    public async Task Guarda_a_segunda_cobranca_igual_do_dia_com_a_propria_chave()
+    {
+        var pedagio = new Transacao(new DateOnly(2026, 11, 22), -3.65m, "Rodoanel Pedagio", TipoDeTransacao.Comum);
+        var numeradas = Transacao.NumerarRepetidas([pedagio, pedagio]);
+        await using (var banco = NovoBanco())
+        {
+            await new RepositorioPostgres(banco).AdicionarAsync(numeradas);
+        }
+
+        await using var outro = NovoBanco();
+        (await new RepositorioPostgres(outro).ListarAsync()).Select(t => t.ChaveDeDeduplicacao)
+            .Should().Equal(numeradas.Select(t => t.ChaveDeDeduplicacao));
+    }
+
+    [Fact]
     public async Task Informa_so_as_chaves_que_ja_existem()
     {
         await using var banco = NovoBanco();

@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { AvisoDePrivacidade, PoliticaDePrivacidade } from '.'
 import { pontos } from './pontos'
 
 describe('privacidade', () => {
-  it('avisa que nada é armazenado e abre a explicação', () => {
+  it('avisa que nada é armazenado e abre a explicação', async () => {
     render(<AvisoDePrivacidade />, { wrapper: MemoryRouter })
     expect(screen.getByText(/nada é armazenado/i)).toBeInTheDocument()
 
@@ -16,7 +16,7 @@ describe('privacidade', () => {
     expect(modal.getByRole('link', { name: /política completa/i })).toHaveAttribute('href', '/privacidade')
 
     fireEvent.click(modal.getByRole('button', { name: 'Fechar' }))
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('a política repete os pontos do modal e fala de quem hospeda', () => {

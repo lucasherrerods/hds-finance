@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { FaturasDoCartao } from './FaturasDoCartao'
 import type { Fatura } from './faturas'
 
@@ -23,7 +23,7 @@ describe('FaturasDoCartao', () => {
     expect(screen.getByRole('button', { name: /cartão nubank/i })).toHaveTextContent('1 fatura incluída')
   })
 
-  it('clicar numa barra abre a fatura com categorias e lançamentos, e fechar volta', () => {
+  it('clicar numa barra abre a fatura com categorias e lançamentos, e fechar volta', async () => {
     render(<FaturasDoCartao faturas={[fatura('2026-11-02'), fatura('2026-10-02')]} />)
 
     fireEvent.click(screen.getByRole('button', { name: /fatura de outubro de 2026/i }))
@@ -33,7 +33,7 @@ describe('FaturasDoCartao', () => {
     expect(painel.getByText('Lanche')).toBeInTheDocument()
 
     fireEvent.click(painel.getByRole('button', { name: 'Fechar' }))
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('diz se o pagamento foi encontrado, e cala quando não dá para saber', () => {

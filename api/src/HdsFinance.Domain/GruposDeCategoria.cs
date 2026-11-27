@@ -20,11 +20,11 @@ public static class GruposDeCategoria
         new("Saúde", ["Farmácia", "Consultas e planos de saúde", "Academia", "Bem-estar"]),
         new("Serviços digitais", ["Streaming de vídeo", "Streaming de música", "Serviços digitais"]),
         new("Compras", ["Compras", "Compras online", "Lojas", "Vestuário"]),
-        new("Lazer", ["Cinema e eventos", "Jogos"]),
+        new("Lazer", ["Cinema e eventos", "Jogos", "Viagens"]),
         new("Educação", ["Cursos", "Livros", "Universidade"]),
         new("Pets", ["Pet shop e veterinário"]),
         new("Finanças", ["Tarifas bancárias", "Juros e IOF", "Impostos", Emprestimo.Categoria]),
-        new(Outros, [Categorizador.SemCategoria]),
+        new(Outros, ["Apostas", "Transferência - Pix", Categorizador.SemCategoria]),
     ];
 
     // Nomes que já foram categoria antes dos grupos existirem, e os que não são gasto: esses são o próprio grupo.

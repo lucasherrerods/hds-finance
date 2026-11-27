@@ -31,3 +31,12 @@ public interface INotificador
 {
     Task<ResultadoDoEnvio> EnviarAsync(MesDeReferencia mes, byte[] pdf, CancellationToken cancelamento = default);
 }
+
+/// <summary>Porta: o limite de gasto por mês de cada grupo de categorias.</summary>
+public interface IRepositorioDeOrcamentos
+{
+    Task<IReadOnlyDictionary<string, decimal>> ListarAsync(CancellationToken cancelamento = default);
+
+    /// <summary>Limite nulo tira o limite do grupo.</summary>
+    Task DefinirAsync(string grupo, decimal? limite, CancellationToken cancelamento = default);
+}

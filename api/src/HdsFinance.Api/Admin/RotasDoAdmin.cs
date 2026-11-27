@@ -13,7 +13,18 @@ namespace HdsFinance.Api.Admin;
 /// <summary>Categorias são as que dá para escolher ao corrigir uma transação.</summary>
 public sealed record HistoricoJson(
     IReadOnlyList<MesJson> Meses, PainelJson? Painel, IReadOnlyList<TransacaoJson> Transacoes, IReadOnlyList<string> Categorias,
-    SaldoJson? Saldo, IReadOnlyList<FaturaJson> Faturas, IReadOnlyList<GrupoDeCategoria> Grupos);
+    SaldoJson? Saldo, IReadOnlyList<FaturaJson> Faturas, IReadOnlyList<GrupoDeCategoria> Grupos,
+    IReadOnlyList<OrcamentoJson> Orcamento, IReadOnlyList<RecorrenteJson> Recorrentes, ProjecaoJson? Projecao);
+
+public sealed record OrcamentoJson(string Grupo, decimal Limite, decimal Gasto, decimal Percentual, string Situacao);
+
+public sealed record RecorrenteJson(string Descricao, string Categoria, string Grupo, decimal Valor, int Dia, string Situacao, decimal? ValorNoMes);
+
+public sealed record ProjecaoJson(int Ano, int Mes, int DiasPassados, int DiasNoMes, decimal GastoAteAgora, decimal GastoProjetado,
+    decimal RecorrentesPendentes, decimal Entradas, decimal SobraProjetada);
+
+/// <summary>Limite nulo ou zero tira o limite do grupo.</summary>
+public sealed record LimiteJson(string Grupo, decimal? Limite);
 
 public sealed record FaturaJson(DateOnly Vencimento, decimal? Total, decimal Gasto, bool? Paga, IReadOnlyList<TransacaoJson> Compras, string Banco,
     IReadOnlyList<GastoJson> GastosPorCategoria);
@@ -86,6 +97,7 @@ public static class RotasDoAdmin
         protegidas.MapGet("/relatorio", RelatorioAsync);
         protegidas.MapPost("/fechamento", EnviarFechamentoAsync);
         protegidas.MapPut("/categorias", CorrigirCategoriaAsync);
+        protegidas.MapPut("/orcamentos", DefinirOrcamentoAsync);
 
         var assistente = protegidas.MapGroup("/assistente");
         assistente.MapGet("/analise", AnaliseAsync);
@@ -184,8 +196,19 @@ public static class RotasDoAdmin
             historico.Saldo is { } s ? new SaldoJson(s.Valor, s.Em, s.Informado, s.AntesDoHistorico) : null,
             historico.Faturas.Select(f => new FaturaJson(f.Vencimento, f.Total, f.Gasto, f.Paga, f.Compras.Select(JsonDoResumo.De).ToList(), f.Banco.ToString(),
                 f.GastosPorCategoria.Select(GastoJson.De).ToList())).ToList(),
-            GruposDeCategoria.Todos));
+            GruposDeCategoria.Todos,
+            historico.Orcamento.Select(o => new OrcamentoJson(o.Grupo, o.Limite, o.Gasto, o.Percentual, o.Situacao.ToString())).ToList(),
+            historico.Recorrentes.Select(r => new RecorrenteJson(
+                r.Descricao, r.Categoria, GruposDeCategoria.GrupoDe(r.Categoria), r.Valor, r.Dia, r.Situacao.ToString(), r.ValorNoMes)).ToList(),
+            historico.Projecao is { } p
+                ? new ProjecaoJson(p.Mes.Ano, p.Mes.Mes, p.DiasPassados, p.DiasNoMes, p.GastoAteAgora, p.GastoProjetado, p.RecorrentesPendentes, p.Entradas, p.SobraProjetada)
+                : null));
     }
+
+    private static async Task<IResult> DefinirOrcamentoAsync(LimiteJson pedido, DefinirOrcamento definir, CancellationToken cancelamento) =>
+        await definir.ExecutarAsync(pedido.Grupo ?? string.Empty, pedido.Limite, cancelamento) == ResultadoDoOrcamento.Definido
+            ? Results.NoContent()
+            : Results.Problem(title: "Limite inválido", detail: "Escolha um dos grupos e um valor positivo.", statusCode: StatusCodes.Status400BadRequest);
 
     private static async Task<IResult> CorrigirCategoriaAsync(CorrecaoJson correcao, CorrigirCategoria corrigir, CancellationToken cancelamento) =>
         await corrigir.ExecutarAsync(correcao.Descricao ?? string.Empty, correcao.Categoria ?? string.Empty, cancelamento) switch

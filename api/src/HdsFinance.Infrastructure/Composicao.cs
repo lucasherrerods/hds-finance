@@ -81,6 +81,8 @@ public static class Composicao
         services.AddScoped<ProcessarExtratoRecebido>();
         services.AddSingleton<ILeitorDeFatura, LeitorDeFaturas>();
         services.AddScoped<ImportarFatura>();
+        services.AddScoped<IRepositorioDeOrcamentos, OrcamentosPostgres>();
+        services.AddScoped<DefinirOrcamento>();
         services.AddScoped<ConsultarHistorico>();
         services.AddScoped<ApagarDados>();
         services.AddScoped<AjustarTransacao>();

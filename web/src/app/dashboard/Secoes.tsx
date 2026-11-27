@@ -1,7 +1,7 @@
 import { ArrowDownLeft, ArrowUpRight, Equal, HandCoins, Lightbulb, Sigma, Trash2, type LucideIcon } from 'lucide-react'
 import { useId, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { AssistenteDoMes, EnviarFechamento, SugestoesDeCategoria } from '../../modules/admin'
+import { AssistenteDoMes, EnviarFechamento, OrcamentoDoMes, ProjecaoDoMes, RecorrentesDoMes, SugestoesDeCategoria } from '../../modules/admin'
 import {
   Abas,
   CategoriasDoMes,
@@ -42,7 +42,7 @@ const corDo = ({ tipo }: Indicador) => (tipo === 'entrada' ? 'text-entrada' : ti
 
 export function VisaoGeral() {
   const resumo = useResumo()
-  const { arquivos } = useDashboard()
+  const { arquivos, dados, aoHistoricoMudar } = useDashboard()
   const ultimo = resumo.meses.at(-1)!
 
   return (
@@ -72,6 +72,17 @@ export function VisaoGeral() {
           {formatarMoeda(ultimo.emprestimos)} de empréstimo entraram na conta e não contam como receita.
         </p>
       ) : null}
+      {dados.projecao && <ProjecaoDoMes projecao={dados.projecao} />}
+      {!arquivos && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <OrcamentoDoMes
+            orcamento={dados.orcamento ?? []}
+            grupos={(dados.grupos ?? []).map((g) => g.nome)}
+            aoSalvar={(mensagem) => aoHistoricoMudar?.(mensagem)}
+          />
+          <RecorrentesDoMes recorrentes={dados.recorrentes ?? []} />
+        </div>
+      )}
       {resumo.painel && <PainelDoMes painel={resumo.painel} />}
       {!arquivos && <AssistenteDoMes mes={ultimo} />}
     </>

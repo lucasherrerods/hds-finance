@@ -48,6 +48,13 @@ public sealed class MesEnviado
 }
 
 /// <summary>A chave é a descrição limpa (<see cref="Categorizador.ChaveDaDescricao"/>), então cada descrição tem uma correção só.</summary>
+public sealed class OrcamentoSalvo
+{
+    public required string Grupo { get; set; }
+
+    public decimal Limite { get; set; }
+}
+
 public sealed class CategoriaAprendidaSalva
 {
     public required string Chave { get; set; }
@@ -68,6 +75,8 @@ public sealed class BancoDoAdmin(DbContextOptions<BancoDoAdmin> opcoes) : DbCont
 
     public DbSet<CategoriaAprendidaSalva> CategoriasAprendidas => Set<CategoriaAprendidaSalva>();
 
+    public DbSet<OrcamentoSalvo> Orcamentos => Set<OrcamentoSalvo>();
+
     protected override void OnModelCreating(ModelBuilder modelo)
     {
         modelo.Entity<TransacaoSalva>(t =>
@@ -79,6 +88,7 @@ public sealed class BancoDoAdmin(DbContextOptions<BancoDoAdmin> opcoes) : DbCont
         });
         modelo.Entity<MesEnviado>().HasKey(m => new { m.Ano, m.Mes });
         modelo.Entity<CategoriaAprendidaSalva>().HasKey(c => c.Chave);
+        modelo.Entity<OrcamentoSalvo>().HasKey(o => o.Grupo);
     }
 
     // Texto e número guardam o valor exato no Postgres e no SQLite em memória dos testes, com o mesmo modelo.

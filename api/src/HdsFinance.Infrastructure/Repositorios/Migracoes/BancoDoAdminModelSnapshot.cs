@@ -75,6 +75,20 @@ namespace HdsFinance.Infrastructure.Repositorios.Migracoes
                     b.ToTable("MesesEnviados");
                 });
 
+            modelBuilder.Entity("HdsFinance.Infrastructure.Repositorios.OrcamentoSalvo", b =>
+                {
+                    b.Property<string>("Grupo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Limite")
+                        .IsRequired()
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Grupo");
+
+                    b.ToTable("Orcamentos");
+                });
+
             modelBuilder.Entity("HdsFinance.Infrastructure.Repositorios.TransacaoSalva", b =>
                 {
                     b.Property<int>("Id")

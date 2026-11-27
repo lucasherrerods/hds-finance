@@ -52,7 +52,7 @@ export function Dialogo({ rotulo, aoFechar, cabecalho, children, className, entr
       animate={fechando ? fechado : aberto}
       transition={{ type: 'spring', duration: fechando ? 0.2 : 0.35, bounce: fechando ? 0 : 0.15 }}
       onAnimationComplete={() => fechando && dialogo.current?.close()}
-      className={`overflow-y-auto overscroll-contain border-borda bg-superficie text-texto backdrop:bg-fundo/80 backdrop:backdrop-blur-sm ${className}`}
+      className={`overflow-y-auto overscroll-contain border-borda bg-superficie text-texto backdrop:bg-fundo/50 ${className}`}
     >
       <div className="flex min-h-full flex-col gap-6 p-6">
         <header className="flex items-center gap-4">

@@ -1,8 +1,8 @@
-import { Check, Lightbulb } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Dialogo, formatarMoeda } from '../../shared'
+import { ArrowLeft, CalendarRange, Check, ChevronRight, Lightbulb } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Dialogo, formatarMes, formatarMoeda } from '../../shared'
 import type { GrupoDeCategoria } from '../import'
-import { buscarSugestoes, corrigirCategoria, type SugestaoDeCategoria } from './api'
+import { buscarMesesSemCategoria, buscarSugestoes, corrigirCategoria, type MesSemCategoria, type SugestaoDeCategoria } from './api'
 
 type Props = {
   /** As categorias que dá para escolher no lugar da sugerida. */
@@ -13,7 +13,14 @@ type Props = {
   aoFechar: () => void
 }
 
-type Estado = { tipo: 'buscando' } | { tipo: 'pronto'; sugestoes: SugestaoDeCategoria[] } | { tipo: 'erro'; mensagem: string }
+type Estado =
+  | { tipo: 'contando' }
+  | { tipo: 'meses'; meses: MesSemCategoria[] }
+  | { tipo: 'buscando' }
+  | { tipo: 'pronto'; sugestoes: SugestaoDeCategoria[] }
+  | { tipo: 'erro'; mensagem: string; escolheu: boolean }
+
+const chaveDo = (m: MesSemCategoria) => `${m.ano}-${String(m.mes).padStart(2, '0')}`
 
 const botao =
   'flex items-center gap-2 rounded-full border border-borda bg-superficie px-4 py-2 text-sm font-medium hover:border-primaria disabled:opacity-50'
@@ -23,20 +30,27 @@ const botao =
  * a sugestão antes de aplicar; aplicar vira categoria aprendida, aqui e nas próximas importações.
  */
 export function SugestoesDeCategoria({ categorias, grupos, aoAceitar, aoFechar }: Props) {
-  const [estado, setEstado] = useState<Estado>({ tipo: 'buscando' })
+  const [estado, setEstado] = useState<Estado>({ tipo: 'contando' })
   const [escolhas, setEscolhas] = useState<Record<string, string>>({})
   const [aviso, setAviso] = useState<string | null>(null)
 
-  useEffect(() => {
-    let ativo = true
-    buscarSugestoes().then((resultado) => {
-      if (!ativo) return
-      setEstado(resultado.ok ? { tipo: 'pronto', sugestoes: resultado.sugestoes } : { tipo: 'erro', mensagem: resultado.mensagem })
-    })
-    return () => {
-      ativo = false
-    }
+  // Primeiro só conta os meses, sem IA: ela é chamada depois que o admin escolhe o recorte.
+  const contar = useCallback(async () => {
+    setEstado({ tipo: 'contando' })
+    setAviso(null)
+    const resultado = await buscarMesesSemCategoria()
+    setEstado(resultado.ok ? { tipo: 'meses', meses: resultado.meses } : { tipo: 'erro', mensagem: resultado.mensagem, escolheu: false })
   }, [])
+
+  useEffect(() => {
+    void contar()
+  }, [contar])
+
+  async function sugerir(mes?: string) {
+    setEstado({ tipo: 'buscando' })
+    const resultado = await buscarSugestoes(mes)
+    setEstado(resultado.ok ? { tipo: 'pronto', sugestoes: resultado.sugestoes } : { tipo: 'erro', mensagem: resultado.mensagem, escolheu: true })
+  }
 
   async function aplicar(sugestao: SugestaoDeCategoria) {
     const categoria = escolhas[sugestao.descricao] ?? sugestao.categoria
@@ -68,6 +82,19 @@ export function SugestoesDeCategoria({ categorias, grupos, aoAceitar, aoFechar }
       <p className="text-texto-suave">
         A IA sugere uma categoria para o que as regras não reconheceram. Troque se quiser e aplique: nada muda sem você aplicar.
       </p>
+      {estado.tipo === 'contando' && <p role="status">Procurando gastos sem categoria…</p>}
+      {estado.tipo === 'meses' && estado.meses.length === 0 && (
+        <p role="status" className="text-texto-suave">
+          Nenhum gasto sem categoria: está tudo categorizado.
+        </p>
+      )}
+      {estado.tipo === 'meses' && estado.meses.length > 0 && <EscolhaDoMes meses={estado.meses} aoEscolher={(mes) => void sugerir(mes)} />}
+      {(estado.tipo === 'pronto' || (estado.tipo === 'erro' && estado.escolheu)) && (
+        <button type="button" onClick={() => void contar()} className="flex items-center gap-2 self-start text-sm text-texto-suave transition-colors hover:text-texto">
+          <ArrowLeft aria-hidden className="size-4" />
+          Trocar o mês
+        </button>
+      )}
       {estado.tipo === 'buscando' && <p role="status">Analisando os gastos sem categoria…</p>}
       {estado.tipo === 'erro' && (
         <p role="alert" className="text-saida">
@@ -120,5 +147,43 @@ export function SugestoesDeCategoria({ categorias, grupos, aoAceitar, aoFechar }
         </ul>
       )}
     </Dialogo>
+  )
+}
+
+function EscolhaDoMes({ meses, aoEscolher }: { meses: MesSemCategoria[]; aoEscolher: (mes?: string) => void }) {
+  const total = meses.reduce((s, m) => s + m.quantidade, 0)
+  return (
+    <section aria-label="Escolha o mês" className="flex flex-col gap-3">
+      <h3 className="text-sm text-texto-suave">Qual mês a IA deve olhar?</h3>
+      <ul className="flex flex-col gap-2">
+        <li>
+          <OpcaoDeMes titulo="Todos os meses" quantidade={total} icone aoEscolher={() => aoEscolher()} />
+        </li>
+        {meses.map((m) => (
+          <li key={chaveDo(m)}>
+            <OpcaoDeMes titulo={formatarMes(m.ano, m.mes)} quantidade={m.quantidade} aoEscolher={() => aoEscolher(chaveDo(m))} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+function OpcaoDeMes({ titulo, quantidade, icone = false, aoEscolher }: { titulo: string; quantidade: number; icone?: boolean; aoEscolher: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={aoEscolher}
+      className="flex w-full items-center gap-3 rounded-xl border border-borda bg-fundo p-4 text-left transition-colors hover:border-primaria/40"
+    >
+      {icone && <CalendarRange aria-hidden className="size-5 shrink-0 opacity-70" />}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="font-medium first-letter:uppercase">{titulo}</span>
+        <span className="text-sm text-texto-suave">
+          {quantidade} {quantidade === 1 ? 'gasto' : 'gastos'} sem categoria
+        </span>
+      </span>
+      <ChevronRight aria-hidden className="size-4 shrink-0 opacity-60" />
+    </button>
   )
 }

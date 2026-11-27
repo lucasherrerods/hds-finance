@@ -176,8 +176,22 @@ export async function buscarAnalise(mes: MesDoFechamento): Promise<{ ok: true; a
 
 export type SugestaoDeCategoria = { descricao: string; categoria: string; quantidade: number; valor: number }
 
-export async function buscarSugestoes(): Promise<{ ok: true; sugestoes: SugestaoDeCategoria[] } | Falha> {
-  const resposta = await chamarAdmin('/assistente/sugestoes')
+export type MesSemCategoria = { ano: number; mes: number; quantidade: number }
+
+/** Não chama a IA: só conta, por mês, os gastos que ela receberia. */
+export async function buscarMesesSemCategoria(): Promise<{ ok: true; meses: MesSemCategoria[] } | Falha> {
+  const resposta = await chamarAdmin('/assistente/sugestoes/meses')
+  if (!resposta) return falhaSemServidor
+  if (resposta.ok) {
+    const corpo: unknown = await resposta.json().catch(() => null)
+    return { ok: true, meses: Array.isArray(corpo) ? (corpo as MesSemCategoria[]) : [] }
+  }
+  return { ok: false, mensagem: await mensagemDoProblema(resposta, 'Não foi possível buscar os meses sem categoria.') }
+}
+
+/** Sem mês ("AAAA-MM"), a IA olha todos os meses. */
+export async function buscarSugestoes(mes?: string): Promise<{ ok: true; sugestoes: SugestaoDeCategoria[] } | Falha> {
+  const resposta = await chamarAdmin(mes ? `/assistente/sugestoes?mes=${mes}` : '/assistente/sugestoes')
   if (!resposta) return falhaSemServidor
   if (resposta.ok) {
     const corpo: unknown = await resposta.json().catch(() => null)

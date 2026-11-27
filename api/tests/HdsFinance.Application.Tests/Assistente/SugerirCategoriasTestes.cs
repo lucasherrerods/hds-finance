@@ -41,4 +41,30 @@ public class SugerirCategoriasTestes
     [InlineData("[1,2]")]
     public async Task Resposta_ruim_vira_lista_vazia(string? resposta) =>
         (await SugerirAsync(new AssistenteFalso(resposta))).Should().BeEmpty();
+
+    private static readonly Transacao[] DeDoisMeses =
+    [
+        .. Transacoes,
+        new(new DateOnly(2026, 11, 4), -20m, "Pagamento ZYXW", TipoDeTransacao.Comum),
+        new(new DateOnly(2026, 11, 9), -15m, "Pagamento ZYXW", TipoDeTransacao.Comum),
+    ];
+
+    [Fact]
+    public void Lista_os_meses_com_gasto_sem_categoria_do_mais_novo_para_o_mais_antigo()
+    {
+        var meses = new SugerirCategorias(new AssistenteFalso(null), new MemoriaDoAssistente(), Categorizador.Padrao).MesesSemCategoria(DeDoisMeses);
+
+        meses.Should().Equal(new MesSemCategoria(2026, 11, 2), new MesSemCategoria(2026, 10, 1));
+    }
+
+    [Fact]
+    public async Task Com_um_mes_escolhido_so_ele_vai_para_a_ia()
+    {
+        var assistente = new AssistenteFalso("{\"sugestoes\":[]}");
+
+        await new SugerirCategorias(assistente, new MemoriaDoAssistente(), Categorizador.Padrao)
+            .ExecutarAsync(DeDoisMeses, new MesDeReferencia(2026, 11));
+
+        assistente.Pedidos.Single().Should().Contain("Pagamento ZYXW").And.NotContain("Pagamento XPTO");
+    }
 }

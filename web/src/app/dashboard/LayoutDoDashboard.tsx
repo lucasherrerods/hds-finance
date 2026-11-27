@@ -302,7 +302,7 @@ function Moldura({ base, dados, arquivos, ajustes, edicao, aoHistoricoMudar, ori
           className="pointer-events-none absolute inset-x-0 -top-64 -z-10 mx-auto h-[28rem] max-w-4xl rounded-full bg-brilho opacity-60 blur-[120px]"
         />
         <header className="sticky top-0 z-20 border-b border-borda bg-fundo/80 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
             <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
               <Wallet aria-hidden className="size-5 text-primaria" />
               hds finance
@@ -369,7 +369,7 @@ function Moldura({ base, dados, arquivos, ajustes, edicao, aoHistoricoMudar, ori
         </p>
 
         <main className="min-w-0 px-4 py-8 sm:px-6 lg:py-10">
-          <div className="mx-auto flex max-w-6xl flex-col gap-8">
+          <div className="mx-auto flex max-w-7xl flex-col gap-8">
             <AnimatePresence>
               {aviso && (
                 <motion.p

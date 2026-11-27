@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ListaDeTransacoes, type EdicaoDoHistorico } from './ListaDeTransacoes'
 
@@ -30,6 +30,31 @@ const edicao = (extra: Partial<EdicaoDoHistorico> = {}): EdicaoDoHistorico => ({
 })
 
 describe('ListaDeTransacoes', () => {
+  it('clicar numa transação abre os detalhes com as semelhantes do histórico, sem chamar a api', () => {
+    const anterior = { data: '2026-09-05', descricao: 'Pix enviado Joao', categoria: 'Sem categoria', valor: -40, chave: 'a' }
+    render(<ListaDeTransacoes transacoes={transacoes} historico={[anterior, ...transacoes]} totais={mes} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /detalhes de pix enviado joao/i }))
+
+    const dialogo = screen.getByRole('dialog', { name: /detalhes da transação/i })
+    expect(dialogo).toHaveTextContent('05/10/2026')
+    expect(within(dialogo).getByRole('list', { name: /semelhantes/i })).toHaveTextContent('40,00')
+  })
+
+  it('nos detalhes, a categoria troca e a transação pode ser ocultada', () => {
+    const aoMudar = vi.fn()
+    const aoOcultar = vi.fn()
+    render(<ListaDeTransacoes transacoes={transacoes} totais={mes} edicao={edicao({ aoMudar, aoOcultar })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /detalhes de pix enviado joao/i }))
+    const dialogo = screen.getByRole('dialog', { name: /detalhes da transação/i })
+    fireEvent.change(within(dialogo).getByRole('combobox', { name: /categoria de pix enviado joao/i }), { target: { value: 'Moradia' } })
+    fireEvent.click(within(dialogo).getByRole('button', { name: /tirar das somas/i }))
+
+    expect(aoMudar).toHaveBeenCalledWith(transacoes[0], 'Moradia')
+    expect(aoOcultar).toHaveBeenCalledWith(transacoes[0], true)
+  })
+
   it('sem edição, a categoria é só texto', () => {
     render(<ListaDeTransacoes transacoes={transacoes} totais={mes} />)
 

@@ -54,6 +54,7 @@ export function TransacoesPorMes({ meses, transacoes, edicao, hoje = hojeEmIso()
       >
         <ListaDeTransacoes
           transacoes={doPeriodo}
+          historico={transacoes}
           totais={totaisDoIntervalo(meses, transacoes, escolha.intervalo)}
           sufixo={umMes ? 'do mês' : 'no período'}
           periodo={<SeletorDePeriodo escolha={escolha} atalhos={atalhos} aoAplicar={setEscolhida} />}

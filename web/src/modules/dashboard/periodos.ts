@@ -46,7 +46,7 @@ export type Filtros = { busca: string; categoria: string; ordem: Ordem; banco?: 
 
 export type TipoDeFiltro = '' | 'entradas' | 'saidas' | 'cartao'
 
-const semAcento = (texto: string) =>
+export const semAcento = (texto: string) =>
   texto
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')

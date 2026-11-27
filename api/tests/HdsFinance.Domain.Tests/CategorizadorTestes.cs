@@ -36,6 +36,24 @@ public class CategorizadorTestes
         _categorizador.Categorizar(Gasto("Posto com mercado")).Should().Be("Alimentação");
     }
 
+    [Theory]
+    [InlineData("LATAM AIRLINES BRASIL", "Viagens")]
+    [InlineData("Booking.com Hotel Exemplo", "Viagens")]
+    [InlineData("Pix enviado Kaizen Gaming Brasil Ltda", "Apostas")]
+    [InlineData("Pix enviado Betano", "Apostas")]
+    [InlineData("Uber *trip", "Táxi e transporte privado urbano")]
+    public void As_regras_padrao_reconhecem_viagens_e_apostas(string descricao, string esperada)
+    {
+        Categorizador.Padrao.Categorizar(Gasto(descricao)).Should().Be(esperada);
+    }
+
+    [Fact]
+    public void Transferencia_pix_existe_para_escolher_mas_nenhum_pix_cai_nela_sozinho()
+    {
+        Categorizador.Padrao.Categorias.Should().Contain(["Viagens", "Apostas", "Transferência - Pix"]);
+        Categorizador.Padrao.Categorizar(Gasto("Pix enviado Fulano Ficticio")).Should().Be(Categorizador.SemCategoria);
+    }
+
     [Fact]
     public void As_regras_padrao_cobrem_gastos_comuns()
     {

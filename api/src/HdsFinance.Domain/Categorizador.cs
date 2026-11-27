@@ -60,6 +60,12 @@ public sealed class Categorizador
             ["hospital", "clinica", "laboratorio", "dentista", "odonto", "unimed", "amil"]),
         new RegraDeCategoria("Cinema e eventos", ["cinema", "ingresso", "sympla", "teatro"]),
         new RegraDeCategoria("Jogos", ["steam", "playstation", "xbox", "nintendo"]),
+        new RegraDeCategoria("Viagens",
+        [
+            "latam", "gol linhas", "azul linhas", "booking", "airbnb", "decolar", "123milhas", "hotel", "pousada", "hostel",
+            "rodoviaria", "buser", "clickbus",
+        ]),
+        new RegraDeCategoria("Apostas", ["kaizen gaming", "betano", "bet365", "sportingbet", "blaze", "pixbet", "estrela bet", "bet"]),
         new RegraDeCategoria("Cursos", ["escola", "faculdade", "curso", "udemy", "alura"]),
         new RegraDeCategoria("Livros", ["livraria"]),
         new RegraDeCategoria("Pet shop e veterinário", ["petz", "cobasi", "petshop", "pet shop", "veterinario"]),

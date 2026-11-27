@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import type { Orcamento, Projecao, Recorrente } from '../../modules/admin'
 import type { EdicaoDoHistorico, Fatura, Saldo } from '../../modules/dashboard'
 import type { Ajuste, Painel, ResumoMensal, TransacaoCategorizada } from '../../modules/import'
 
@@ -11,6 +12,10 @@ export type DadosDoDashboard = {
   /** Só na área admin. */
   saldo?: Saldo | null
   faturas?: Fatura[]
+  orcamento?: Orcamento[]
+  recorrentes?: Recorrente[]
+  projecao?: Projecao | null
+  grupos?: { nome: string }[]
 }
 
 export type ValorDoDashboard = {

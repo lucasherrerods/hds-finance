@@ -11,6 +11,36 @@ export type Historico = {
   saldo: Saldo | null
   faturas: Fatura[]
   grupos?: GrupoDeCategoria[]
+  /** Só os grupos com limite, no mês mais recente. */
+  orcamento?: Orcamento[]
+  recorrentes?: Recorrente[]
+  /** Só quando o mês mais recente é o de hoje. */
+  projecao?: Projecao | null
+}
+
+export type Orcamento = { grupo: string; limite: number; gasto: number; percentual: number; situacao: 'Tranquilo' | 'Atencao' | 'Estourou' }
+
+export type Recorrente = {
+  descricao: string
+  categoria: string
+  grupo: string
+  /** O valor de costume: o da última vez antes do mês. */
+  valor: number
+  dia: number
+  situacao: 'Pendente' | 'Paga' | 'MaisCara'
+  valorNoMes: number | null
+}
+
+export type Projecao = {
+  ano: number
+  mes: number
+  diasPassados: number
+  diasNoMes: number
+  gastoAteAgora: number
+  gastoProjetado: number
+  recorrentesPendentes: number
+  entradas: number
+  sobraProjetada: number
 }
 
 type Falha = { ok: false; mensagem: string }
@@ -141,6 +171,11 @@ async function ajustar(caminho: string, corpo: unknown, padrao: string): Promise
 /** Guarda a categoria escolhida para essa descrição; daqui pra frente ela vence as regras. */
 export async function corrigirCategoria(descricao: string, categoria: string): Promise<{ ok: true } | Falha> {
   return ajustar('/categorias', { descricao, categoria }, 'Não foi possível trocar a categoria.')
+}
+
+/** Limite nulo tira o limite do grupo. */
+export async function definirOrcamento(grupo: string, limite: number | null): Promise<{ ok: true } | Falha> {
+  return ajustar('/orcamentos', { grupo, limite }, 'Não foi possível salvar o limite.')
 }
 
 export type Alerta = { tipo: string; assunto: string; valor: number; referencia: number | null; texto: string }

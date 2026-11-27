@@ -274,6 +274,22 @@ public sealed class AdminTestes(WebApplicationFactory<Program> fabrica) : IClass
     }
 
     [Fact]
+    public async Task O_limite_do_grupo_volta_no_historico_com_o_gasto_do_mes()
+    {
+        var cliente = await ClienteLogadoAsync();
+        await cliente.PostAsync("/admin/extratos", Amostra());
+
+        (await cliente.PutAsJsonAsync("/admin/orcamentos", new { grupo = "Alimentação", limite = 1000m })).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await cliente.PutAsJsonAsync("/admin/orcamentos", new { grupo = "Inventado", limite = 10m })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        using var json = JsonDocument.Parse(await cliente.GetStringAsync("/admin/historico"));
+        var orcamento = json.RootElement.GetProperty("orcamento").EnumerateArray().Single();
+        orcamento.GetProperty("grupo").GetString().Should().Be("Alimentação");
+        orcamento.GetProperty("limite").GetDecimal().Should().Be(1000m);
+        json.RootElement.GetProperty("recorrentes").ValueKind.Should().Be(JsonValueKind.Array);
+    }
+
+    [Fact]
     public async Task Com_o_admin_ligado_a_demonstracao_continua_sem_guardar_nada()
     {
         var cliente = await ClienteLogadoAsync();

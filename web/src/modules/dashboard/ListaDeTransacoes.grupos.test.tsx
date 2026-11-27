@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ListaDeTransacoes } from './ListaDeTransacoes'
 
@@ -21,8 +21,10 @@ describe('categoria agrupada', () => {
       />,
     )
 
-    const seletor = screen.getByRole('combobox', { name: /categoria de mercado exemplo/i })
-    expect(within(seletor).getAllByRole('group').map((g) => g.getAttribute('label'))).toEqual(['Alimentação', 'Transporte', 'Outros'])
-    expect(within(seletor).getAllByRole('option')[0]).toHaveTextContent('Besteira')
+    fireEvent.click(screen.getByRole('button', { name: /detalhes de mercado exemplo/i }))
+    fireEvent.click(screen.getByRole('button', { name: /categoria de mercado exemplo/i }))
+    const lista = screen.getByRole('listbox')
+    expect(within(lista).getAllByRole('group').map((g) => g.getAttribute('aria-label'))).toEqual(['Suas categorias', 'Alimentação', 'Transporte', 'Outros'])
+    expect(within(lista).getAllByRole('option')[0]).toHaveTextContent('Besteira')
   })
 })

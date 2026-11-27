@@ -48,17 +48,20 @@ describe('ListaDeTransacoes', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /detalhes de pix enviado joao/i }))
     const dialogo = screen.getByRole('dialog', { name: /detalhes da transação/i })
-    fireEvent.change(within(dialogo).getByRole('combobox', { name: /categoria de pix enviado joao/i }), { target: { value: 'Moradia' } })
-    fireEvent.click(within(dialogo).getByRole('button', { name: /tirar das somas/i }))
+    fireEvent.click(within(dialogo).getByRole('button', { name: /^ocultar$/i }))
+    fireEvent.click(within(dialogo).getByRole('button', { name: /categoria de pix enviado joao/i }))
+    fireEvent.change(within(dialogo).getByRole('searchbox', { name: /buscar categoria/i }), { target: { value: 'mora' } })
+    expect(within(dialogo).getAllByRole('option')).toHaveLength(1)
+    fireEvent.click(within(dialogo).getByRole('option', { name: 'Moradia' }))
 
-    expect(aoMudar).toHaveBeenCalledWith(transacoes[0], 'Moradia')
     expect(aoOcultar).toHaveBeenCalledWith(transacoes[0], true)
+    expect(aoMudar).toHaveBeenCalledWith(transacoes[0], 'Moradia')
   })
 
   it('sem edição, a categoria é só texto', () => {
     render(<ListaDeTransacoes transacoes={transacoes} totais={mes} />)
 
-    expect(screen.queryByRole('combobox', { name: /categoria de pix enviado joao/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /categoria de pix enviado joao/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /apagar/i })).not.toBeInTheDocument()
   })
 
@@ -111,6 +114,8 @@ describe('ListaDeTransacoes', () => {
   it('uma entrada pode voltar para a categoria automática', () => {
     render(<ListaDeTransacoes transacoes={[{ ...transacoes[0], valor: 60, categoria: 'Moradia' }]} totais={mes} edicao={edicao()} />)
 
+    fireEvent.click(screen.getByRole('button', { name: /detalhes de pix enviado joao/i }))
+    fireEvent.click(screen.getByRole('button', { name: /categoria de pix enviado joao/i }))
     expect(screen.getByRole('option', { name: 'Entrada' })).toBeInTheDocument()
   })
 
@@ -129,18 +134,17 @@ describe('ListaDeTransacoes', () => {
     expect(aoApagar).toHaveBeenCalledWith(transacoes[0])
   })
 
-  it('com edição, troca a categoria de um gasto', () => {
-    const aoMudar = vi.fn()
-    render(<ListaDeTransacoes transacoes={transacoes} totais={mes} edicao={edicao({ aoMudar })} />)
+  it('com edição, a categoria só troca nos detalhes, não na lista', () => {
+    render(<ListaDeTransacoes transacoes={transacoes} totais={mes} edicao={edicao()} />)
 
-    fireEvent.change(screen.getByRole('combobox', { name: /categoria de pix enviado joao/i }), { target: { value: 'Moradia' } })
-
-    expect(aoMudar).toHaveBeenCalledWith(transacoes[0], 'Moradia')
+    expect(screen.queryByRole('button', { name: /categoria de pix enviado joao/i })).not.toBeInTheDocument()
   })
 
   it('investimentos e transferências não têm categoria para trocar', () => {
     render(<ListaDeTransacoes transacoes={transacoes} totais={mes} edicao={edicao()} />)
 
-    expect(screen.queryByRole('combobox', { name: /categoria de aplicação cdb/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /detalhes de aplicação cdb/i }))
+
+    expect(screen.queryByRole('button', { name: /categoria de aplicação cdb/i })).not.toBeInTheDocument()
   })
 })

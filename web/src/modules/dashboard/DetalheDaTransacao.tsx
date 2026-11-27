@@ -61,7 +61,8 @@ export function DetalheDaTransacao({ transacao, historico, edicao, aoEscolher, a
           </span>
         </Dado>
         <Dado icone={Tag} rotulo="Categoria">
-          <CategoriaDaTransacao transacao={t} edicao={edicao} />
+          {/* Fecha ao trocar: o aviso com "aplicar a todas as iguais" fica atrás do diálogo. */}
+          <CategoriaDaTransacao transacao={t} edicao={edicao} aoMudar={aoFechar} />
         </Dado>
       </dl>
 
@@ -73,7 +74,7 @@ export function DetalheDaTransacao({ transacao, historico, edicao, aoEscolher, a
             className="flex items-center gap-2 rounded-full border border-borda px-4 py-2 text-sm transition-colors hover:border-primaria"
           >
             {t.oculta ? <Eye aria-hidden className="size-4 opacity-70" /> : <EyeOff aria-hidden className="size-4 opacity-70" />}
-            {t.oculta ? 'Voltar a somar' : 'Tirar das somas'}
+            {t.oculta ? 'Mostrar' : 'Ocultar'}
           </button>
           {edicao.aoApagar && (
             <button

@@ -13,6 +13,7 @@ export function DetalheDaFatura({ fatura, aoFechar }: { fatura: Fatura; aoFechar
     <Dialogo
       rotulo={`Fatura de ${formatarMes(ano, mes)}`}
       aoFechar={aoFechar}
+      entrada="lado"
       className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-md border-l"
       cabecalho={
         <>

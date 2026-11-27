@@ -6,7 +6,7 @@ import type { Totais } from './intervalo'
 import { IconeDaCategoria } from './IconeDaCategoria'
 import { tomDaCategoria } from './iconesDeCategoria'
 import { Seletor } from './Seletor'
-import { CategoriaDaTransacao } from './CategoriaDaTransacao'
+import { Etiqueta } from './CategoriaDaTransacao'
 import { DetalheDaTransacao } from './DetalheDaTransacao'
 import { bancosDe, categoriasDe, filtrarTransacoes, type Filtros, type Ordem, type TipoDeFiltro } from './periodos'
 
@@ -231,7 +231,7 @@ function Linha({ transacao: t, edicao, aoAbrir }: LinhaProps) {
         </span>
       </td>
       <td role="cell" className={`order-3 min-w-0 ${celula}`}>
-        <CategoriaDaTransacao transacao={t} edicao={edicao} />
+        <Etiqueta categoria={t.categoria} grupo={t.grupo} />
       </td>
       <td role="cell" className={`order-5 hidden whitespace-nowrap text-texto-suave lg:table-cell ${celula}`}>
         <span className="flex items-center gap-2">

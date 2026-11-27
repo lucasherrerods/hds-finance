@@ -136,8 +136,10 @@ describe('área admin', () => {
     const fetchFalso = apiDoAdmin()
     abrir('/admin/transacoes')
 
-    const [seletor] = await screen.findAllByRole('combobox', { name: /^categoria de /i }, { timeout: 5000 })
-    fireEvent.change(seletor, { target: { value: 'Lazer' } })
+    const [linha] = await screen.findAllByRole('button', { name: /^detalhes de /i }, { timeout: 5000 })
+    fireEvent.click(linha)
+    fireEvent.click(screen.getByRole('button', { name: /^categoria de /i }))
+    fireEvent.click(screen.getByRole('option', { name: 'Lazer' }))
 
     expect(await screen.findByRole('status')).toHaveTextContent('agora é Lazer')
     expect(chamadas(fetchFalso, '/admin/transacoes/categoria')).toHaveLength(1)
@@ -310,8 +312,10 @@ describe('dashboard', () => {
   it('na demonstração dá para trocar a categoria e ocultar, e o extrato vai de novo com os ajustes', async () => {
     const menu = await verResumo()
     fireEvent.click(menu.getByRole('link', { name: /transações/i }))
-    const [seletor] = await screen.findAllByRole('combobox', { name: /^categoria de /i }, { timeout: 5000 })
-    fireEvent.change(seletor, { target: { value: 'Empréstimos' } })
+    const [linha] = await screen.findAllByRole('button', { name: /^detalhes de /i }, { timeout: 5000 })
+    fireEvent.click(linha)
+    fireEvent.click(screen.getByRole('button', { name: /^categoria de /i }))
+    fireEvent.click(screen.getByRole('option', { name: 'Empréstimos' }))
 
     expect(await screen.findByText(/agora é Empréstimos/)).toBeInTheDocument()
     const corpo = vi.mocked(fetch).mock.calls.at(-1)![1]!.body as FormData

@@ -8,8 +8,6 @@ import { META_MENSAL, movimentacoesDeInvestimento, resumoDosInvestimentos, seque
 // O Recharts só baixa quando há gráfico para mostrar.
 const GraficoDeInvestimentos = lazy(() => import('./GraficoDeInvestimentos').then((m) => ({ default: m.GraficoDeInvestimentos })))
 
-const GraficoDaMeta = lazy(() => import('./GraficoDaMeta').then((m) => ({ default: m.GraficoDaMeta })))
-
 const POR_VEZ = 8
 
 const Espera = ({ altura }: { altura: string }) => <div aria-hidden className={`${altura} rounded-2xl border border-borda bg-superficie opacity-50 motion-safe:animate-pulse`} />
@@ -55,14 +53,9 @@ export function InvestimentosDoPeriodo({ meses, transacoes }: Props) {
       </div>
 
       {meses.length > 1 && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Suspense fallback={<Espera altura="h-[352px]" />}>
-            <GraficoDeInvestimentos meses={meses} />
-          </Suspense>
-          <Suspense fallback={<Espera altura="h-[352px]" />}>
-            <GraficoDaMeta meses={meses} />
-          </Suspense>
-        </div>
+        <Suspense fallback={<Espera altura="h-[352px]" />}>
+          <GraficoDeInvestimentos meses={meses} />
+        </Suspense>
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">

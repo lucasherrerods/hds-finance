@@ -71,17 +71,3 @@ export function sequenciaDeAplicacao(meses: ResumoMensal[], meta = META_MENSAL):
   }
   return { atual, recorde }
 }
-
-export type PontoDaMeta = { rotulo: string; liquido: number; taxa: number | null; bateu: boolean }
-
-export function dadosDaMeta(meses: ResumoMensal[], meta = META_MENSAL): PontoDaMeta[] {
-  return meses.map((m) => {
-    const liquido = liquidoDo(m)
-    return {
-      rotulo: formatarMesCurto(m.ano, m.mes),
-      liquido,
-      taxa: m.entradas > 0 ? Math.round((liquido / m.entradas) * 1000) / 10 : null,
-      bateu: liquido >= meta,
-    }
-  })
-}

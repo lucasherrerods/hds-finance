@@ -49,9 +49,33 @@ public sealed record Transacao(
     /// <summary>Estorno no cartão também entra aqui: é valor positivo que abate o gasto, não receita.</summary>
     public bool EhGasto => !Oculta && (Tipo == TipoDeTransacao.CompraNoCartao || (Tipo == TipoDeTransacao.Comum && Valor < 0));
 
+    /// <summary>
+    /// Posição entre as transações iguais (mesmo dia, valor e descrição) do mesmo arquivo.
+    /// Sem ela, dois pedágios iguais no mesmo dia virariam um só.
+    /// </summary>
+    public int Ocorrencia { get; init; } = 1;
+
     public string ChaveDeDeduplicacao =>
-        IdExterno ?? string.Join('|',
-            Data.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            Valor.ToString("0.00", CultureInfo.InvariantCulture),
-            TextoNormalizado.De(Descricao));
+        IdExterno ?? (Ocorrencia > 1 ? $"{ChaveSemOcorrencia}|{Ocorrencia}" : ChaveSemOcorrencia);
+
+    private string ChaveSemOcorrencia => string.Join('|',
+        Data.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        Valor.ToString("0.00", CultureInfo.InvariantCulture),
+        TextoNormalizado.De(Descricao));
+
+    /// <summary>A primeira de cada grupo fica com a chave de antes, para o que já foi importado não duplicar.</summary>
+    public static IReadOnlyList<Transacao> NumerarRepetidas(IEnumerable<Transacao> transacoes)
+    {
+        var vistas = new Dictionary<string, int>();
+        return transacoes.Select(t =>
+        {
+            if (t.IdExterno is not null)
+            {
+                return t;
+            }
+
+            var ocorrencia = vistas[t.ChaveSemOcorrencia] = vistas.GetValueOrDefault(t.ChaveSemOcorrencia) + 1;
+            return t with { Ocorrencia = ocorrencia };
+        }).ToList();
+    }
 }

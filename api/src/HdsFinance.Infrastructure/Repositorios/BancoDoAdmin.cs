@@ -20,6 +20,8 @@ public sealed class TransacaoSalva
 
     public string? IdExterno { get; set; }
 
+    public int Ocorrencia { get; set; } = 1;
+
     public string? Categoria { get; set; }
 
     public bool Oculta { get; set; }
@@ -73,6 +75,7 @@ public sealed class BancoDoAdmin(DbContextOptions<BancoDoAdmin> opcoes) : DbCont
             t.HasIndex(x => x.Chave).IsUnique();
             t.Property(x => x.Tipo).HasConversion<string>();
             t.Property(x => x.Banco).HasConversion<string>().HasDefaultValue(Banco.Inter).HasSentinel(Banco.Inter);
+            t.Property(x => x.Ocorrencia).HasDefaultValue(1).HasSentinel(1);
         });
         modelo.Entity<MesEnviado>().HasKey(m => new { m.Ano, m.Mes });
         modelo.Entity<CategoriaAprendidaSalva>().HasKey(c => c.Chave);

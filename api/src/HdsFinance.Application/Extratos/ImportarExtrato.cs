@@ -35,7 +35,8 @@ public sealed class ImportarExtrato(
         }
 
         var classificar = (classificador ?? new ClassificadorDeTipo()).Classificar;
-        var lidas = ((ResultadoDaLeitura.Sucesso)leitura).Transacoes.Select(classificar).ToList();
+        var classificadas = ((ResultadoDaLeitura.Sucesso)leitura).Transacoes.Select(classificar);
+        var lidas = Transacao.NumerarRepetidas(classificadas);
         var unicasDoArquivo = lidas.DistinctBy(t => t.ChaveDeDeduplicacao).ToList();
         var existentes = await repositorio.ChavesExistentesAsync(
             unicasDoArquivo.Select(t => t.ChaveDeDeduplicacao), cancelamento);

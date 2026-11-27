@@ -106,6 +106,11 @@ namespace HdsFinance.Infrastructure.Repositorios.Migracoes
                     b.Property<string>("IdExterno")
                         .HasColumnType("text");
 
+                    b.Property<int>("Ocorrencia")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
                     b.Property<bool>("Oculta")
                         .HasColumnType("boolean");
 

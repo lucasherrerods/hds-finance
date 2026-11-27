@@ -1,6 +1,6 @@
 import { Check, ChevronsUpDown, Search, Sparkles } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { IconeDaCategoria } from './IconeDaCategoria'
 import { semAcento } from './periodos'
 
@@ -17,13 +17,43 @@ type Props = {
 }
 
 const SUAS = 'Suas categorias'
+const temPopover = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype
+const LARGURA = 288
+const ALTURA = 340
+const FOLGA = 8
+
+/** Abaixo do botão, alinhada à direita; sobe quando não cabe embaixo. */
+function posicaoDa(botao: DOMRect): CSSProperties {
+  const left = Math.max(FOLGA, Math.min(botao.right - LARGURA, window.innerWidth - LARGURA - FOLGA))
+  const cabeEmbaixo = botao.bottom + FOLGA + ALTURA <= window.innerHeight
+  return cabeEmbaixo ? { top: botao.bottom + FOLGA, left } : { bottom: window.innerHeight - botao.top + FOLGA, left }
+}
 
 /** Lista com busca e grupos. Neutra: a cor das categorias fica só na aba Categorias. */
 export function SeletorDeCategoria({ rotulo, valor, grupoDoValor, soltas, grupos, aoEscolher }: Props) {
   const [aberto, setAberto] = useState(false)
   const [busca, setBusca] = useState('')
   const caixa = useRef<HTMLDivElement>(null)
+  const botao = useRef<HTMLButtonElement>(null)
+  const painel = useRef<HTMLDivElement>(null)
+  const [posicao, setPosicao] = useState<CSSProperties>({})
   const idDaLista = useId()
+
+  // A lista vai para a camada do topo (popover), por cima do diálogo e fora da rolagem dele.
+  useLayoutEffect(() => {
+    if (!aberto) return
+    const posicionar = () => botao.current && setPosicao(posicaoDa(botao.current.getBoundingClientRect()))
+    posicionar()
+    const atual = painel.current
+    // Sem a API de popover (navegador antigo), a lista fica fixa no lugar, por baixo do diálogo.
+    if (temPopover && atual && !atual.matches(':popover-open')) atual.showPopover()
+    window.addEventListener('resize', posicionar)
+    window.addEventListener('scroll', posicionar, true)
+    return () => {
+      window.removeEventListener('resize', posicionar)
+      window.removeEventListener('scroll', posicionar, true)
+    }
+  }, [aberto])
 
   useEffect(() => {
     if (!aberto) return
@@ -57,6 +87,7 @@ export function SeletorDeCategoria({ rotulo, valor, grupoDoValor, soltas, grupos
   return (
     <div ref={caixa} onKeyDown={teclado} className="relative inline-block max-w-full text-left">
       <button
+        ref={botao}
         type="button"
         aria-label={rotulo}
         aria-haspopup="listbox"
@@ -73,11 +104,14 @@ export function SeletorDeCategoria({ rotulo, valor, grupoDoValor, soltas, grupos
       <AnimatePresence>
         {aberto && (
           <motion.div
+            ref={painel}
+            popover={temPopover ? 'manual' : undefined}
+            style={{ position: 'fixed', inset: 'auto', ...posicao, width: LARGURA, maxHeight: ALTURA }}
             initial={{ opacity: 0, y: -4, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute top-full right-0 z-10 mt-2 flex w-72 origin-top-right flex-col overflow-hidden rounded-xl border border-borda bg-superficie"
+            className="m-0 flex origin-top-right flex-col overflow-hidden rounded-xl border border-borda bg-superficie p-0 text-texto"
           >
             <label className="relative border-b border-borda">
               <span className="sr-only">Buscar categoria</span>
@@ -91,7 +125,7 @@ export function SeletorDeCategoria({ rotulo, valor, grupoDoValor, soltas, grupos
                 className="h-11 w-full bg-transparent pr-3 pl-9 text-sm outline-none placeholder:text-texto-suave"
               />
             </label>
-            <div id={idDaLista} role="listbox" aria-label={rotulo} className="max-h-72 overflow-y-auto overscroll-contain p-1">
+            <div id={idDaLista} role="listbox" aria-label={rotulo} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1">
               {todos.length === 0 && <p className="px-3 py-4 text-center text-sm text-texto-suave">Nenhuma categoria encontrada.</p>}
               {todos.map((g) => (
                 <div key={g.nome} role="group" aria-label={g.nome} className="flex flex-col py-1">

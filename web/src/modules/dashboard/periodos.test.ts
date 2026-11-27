@@ -81,11 +81,11 @@ describe('recortesDaEvolucao', () => {
   const base = mesesDeExemplo[0]
   const meses = Array.from({ length: 15 }, (_, i) => ({ ...base, ano: 2025 + Math.floor((i + 6) / 12), mes: ((i + 6) % 12) + 1 }))
 
-  it('começa nos últimos 12 meses e depois traz cada ano, do mais novo para o mais antigo', () => {
+  it('começa nos últimos 12 meses, depois todo o período e cada ano, do mais novo para o mais antigo', () => {
     const recortes = recortesDaEvolucao(meses)
 
-    expect(recortes.map((r) => r.rotulo)).toEqual(['Últimos 12 meses', '2026', '2025'])
-    expect(recortes.map((r) => r.meses.length)).toEqual([12, 9, 6])
+    expect(recortes.map((r) => r.rotulo)).toEqual(['Últimos 12 meses', 'Todo o período', '2026', '2025'])
+    expect(recortes.map((r) => r.meses.length)).toEqual([12, 15, 9, 6])
   })
 
   it('com um ano só não há o que escolher', () => {
